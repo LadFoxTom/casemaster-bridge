@@ -1,0 +1,28 @@
+// Classic HTML inventory list — rendered by cms-vercel's HTML pipeline.
+// The SPA at /admin/wms/inventory consumes the SAME BO descriptor via
+// /api/v1/bo/wms/inventory/list to render the modernised table.
+
+inherits 'base'
+
+function main()
+    set('rows',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'r', entity: 'wms/inventory', orderBy: 'id'>
+            >,
+            rows: 200
+        )
+    )
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            title: <@page/title label: 'Inventory (classic HTML render)'>,
+            crumbs: <@page/html `<p><a href="/" class="btn btn-sm btn-outline-secondary">&larr; Comparison page</a> <a href="/admin/wms/inventory" class="btn btn-sm btn-primary">View this page in the new SPA &rarr;</a></p>`>,
+            count: <@page/html resolveTemplate(`<p class="text-muted">{{iterator.count([rows])}} row(s) — same data, rendered with Bootstrap 4.</p>`)>,
+            table: <@page/data/table iterator: [rows], group: 'list', pagingMode: pagingMode.None>
+        >
+    >
+end-resource

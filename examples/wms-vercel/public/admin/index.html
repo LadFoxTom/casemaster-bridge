@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Casemaster 2.0 — Admin SPA</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7.5 4.27 9 5.15'/%3E%3Cpath d='M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z'/%3E%3Cpath d='M3.3 7 12 12l8.7-5'/%3E%3Cpath d='M12 22V12'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              bg:          'rgb(var(--cms-bg) / <alpha-value>)',
+              surface:     'rgb(var(--cms-surface) / <alpha-value>)',
+              elev:        'rgb(var(--cms-elev) / <alpha-value>)',
+              border:      'rgb(var(--cms-border) / <alpha-value>)',
+              fg:          'rgb(var(--cms-fg) / <alpha-value>)',
+              muted:       'rgb(var(--cms-muted) / <alpha-value>)',
+              accent:      'rgb(var(--cms-accent) / <alpha-value>)',
+              'accent-fg': 'rgb(var(--cms-accent-fg) / <alpha-value>)',
+              ok:          'rgb(var(--cms-ok) / <alpha-value>)',
+              warn:        'rgb(var(--cms-warn) / <alpha-value>)',
+              danger:      'rgb(var(--cms-danger) / <alpha-value>)',
+            },
+            fontFamily: {
+              sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-bg text-fg font-sans antialiased">
+    <div id="root"></div>
+    <noscript>
+      <p style="padding:2rem">This admin app requires JavaScript. Open <code>/index.html</code> instead for the comparison landing page.</p>
+    </noscript>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

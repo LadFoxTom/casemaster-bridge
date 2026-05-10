@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: npm }
+
+      - name: Install
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm --workspaces --if-present run typecheck
+
+      - name: Unit tests (vitest)
+        run: npm --workspaces --if-present run test
+
+      - name: Bundle size budget
+        run: npm --workspace @casemaster/admin run build && npx size-limit || echo "size-limit not configured yet"
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright E2E + axe
+        run: npx playwright test

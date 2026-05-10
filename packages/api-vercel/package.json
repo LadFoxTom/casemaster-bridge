@@ -1,0 +1,33 @@
+{
+  "name": "@casemaster/api-vercel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "JSON adapter — wraps cms-vercel and exposes the cms-admin /api/v1 contract",
+  "main": "src/index.ts",
+  "exports": {
+    ".":      "./src/index.ts",
+    "./demo": "./src/demo-provider.ts"
+  },
+  "bin": {
+    "cms-admin-install-helper": "./bin/install-helper.mjs",
+    "cms-admin-emit-live-sql":  "./bin/emit-live-sql.mjs"
+  },
+  "scripts": {
+    "build":    "tsc -p .",
+    "test":     "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "cms-vercel": "*",
+    "zod": "^3.23.0"
+  },
+  "peerDependenciesMeta": {
+    "cms-vercel": { "optional": true }
+  },
+  "devDependencies": {
+    "vitest":     "^1.6.0",
+    "typescript": "^5.4.0",
+    "zod":        "^3.23.0"
+  }
+}

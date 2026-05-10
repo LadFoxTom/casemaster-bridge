@@ -1,0 +1,16 @@
+inherits 'base'
+
+function main()
+    set('rows', iterator.ofEntity(
+        entities: < <@iterator/entity name: 'r', entity: 'example', orderBy: 'id'> >,
+        rows: 100
+    ))
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container content: <@page/content
+        title: <@page/title label: 'Example'>,
+        table: <@page/data/table iterator: [rows], group: 'list'>
+    >>
+end-resource

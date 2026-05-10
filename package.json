@@ -1,0 +1,25 @@
+{
+  "name": "casemaster-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A 2026-class admin SPA for CaseMaster apps, on both runtimes. Implements C-spa-bridge.md.",
+  "license": "MIT",
+  "homepage": "https://github.com/LadFoxTom/casemaster-bridge",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LadFoxTom/casemaster-bridge.git"
+  },
+  "engines": { "node": ">=20" },
+  "workspaces": [
+    "packages/*",
+    "examples/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "demo":      "node examples/wms-vercel/server.mjs",
+    "demo:port": "PORT=3737 node examples/wms-vercel/server.mjs",
+    "docs":      "node apps/docs/bin/dev-server.mjs",
+    "test":      "npm --workspaces --if-present run test"
+  }
+}

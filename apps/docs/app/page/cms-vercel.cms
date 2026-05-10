@@ -1,0 +1,97 @@
+// Install + use guide for cms-vercel projects.
+
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:    <@page/html `<div class="cms-layout">`>,
+            side:    <@page/html script.call('_layout:sidebar', 'cmsv')>,
+            body_o:  <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>Install on a cms-vercel project</h1>
+                <p class="lead">Greenfield path. Estimated time: 5 minutes from cloned repo to live URL.</p>
+            `>,
+
+            step1: <@page/html `
+                <h2>1. Add the packages</h2>
+                <pre><code>npm install @casemaster/admin @casemaster/api-vercel @casemaster/api-spec</code></pre>
+                <p>If <code>@casemaster/*</code> isn't published yet, install from this repo's git URL:</p>
+                <pre><code>npm install \
+  github:LadFoxTom/casemaster-cms-admin#main \
+  github:LadFoxTom/casemaster-cms-admin#main:packages/api-vercel \
+  github:LadFoxTom/casemaster-cms-admin#main:packages/api-spec</code></pre>
+            `>,
+
+            step2: <@page/html `
+                <h2>2. Mount the JSON adapter</h2>
+                <p>Create <code>api/v1/index.ts</code>:</p>
+                <pre><code>// api/v1/index.ts
+import { createJsonHandler } from '@casemaster/api-vercel';
+
+export default createJsonHandler({ appDir: './app' });</code></pre>
+                <p>Then add a Vercel rewrite so every <code>/api/v1/*</code> request lands here:</p>
+                <pre><code>// vercel.json
+{
+  "rewrites": [
+    { "source": "/api/v1/(.*)", "destination": "/api/v1/index.ts" }
+  ]
+}</code></pre>
+            `>,
+
+            step3: <@page/html `
+                <h2>3. Build the SPA</h2>
+                <p>The SPA is one static bundle. Build it once, host it from <code>public/admin/</code>:</p>
+                <pre><code>npx @casemaster/admin build --out public/admin</code></pre>
+                <p>Or, if you'd rather own the source (shadcn-style), run the scaffold:</p>
+                <pre><code>npx create-cms-admin@latest .</code></pre>
+                <p>Either way, <code>/admin/</code> on your domain serves the SPA.</p>
+            `>,
+
+            step4: <@page/html `
+                <h2>4. Optional — route writes through bo.persist</h2>
+                <p>By default the JSON adapter does direct INSERT/UPDATE through the predicate translator.
+                If your BOs declare validators, audit logging, or <code>deleteRule</code>, install the helper:</p>
+                <pre><code>npx cms-admin-install-helper --app ./app</code></pre>
+                <p>This drops a tiny <code>app/script/_cmsAdmin.cms</code> that the adapter prefers; saves
+                now go through <code>bo.persist</code> with full lifecycle semantics.</p>
+            `>,
+
+            step5: <@page/html `
+                <h2>5. Optional — live updates</h2>
+                <p>Install Postgres triggers so writes from any source push to connected SPAs:</p>
+                <pre><code>npx cms-admin-emit-live-sql --app ./app | psql $DATABASE_URL</code></pre>
+                <p>The SPA's <code>useLive(bo)</code> hook subscribes to <code>/api/v1/stream/:bo</code> via SSE
+                and invalidates the right TanStack Query cache keys on every event.</p>
+            `>,
+
+            step6: <@page/html `
+                <h2>6. Deploy</h2>
+                <pre><code>vercel --prod</code></pre>
+                <p>Both URL bands now coexist on one Vercel function:</p>
+                <ul>
+                    <li><code>/page/*</code> — the classic HTML render of your <code>.cms</code> source.</li>
+                    <li><code>/api/v1/*</code> — the JSON contract.</li>
+                    <li><code>/admin/*</code> — the SPA, schema-driven, Cmd-K, dark-mode.</li>
+                </ul>
+                <p>Pick which routes use which UI per page; both serve forever.</p>
+            `>,
+
+            next: <@page/html `
+                <h2>Next</h2>
+                <p>
+                    <a href="/page/architecture">→ How it works under the hood</a><br>
+                    <a href="/page/api">→ JSON API reference</a><br>
+                    <a href="/page/dotnet">→ CaseMaster.Web.exe sidecar pattern</a>
+                </p>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource

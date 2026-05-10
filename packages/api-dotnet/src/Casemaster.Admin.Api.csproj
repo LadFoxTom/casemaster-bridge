@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Casemaster.Admin.Api</AssemblyName>
+    <RootNamespace>Casemaster.Admin.Api</RootNamespace>
+    <Description>JSON adapter for cms-admin running inside CaseMaster.Web.exe.</Description>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Reference the .NET runtime's main DLL by file path. The CaseMaster
+      runtime distribution bundles these in `runtime/`.
+    -->
+    <Reference Include="CaseMaster">
+      <HintPath>..\..\..\..\Casemaster-WMS\casemaster-runtime\runtime\CaseMaster.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+  </ItemGroup>
+
+</Project>

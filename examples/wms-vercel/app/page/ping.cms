@@ -1,0 +1,8 @@
+// Smallest possible runtime smoke-test. No DB, no BO, no resource tree.
+// `/page/ping` returns plain text via response.write — useful for proving
+// the runtime is mounted and sized for monitoring health checks.
+
+function main()
+    response.setContentType('text/plain')
+    response.write(concat('pong @ ', now()))
+end-function

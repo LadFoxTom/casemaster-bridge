@@ -1,0 +1,109 @@
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:   <@page/html `<div class="cms-layout">`>,
+            side:   <@page/html script.call('_layout:sidebar', 'iis')>,
+            body_o: <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>IIS deployment, alongside CaseMaster.Web.exe</h1>
+                <p class="lead">
+                    One IIS site, one hostname. URL Rewrite directs each path band to the right backend.
+                    No new app pools for the existing <code>.exe</code>.
+                </p>
+            `>,
+
+            prereq: <@page/html `
+                <h2>Prerequisites</h2>
+                <ul>
+                    <li>IIS 10+ with the <strong>URL Rewrite</strong> module and
+                        <strong>Application Request Routing (ARR)</strong>. Enable Server Proxy Settings.</li>
+                    <li>Node 20+ on the same Windows box (or any reachable host).</li>
+                    <li>Same Postgres your <code>.exe</code> uses.</li>
+                </ul>
+            `>,
+
+            topo: <@page/html `
+                <h2>Path bands</h2>
+                <table>
+                  <thead><tr><th>Path</th><th>Handled by</th><th>How IIS routes</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>/page/*</code>, <code>/maintenance/*</code></td><td>CaseMaster.Web.exe (existing app pool)</td><td>Default — no rule needed</td></tr>
+                    <tr><td><code>/api/v1/*</code></td><td>Node.js sidecar</td><td>ARR reverse-proxy to <code>http://127.0.0.1:5174</code></td></tr>
+                    <tr><td><code>/admin/*</code>, <code>/</code></td><td>Static SPA</td><td>Virtual directory pointing at the dist folder</td></tr>
+                  </tbody>
+                </table>
+            `>,
+
+            web_config: <@page/html `
+                <h2>web.config</h2>
+                <p>Drop this into your CaseMaster site's web.config (or merge into the existing one):</p>
+                <pre><code>&lt;configuration&gt;
+  &lt;system.webServer&gt;
+    &lt;rewrite&gt;
+      &lt;rules&gt;
+        &lt;!-- /api/v1/* → Node sidecar --&gt;
+        &lt;rule name="cms-admin-api" stopProcessing="true"&gt;
+          &lt;match url="^api/v1/(.*)" /&gt;
+          &lt;action type="Rewrite" url="http://127.0.0.1:5174/api/v1/{R:1}" /&gt;
+        &lt;/rule&gt;
+
+        &lt;!-- BrowserRouter fallback so /admin/wms/inventory deep-links work --&gt;
+        &lt;rule name="cms-admin-spa-fallback" stopProcessing="true"&gt;
+          &lt;match url="^admin/(?!.*\\.).*" /&gt;
+          &lt;action type="Rewrite" url="/admin/index.html" /&gt;
+        &lt;/rule&gt;
+      &lt;/rules&gt;
+    &lt;/rewrite&gt;
+
+    &lt;!-- ARR proxy + SSE-friendly buffering --&gt;
+    &lt;proxy enabled="true"
+           preserveHostHeader="true"
+           responseBufferLimit="0" /&gt;
+  &lt;/system.webServer&gt;
+&lt;/configuration&gt;</code></pre>
+                <p><code>responseBufferLimit="0"</code> is the magic part that makes
+                Server-Sent Events work through ARR.</p>
+            `>,
+
+            sidecar: <@page/html `
+                <h2>Run the sidecar as a Windows service</h2>
+                <pre><code>nssm install cms-admin-sidecar "C:\\Program Files\\nodejs\\node.exe" "C:\\inetpub\\cms-admin\\sidecar\\server.mjs"
+nssm set cms-admin-sidecar AppEnvironmentExtra DATABASE_URL=&lt;dsn&gt; CMS_APP_DIR=C:\\path\\to\\your\\casemaster-runtime PORT=5174
+nssm start cms-admin-sidecar</code></pre>
+                <p>Add an IIS Health Monitor against
+                <code>http://127.0.0.1:5174/api/v1/schema</code> so ARR returns 502 cleanly if the sidecar
+                dies — your <code>.exe</code> keeps serving <code>/page/*</code> through the outage.</p>
+            `>,
+
+            virtdir: <@page/html `
+                <h2>Add the SPA virtual directory</h2>
+                <p>In IIS Manager → your site → Add Virtual Directory:</p>
+                <ul>
+                    <li><strong>Alias:</strong> <code>admin</code></li>
+                    <li><strong>Physical path:</strong> <code>C:\\inetpub\\cms-admin\\spa</code> (where you copied <code>packages/admin/dist/</code>)</li>
+                </ul>
+                <p>Visit <code>https://your-host/admin/</code> — you should see the SPA shell. If it loads
+                a blank page, check that <code>/api/v1/schema</code> returns JSON (rewrite rule wired).</p>
+            `>,
+
+            cookies: <@page/html `
+                <h2>Cookies & sessions</h2>
+                <p>Same hostname for everything = same cookie scope. Both runtimes default to
+                <code>cmsv_sid</code>. Verify post-deploy:</p>
+                <pre><code># sign in via classic HTML, then:
+curl -b "cmsv_sid=&lt;your-id&gt;" https://your-host/api/v1/session/me</code></pre>
+                <p>If you split the SPA off to a different hostname, set <code>SameSite=None; Secure</code>
+                on the cookie and add CORS headers on the sidecar.</p>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource

@@ -1,0 +1,46 @@
+// Shared sidebar nav. Pages call `script.call('_layout:sidebar', 'home')`
+// passing the current section so the active link is highlighted.
+
+protected function sidebar(active)
+    set('h_home',   if(eq([active], 'home'),   ' active', ''))
+    set('h_cmsv',   if(eq([active], 'cmsv'),   ' active', ''))
+    set('h_dotnet', if(eq([active], 'dotnet'), ' active', ''))
+    set('h_iis',    if(eq([active], 'iis'),    ' active', ''))
+    set('h_arch',   if(eq([active], 'arch'),   ' active', ''))
+    set('h_api',    if(eq([active], 'api'),    ' active', ''))
+    set('h_why',    if(eq([active], 'why'),    ' active', ''))
+    set('h_road',   if(eq([active], 'road'),   ' active', ''))
+    set('h_faq',    if(eq([active], 'faq'),    ' active', ''))
+    return resolveTemplate(`
+        <div class="cms-sidebar">
+            <div class="brand">
+                <div class="logo">CM</div>
+                <div>
+                    <div class="title">@casemaster/admin</div>
+                    <div class="subtitle">A 2026 SPA for CaseMaster apps</div>
+                </div>
+            </div>
+            <nav>
+                <div class="nav-group">Start here</div>
+                <a class="nav-link{{[h_home]}}" href="/">Overview</a>
+                <a class="nav-link{{[h_why]}}" href="/page/why">Why this exists</a>
+                <a class="nav-link{{[h_road]}}" href="/page/roadmap">Roadmap status</a>
+
+                <div class="nav-group">Install on your runtime</div>
+                <a class="nav-link{{[h_cmsv]}}"   href="/page/cms-vercel">cms-vercel project</a>
+                <a class="nav-link{{[h_dotnet]}}" href="/page/dotnet">CaseMaster.Web.exe</a>
+                <a class="nav-link{{[h_iis]}}"   href="/page/iis">IIS deployment</a>
+
+                <div class="nav-group">Reference</div>
+                <a class="nav-link{{[h_arch]}}" href="/page/architecture">Architecture</a>
+                <a class="nav-link{{[h_api]}}"  href="/page/api">JSON API</a>
+                <a class="nav-link{{[h_faq]}}"  href="/page/faq">FAQ</a>
+            </nav>
+            <div class="footer">
+                <a href="https://github.com/LadFoxTom/Casemaster-Vercel" class="text-muted small">cms-vercel ↗</a>
+                <span class="text-muted small">·</span>
+                <a href="https://docs.casemaster.io/" class="text-muted small">CaseMaster docs ↗</a>
+            </div>
+        </div>
+    `)
+end-function

@@ -1,0 +1,55 @@
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:   <@page/html `<div class="cms-layout">`>,
+            side:   <@page/html script.call('_layout:sidebar', 'why')>,
+            body_o: <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>Why this exists</h1>
+                <p class="lead">
+                    CaseMaster apps render Bootstrap-4 + jQuery — a 2018 admin look that's hard to make feel
+                    modern. But the runtime already speaks the structured shape of an app's data. That
+                    structure is a JSON API waiting to be exposed; once exposed, a single SPA can present
+                    every CaseMaster app as a 2026-class admin product.
+                </p>
+            `>,
+
+            takeaways: <@page/html `
+                <h2>Twelve research takeaways driving the design</h2>
+                <ol>
+                    <li><strong>shadcn/ui + Radix + Tailwind</strong> — the 2026 admin baseline; copy-in components, CSS variable tokens, dark mode is a class flip.</li>
+                    <li><strong>TanStack Table v8 + Virtual</strong> — virtualization mandatory above ~1k rows; server-side pagination above 50k.</li>
+                    <li><strong>TanStack Query optimistic mutations</strong> — apps with rollback feel 2-3× faster.</li>
+                    <li><strong>cmdk Cmd-K palette</strong> — Linear/Notion/Raycast pattern; fuzzy search across pages, records, actions.</li>
+                    <li><strong>Linear-class keyboard ergonomics</strong> — every action shortcutable; tooltips reveal shortcuts.</li>
+                    <li><strong>Retool-style dashboard composer</strong> — 12-col grid; user-saved layouts; KPIs/lists/charts as draggable widgets.</li>
+                    <li><strong>AI Copilot bar</strong> — Microsoft / dbt / Power BI shipped natural-language → action UIs in 2026; we expose a BYO-key Copilot.</li>
+                    <li><strong>Postgres LISTEN/NOTIFY → SSE</strong> — built-in pub/sub; right shape for moderate internal-tool scale; serverless-friendly.</li>
+                    <li><strong>WMS-specific ergonomics</strong> — density toggle, large touch targets, workflow-shaped pages, throughput as the metric.</li>
+                    <li><strong>WCAG 2.2 AA non-negotiable</strong> — focus visible, target sizes, axe-core in CI.</li>
+                    <li><strong>Schema-driven defaults + escape hatches</strong> — Refine/React-Admin pattern; auto-render every BO, override per-page when needed.</li>
+                    <li><strong>Own the source</strong> — shadcn philosophy; the SPA is your code, not a black-box import.</li>
+                </ol>
+            `>,
+
+            non_goals: <@page/html `
+                <h2>Non-goals</h2>
+                <ul>
+                    <li><strong>Replacing classic HTML.</strong> Both runtimes serve forever. Users pick per route.</li>
+                    <li><strong>A built-in LLM.</strong> Copilot is BYO key. Privacy first.</li>
+                    <li><strong>A new declarative language.</strong> The SPA renders <code>.cms</code>; <code>.cms</code> stays the spec.</li>
+                    <li><strong>Faster than the .NET runtime on a long-lived host.</strong> We trade per-request latency for elastic scale.</li>
+                </ul>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource

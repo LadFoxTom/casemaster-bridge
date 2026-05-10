@@ -1,0 +1,32 @@
+// Bo descriptor for the demo. Tracked by both the classic HTML render
+// path and the SPA's JSON adapter.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inventory',
+        table: 'inventory',
+        primaryKey: 'id',
+        attributes: <
+            id:            <@bo/attribute label: 'Id',          column: 'id',          dataType: dataType.Long,    optional: false()>,
+            warehouse_id:  <@bo/attribute label: 'Warehouse',   column: 'warehouse_id', dataType: dataType.Long,    optional: false(), foreignKey: 'wms/warehouse'>,
+            location_id:   <@bo/attribute label: 'Location',    column: 'location_id',  dataType: dataType.Long,    optional: false(), foreignKey: 'wms/location'>,
+            item_id:       <@bo/attribute label: 'Item',        column: 'item_id',      dataType: dataType.Long,    optional: false(), foreignKey: 'wms/item'>,
+            lot_number:    <@bo/attribute label: 'Lot',         column: 'lot_number',   dataType: dataType.String>,
+            qty_on_hand:   <@bo/attribute label: 'On hand',     column: 'qty_on_hand',  dataType: dataType.Decimal, precision: 6>,
+            qty_reserved:  <@bo/attribute label: 'Reserved',    column: 'qty_reserved', dataType: dataType.Decimal, precision: 6>,
+            qty_on_hold:   <@bo/attribute label: 'On hold',     column: 'qty_on_hold',  dataType: dataType.Decimal, precision: 6>,
+            quality_status:<@bo/attribute label: 'Quality',     column: 'quality_status',dataType: dataType.String>,
+            uom_code:      <@bo/attribute label: 'UoM',         column: 'uom_code',     dataType: dataType.String>
+        >,
+        attributeGroups: <
+            label: < 'lot_number' >,
+            list:  < 'item_id', 'location_id', 'qty_on_hand', 'qty_reserved', 'quality_status', 'lot_number' >,
+            description: < 'warehouse_id', 'location_id', 'item_id', 'lot_number', 'qty_on_hand', 'qty_reserved', 'qty_on_hold', 'quality_status', 'uom_code' >,
+            search: < 'lot_number' >
+        >
+    >
+end-resource

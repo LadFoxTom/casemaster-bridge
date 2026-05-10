@@ -1,0 +1,14 @@
+[
+  {
+    "name": "@casemaster/admin initial bundle (gz)",
+    "path": "packages/admin/dist/assets/*.js",
+    "limit": "250 kB",
+    "gzip": true
+  },
+  {
+    "name": "@casemaster/admin styles (gz)",
+    "path": "packages/admin/dist/assets/*.css",
+    "limit": "30 kB",
+    "gzip": true
+  }
+]

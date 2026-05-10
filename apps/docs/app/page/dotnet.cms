@@ -1,0 +1,224 @@
+// Sidecar pattern guide for CaseMaster.Web.exe shops.
+
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:   <@page/html `<div class="cms-layout">`>,
+            side:   <@page/html script.call('_layout:sidebar', 'dotnet')>,
+            body_o: <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>Use with CaseMaster.Web.exe</h1>
+                <p class="lead">
+                    Your existing .NET runtime keeps doing what it does today. cms-vercel runs as a
+                    <strong>JSON-only sidecar</strong> against the same Postgres. Both runtimes coexist;
+                    users sign in once and use either UI seamlessly.
+                </p>
+            `>,
+
+            why: <@page/html `
+                <h2>Why a sidecar (not a plugin)</h2>
+                <p>The package is TypeScript. <code>CaseMaster.Web.exe</code> is .NET. They can't share a process.
+                But they don't have to — they share <strong>state</strong>: same <code>app/</code> folder,
+                same Postgres, same <code>cms_session</code> cookie. That's enough.</p>
+                <p>An in-process C# plugin (<code>@casemaster/api-dotnet</code>) is also planned for sites that
+                genuinely cannot run a second process. It's currently a scaffold; the sidecar shape is
+                production-ready today.</p>
+            `>,
+
+            arch: <@page/html `
+                <h2>Topology</h2>
+                <div class="arch-diagram">
+                    <svg viewBox="0 0 920 530" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sidecar topology with CaseMaster.Web.exe">
+                      <defs>
+                        <linearGradient id="sc-grad-browser" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"  stop-color="#1a1f29"/>
+                          <stop offset="100%" stop-color="#14181f"/>
+                        </linearGradient>
+                        <linearGradient id="sc-grad-shape" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"  stop-color="#1a1f29"/>
+                          <stop offset="100%" stop-color="#10141b"/>
+                        </linearGradient>
+                        <linearGradient id="sc-grad-pg" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%"  stop-color="#1a3a2a"/>
+                          <stop offset="100%" stop-color="#10241a"/>
+                        </linearGradient>
+                        <filter id="sc-shadow" x="-10%" y="-10%" width="120%" height="120%">
+                          <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+                        </filter>
+                        <marker id="sc-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+                          <path d="M0,0 L10,5 L0,10 Z" fill="#5b8bff"/>
+                        </marker>
+                        <marker id="sc-arrow-mute" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                          <path d="M0,0 L10,5 L0,10 Z" fill="#5d6776"/>
+                        </marker>
+                      </defs>
+
+                      <!-- BROWSER -->
+                      <g filter="url(#sc-shadow)">
+                        <rect x="340" y="20" width="240" height="64" rx="12" fill="url(#sc-grad-browser)" stroke="#2a3140"/>
+                      </g>
+                      <text x="460" y="46" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" letter-spacing="0.18em" fill="#7d8694">BROWSER</text>
+                      <text x="460" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e6edf3">single hostname (your site)</text>
+
+                      <!-- arrow browser → routing band -->
+                      <line x1="460" y1="84" x2="460" y2="118" stroke="#5b8bff" stroke-width="1.8" marker-end="url(#sc-arrow)"/>
+
+                      <!-- routing band -->
+                      <g>
+                        <rect x="80" y="120" width="760" height="38" rx="9" fill="rgba(91,139,255,0.06)" stroke="rgba(91,139,255,0.3)" stroke-dasharray="3 3"/>
+                        <text x="100" y="144" font-family="ui-monospace,monospace" font-size="11.5" fill="#cfdaff">/page/*  →  .exe</text>
+                        <text x="820" y="144" text-anchor="end" font-family="ui-monospace,monospace" font-size="11.5" fill="#cfdaff">/api/v1/*  +  /admin/*  →  sidecar</text>
+                        <text x="460" y="144" text-anchor="middle" font-family="Inter,sans-serif" font-size="10.5" fill="#7d8694" letter-spacing="0.04em">URL-path split (IIS URL Rewrite)</text>
+                      </g>
+
+                      <!-- arrows from band down to each box -->
+                      <line x1="220" y1="158" x2="220" y2="200" stroke="#5d6776" stroke-width="1.5" marker-end="url(#sc-arrow-mute)"/>
+                      <line x1="700" y1="158" x2="700" y2="200" stroke="#5d6776" stroke-width="1.5" marker-end="url(#sc-arrow-mute)"/>
+
+                      <!-- LEFT: CaseMaster.Web.exe -->
+                      <g filter="url(#sc-shadow)">
+                        <rect x="80" y="206" width="280" height="170" rx="12" fill="url(#sc-grad-shape)" stroke="#2a3140"/>
+                      </g>
+                      <g transform="translate(100, 226)">
+                        <rect x="0" y="0" width="84" height="18" rx="9" fill="rgba(125,134,148,0.10)" stroke="rgba(125,134,148,0.4)"/>
+                        <text x="42" y="13" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#9aa3b1" letter-spacing="0.05em">EXISTING</text>
+                      </g>
+                      <text x="100" y="276" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#e6edf3">CaseMaster.Web.exe</text>
+                      <text x="100" y="294" font-family="Inter,sans-serif" font-size="11" fill="#7d8694">.NET runtime · unchanged</text>
+                      <line x1="100" y1="310" x2="340" y2="310" stroke="#2a3140"/>
+                      <text x="100" y="332" font-family="Inter,sans-serif" font-size="11.5" fill="#c0c9d6">Serves classic Bootstrap 4 HTML</text>
+                      <text x="100" y="350" font-family="Inter,sans-serif" font-size="11.5" fill="#c0c9d6">at <tspan font-family="ui-monospace,monospace" fill="#cfdaff">/page/*</tspan> as it does today.</text>
+
+                      <!-- RIGHT: cms-vercel sidecar -->
+                      <g filter="url(#sc-shadow)">
+                        <rect x="560" y="206" width="280" height="170" rx="12" fill="url(#sc-grad-shape)" stroke="rgba(91,139,255,0.45)"/>
+                      </g>
+                      <g transform="translate(580, 226)">
+                        <rect x="0" y="0" width="60" height="18" rx="9" fill="rgba(91,139,255,0.18)" stroke="rgba(91,139,255,0.4)"/>
+                        <text x="30" y="13" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#cfdaff" letter-spacing="0.05em">NEW</text>
+                      </g>
+                      <text x="580" y="276" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#e6edf3">cms-vercel sidecar</text>
+                      <text x="580" y="294" font-family="Inter,sans-serif" font-size="11" fill="#7d8694">Node 20 · NSSM service</text>
+                      <line x1="580" y1="310" x2="820" y2="310" stroke="#2a3140"/>
+                      <text x="580" y="332" font-family="Inter,sans-serif" font-size="11.5" fill="#c0c9d6">@casemaster/api-vercel JSON</text>
+                      <text x="580" y="350" font-family="Inter,sans-serif" font-size="11.5" fill="#c0c9d6">+ static SPA at <tspan font-family="ui-monospace,monospace" fill="#cfdaff">/admin/*</tspan></text>
+
+                      <!-- shared cookie / session link between the two boxes -->
+                      <line x1="360" y1="290" x2="560" y2="290" stroke="#5dac7a" stroke-width="1.4" stroke-dasharray="4 4"/>
+                      <g transform="translate(412, 280)">
+                        <rect x="0" y="0" width="96" height="20" rx="10" fill="rgba(74,222,128,0.10)" stroke="rgba(74,222,128,0.4)"/>
+                        <text x="48" y="14" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#9ddfb1" letter-spacing="0.05em">cms_session</text>
+                      </g>
+
+                      <!-- arrows down to postgres -->
+                      <line x1="220" y1="376" x2="380" y2="438" stroke="#5d6776" stroke-width="1.5" marker-end="url(#sc-arrow-mute)"/>
+                      <line x1="700" y1="376" x2="540" y2="438" stroke="#5d6776" stroke-width="1.5" marker-end="url(#sc-arrow-mute)"/>
+
+                      <!-- POSTGRES -->
+                      <g filter="url(#sc-shadow)">
+                        <rect x="290" y="440" width="340" height="64" rx="11" fill="url(#sc-grad-pg)" stroke="#2c5742"/>
+                      </g>
+                      <text x="460" y="466" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#9ddfb1">Postgres (shared)</text>
+                      <text x="460" y="486" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#5dac7a">BO tables  ·  cms_session  ·  LISTEN/NOTIFY</text>
+
+                      <!-- legend -->
+                      <g transform="translate(80, 522)" font-family="Inter,sans-serif" font-size="10.5" fill="#7d8694">
+                        <line x1="0" y1="-4" x2="22" y2="-4" stroke="#5b8bff" stroke-width="1.8"/>
+                        <text x="28" y="0">request</text>
+                        <line x1="100" y1="-4" x2="122" y2="-4" stroke="#5dac7a" stroke-width="1.4" stroke-dasharray="4 4"/>
+                        <text x="128" y="0">shared cookie / session</text>
+                        <line x1="280" y1="-4" x2="302" y2="-4" stroke="#5d6776" stroke-width="1.4"/>
+                        <text x="308" y="0">SQL / event</text>
+                      </g>
+                    </svg>
+                    <p class="caption">One hostname. The <code>.exe</code> doesn't change; the sidecar adds JSON + SPA. Both share the same Postgres and the same <code>cms_session</code> cookie, so users sign in once.</p>
+                </div>
+            `>,
+
+            step1: <@page/html `
+                <h2>1. Locate the shared resources</h2>
+                <p>You need three things accessible from wherever you'll run cms-vercel:</p>
+                <table>
+                  <thead><tr><th>Resource</th><th>How</th></tr></thead>
+                  <tbody>
+                    <tr><td><code>app/</code> folder of <code>.cms</code> files</td><td>NFS / SMB share, git checkout, or rsync mirror</td></tr>
+                    <tr><td>Postgres database</td><td>Same connection string the <code>.exe</code> uses</td></tr>
+                    <tr><td>Network reachability</td><td>Sidecar must reach Postgres; IIS/clients must reach the sidecar</td></tr>
+                  </tbody>
+                </table>
+            `>,
+
+            step2: <@page/html `
+                <h2>2. Run the sidecar</h2>
+                <pre><code>git clone https://github.com/LadFoxTom/Casemaster-Vercel sidecar
+cd sidecar
+npm install
+export DATABASE_URL='postgres://user:pw@host/db'
+export CMS_APP_DIR='/path/to/your/casemaster-runtime'
+
+# Standard cms-vercel handler at /page/* — useful for pages where the .NET
+# runtime can't serve, but you can also disable HTML if you only want JSON.
+# Plus the JSON adapter at /api/v1/*:
+npm install @casemaster/api-vercel
+# api/v1/[...].ts:
+#   import { createJsonHandler } from '@casemaster/api-vercel';
+#   export default createJsonHandler({ appDir: process.env.CMS_APP_DIR });
+
+npx vercel dev   # or run as a Windows service via NSSM</code></pre>
+                <p>Promote it to a Windows service with <a href="https://nssm.cc/" target="_blank">NSSM</a>:</p>
+                <pre><code>nssm install cms-admin-sidecar "C:\\Program Files\\nodejs\\node.exe" "C:\\inetpub\\cms-admin\\sidecar\\server.mjs"
+nssm set cms-admin-sidecar AppEnvironmentExtra DATABASE_URL=&lt;dsn&gt; CMS_APP_DIR=C:\\path\\to\\your\\casemaster-runtime PORT=5174
+nssm start cms-admin-sidecar</code></pre>
+            `>,
+
+            step3: <@page/html `
+                <h2>3. Host the SPA</h2>
+                <p>The SPA is plain static files. Pick whichever host fits:</p>
+                <ul>
+                    <li><strong>Vercel / Netlify / Cloudflare Pages</strong> — easiest, no Windows changes.</li>
+                    <li><strong>IIS as a virtual directory</strong> — same hostname as <code>CaseMaster.Web.exe</code>;
+                        see <a href="/page/iis">the IIS guide</a> for the URL Rewrite recipe.</li>
+                    <li><strong>S3 + CloudFront</strong> — if you front everything with a CDN already.</li>
+                </ul>
+                <pre><code>cd packages/admin
+npm install &amp;&amp; npm run build
+# packages/admin/dist/ → upload to your static host</code></pre>
+            `>,
+
+            step4: <@page/html `
+                <h2>4. Wire shared sessions</h2>
+                <p>Both runtimes default to the cookie name <code>cmsv_sid</code> and the
+                <code>cms_session</code> table. A user logged in via <code>CaseMaster.Web.exe</code> stays
+                logged in when they hit the SPA. Verify:</p>
+                <pre><code>curl -b "cmsv_sid=&lt;your-session-id&gt;" https://your-host/api/v1/session/me
+# →  { "authenticated": true, "user": { ... }, "perms": [...], "csrf": "..." }</code></pre>
+            `>,
+
+            step5: <@page/html `
+                <h2>5. Live updates between both runtimes</h2>
+                <p>Once the sidecar is running, install Postgres triggers so writes from
+                <em>either</em> runtime push to connected SPAs:</p>
+                <pre><code>npx cms-admin-emit-live-sql --app /path/to/your/casemaster-runtime | psql $DATABASE_URL</code></pre>
+                <p>An operator processing receipts in the classic <code>.exe</code> UI now causes the SPA's
+                inventory grid to refresh in real time, and vice versa. One source of truth, two UIs.</p>
+            `>,
+
+            cutover: <@page/html `
+                <h2>Cutting routes over, one at a time</h2>
+                <p>You don't have to migrate everything at once. The sidecar runs alongside; for any given
+                page you choose whether classic HTML or the SPA is the recommended path. Pin the SPA's
+                deep links from your sidebar; or do the reverse — show the classic page in an iframe inside
+                the SPA when a route hasn't been migrated yet. <code>.cms</code> source untouched throughout.</p>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource

@@ -1,0 +1,12 @@
+{
+  "name": "create-cms-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scaffold a fresh cms-admin project. Run with: npm create cms-admin@latest my-admin",
+  "bin": {
+    "create-cms-admin": "./bin/cli.mjs"
+  },
+  "files": ["bin", "template"],
+  "engines": { "node": ">=20" }
+}

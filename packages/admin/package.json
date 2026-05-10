@@ -1,0 +1,40 @@
+{
+  "name": "@casemaster/admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime-agnostic React admin SPA for CaseMaster apps.",
+  "main": "src/index.tsx",
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@casemaster/api-spec":          "*",
+    "@hookform/resolvers":           "^3.9.0",
+    "@tanstack/react-query":         "^5.50.0",
+    "@tanstack/react-table":         "^8.20.0",
+    "@tanstack/react-virtual":       "^3.10.0",
+    "cmdk":                          "^1.0.0",
+    "react":                         "^18.3.0",
+    "react-dom":                     "^18.3.0",
+    "react-grid-layout":             "^1.5.0",
+    "react-hook-form":               "^7.52.0",
+    "react-resizable":               "^3.0.5",
+    "react-router-dom":              "^6.25.0",
+    "sonner":                        "^1.5.0",
+    "zod":                           "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/react":                  "^18.3.0",
+    "@types/react-dom":              "^18.3.0",
+    "@types/react-grid-layout":      "^1.3.0",
+    "@vitejs/plugin-react":          "^4.3.0",
+    "autoprefixer":                  "^10.4.0",
+    "postcss":                       "^8.4.0",
+    "tailwindcss":                   "^3.4.0",
+    "typescript":                    "^5.4.0",
+    "vite":                          "^5.3.0"
+  }
+}

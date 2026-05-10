@@ -1,0 +1,82 @@
+// Classic CaseMaster-shaped inventory dashboard. Hand-written
+// Bootstrap-4 markup inside <@page/html> qualifiers so the "before"
+// iframe on / looks like a real 2018-class admin page rather than the
+// modern SPA. No DB needed — values are inlined via resolveTemplate.
+
+inherits 'base'
+
+function main()
+    set('cnt_items',     50)
+    set('cnt_inventory', 132)
+    set('cnt_asns',      18)
+    set('cnt_receipts',  12)
+    set('cnt_orders',    30)
+    set('cnt_holds',     7)
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html `
+                <div class="bg-light border-right p-3" style="min-height:100%;width:200px">
+                    <h6 class="text-muted text-uppercase small mb-3">Casemaster · WMS</h6>
+                    <ul class="nav flex-column">
+                        <li class="nav-item"><a class="nav-link active" href="#">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Inbound</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Stock</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Outbound</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Counts</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Quality</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Setup</a></li>
+                    </ul>
+                </div>
+            `>,
+            hero: <@page/html `
+                <div class="jumbotron jumbotron-fluid bg-light p-4 mb-3 rounded">
+                    <div class="container">
+                        <h1 class="display-5">Casemaster &middot; WMS</h1>
+                        <p class="lead text-muted mb-0">Operational dashboard. Pick a workflow below — receiving, stock, outbound and reverse flows are first-class.</p>
+                    </div>
+                </div>
+            `>,
+            kpi: <@page/html resolveTemplate(`
+                <div class="row mb-3">
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_items]}}</div><small class="text-muted">Items</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_inventory]}}</div><small class="text-muted">Inventory rows</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_asns]}}</div><small class="text-muted">ASNs pending</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_receipts]}}</div><small class="text-muted">Receipts</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card border-success"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_orders]}}</div><small class="text-muted">Open orders</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card border-warning"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_holds]}}</div><small class="text-muted">Holds</small></div></div></div>
+                </div>
+            `)>,
+            inv_h: <@page/html `<h5 class="mt-3">Recent inventory</h5>`>,
+            inv_table: <@page/html `
+                <div class="table-responsive">
+                <table class="table table-sm table-striped table-bordered table-hover">
+                    <thead class="bg-primary text-light">
+                        <tr><th>#</th><th>SKU</th><th>Location</th><th class="text-right">On hand</th><th class="text-right">Reserved</th><th>Status</th><th>Lot</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td><code>SKU-1001</code></td><td>A-01-0</td><td class="text-right">145</td><td class="text-right">0</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-001</td></tr>
+                        <tr><td>2</td><td><code>SKU-1002</code></td><td>A-01-1</td><td class="text-right">87</td><td class="text-right">12</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-002</td></tr>
+                        <tr><td>3</td><td><code>SKU-1003</code></td><td>A-02-0</td><td class="text-right">220</td><td class="text-right">30</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-003</td></tr>
+                        <tr><td>4</td><td><code>SKU-1004</code></td><td>A-02-2</td><td class="text-right">4</td><td class="text-right">0</td><td><span class="badge badge-warning">QUARANTINE</span></td><td>LOT-2026-004</td></tr>
+                        <tr><td>5</td><td><code>SKU-1005</code></td><td>B-01-0</td><td class="text-right">61</td><td class="text-right">8</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-005</td></tr>
+                        <tr><td>6</td><td><code>SKU-1006</code></td><td>B-01-1</td><td class="text-right">412</td><td class="text-right">0</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-006</td></tr>
+                        <tr><td>7</td><td><code>SKU-1007</code></td><td>B-02-0</td><td class="text-right">18</td><td class="text-right">0</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-007</td></tr>
+                        <tr><td>8</td><td><code>SKU-1008</code></td><td>B-02-1</td><td class="text-right">199</td><td class="text-right">24</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-008</td></tr>
+                        <tr><td>9</td><td><code>SKU-1009</code></td><td>C-01-0</td><td class="text-right">73</td><td class="text-right">5</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-009</td></tr>
+                        <tr><td>10</td><td><code>SKU-1010</code></td><td>C-01-1</td><td class="text-right">142</td><td class="text-right">16</td><td><span class="badge badge-success">AVAILABLE</span></td><td>LOT-2026-010</td></tr>
+                    </tbody>
+                </table>
+                </div>
+                <p class="text-muted small">Showing 10 of 132 rows · paginated via classic page links · double-click a row to edit (legacy widget).</p>
+            `>,
+            footer: <@page/html resolveTemplate(`
+                <hr>
+                <p class="text-muted small">Rendered by cms-vercel · {{now()}} · classic Bootstrap 4 + jQuery layout · this is what your users see today.</p>
+            `)>
+        >
+    >
+end-resource

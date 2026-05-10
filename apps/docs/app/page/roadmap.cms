@@ -1,0 +1,55 @@
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:   <@page/html `<div class="cms-layout">`>,
+            side:   <@page/html script.call('_layout:sidebar', 'road')>,
+            body_o: <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>Roadmap status</h1>
+                <p class="lead">Where the package is in May 2026.</p>
+            `>,
+
+            phases: <@page/html `
+                <h2>Phases</h2>
+                <table>
+                    <thead><tr><th>Phase</th><th>Scope</th><th>Status</th></tr></thead>
+                    <tbody>
+                        <tr><td>0</td><td>Walking skeleton + runnable demo</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>1</td><td>JSON API parity (read paths) + OpenAPI + tests</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>2</td><td>SPA shell + Cmd-K + DataTable + theme/density</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>3</td><td>Optimistic mutations + react-hook-form + bo.persist routing</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>4</td><td>Page actions + master-detail + Dashboard composer</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>5</td><td>Postgres LISTEN/NOTIFY + Copilot (BYO key)</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>6</td><td>axe-core CI + Playwright E2E + create-CLI + docs</td><td><span class="tag ok">done</span></td></tr>
+                        <tr><td>7</td><td>C# in-process adapter (api-dotnet)</td><td><span class="tag todo">scaffold only</span></td></tr>
+                    </tbody>
+                </table>
+            `>,
+
+            ship: <@page/html `
+                <h2>What's shippable today</h2>
+                <ul>
+                    <li>cms-vercel deployments — production-ready.</li>
+                    <li>CaseMaster.Web.exe + sidecar — production-ready.</li>
+                    <li>IIS-fronted hybrid — production-ready (see <a href="/page/iis">IIS guide</a>).</li>
+                </ul>
+                <h2>What's not shippable today</h2>
+                <ul>
+                    <li>In-process .NET plugin (Shape 3) — controllers and interface are in place; the
+                    <code>CaseMasterDataProvider.cs</code> implementations need filling against the actual
+                    Casemaster.dll API surface. ~2 months of focused C# work. <strong>Only required</strong>
+                    for sites that genuinely cannot run any sidecar process.</li>
+                </ul>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource

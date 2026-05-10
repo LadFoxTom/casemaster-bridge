@@ -1,0 +1,119 @@
+// Landing page. Hosts a live iframe of the SPA demo against the
+// in-memory WMS seed served by this same docs server.
+
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap: <@page/html `<div class="cms-layout">`>,
+            side: <@page/html script.call('_layout:sidebar', 'home')>,
+            body_open: <@page/html `<div class="cms-content">`>,
+
+            hero: <@page/html `
+                <div class="hero">
+                    <div class="eyebrow">@casemaster/admin · v0.1</div>
+                    <h1>A 2026-class admin SPA for any CaseMaster app, on any runtime.</h1>
+                    <p class="lead">
+                        Schema-driven React UI. Cmd-K command palette. Virtualized data grids. Optimistic
+                        mutations. Postgres-backed live updates. The same <code>.cms</code> source files,
+                        unchanged on disk.
+                    </p>
+                    <div class="cta">
+                        <a class="btn btn-primary" href="/page/cms-vercel">Install on cms-vercel →</a>
+                        <a class="btn btn-outline-secondary" href="/page/dotnet">Use with CaseMaster.Web.exe →</a>
+                    </div>
+                    <div class="tag-row" style="margin-top:1.5rem">
+                        <span class="tag ok">cms-vercel ready</span>
+                        <span class="tag ok">.NET sidecar ready</span>
+                        <span class="tag todo">.NET in-process plugin (scaffold)</span>
+                        <span class="tag ok">Postgres LISTEN/NOTIFY</span>
+                        <span class="tag ok">WCAG 2.2 AA</span>
+                    </div>
+                </div>
+            `>,
+
+            demo: <@page/html `
+                <div class="demo-frame">
+                    <div class="chrome">
+                        <div class="dots"><span></span><span></span><span></span></div>
+                        <div class="url">https://your-app.vercel.app/admin/#/wms/inventory</div>
+                        <div class="badge-live">● Live</div>
+                    </div>
+                    <iframe src="/admin/#/wms/inventory" loading="lazy" title="Live WMS demo"></iframe>
+                    <div class="frame-footer">
+                        <span>Real <code>@casemaster/admin</code> SPA against an in-memory WMS seed (10 BOs, 130+ rows, working page actions).</span>
+                        <a href="/admin/" target="_blank">Open in new tab ↗</a>
+                    </div>
+                </div>
+            `>,
+
+            try: <@page/html `
+                <h2>Try it without leaving this page</h2>
+                <p>
+                    The frame above is the actual <code>@casemaster/admin</code> React SPA — same code that
+                    ships in your deployment. Press <kbd>⌘</kbd><kbd>K</kbd> inside it for the command palette,
+                    <kbd>?</kbd> for shortcuts, <kbd>g</kbd> <kbd>i</kbd> to jump to inventory. The data is
+                    in-memory so edits are instantly visible.
+                </p>
+            `>,
+
+            cards: <@page/html `
+                <h2>Where to next</h2>
+                <div class="cards">
+                    <a class="card-doc" href="/page/cms-vercel">
+                        <div class="icon">▲</div>
+                        <h3>cms-vercel project</h3>
+                        <p>Greenfield path. Drop the JSON adapter into <code>api/v1</code>, build the SPA, deploy. One Vercel function.</p>
+                    </a>
+                    <a class="card-doc" href="/page/dotnet">
+                        <div class="icon">⚙</div>
+                        <h3>CaseMaster.Web.exe</h3>
+                        <p>Run cms-vercel as a JSON sidecar against the same Postgres. Your <code>.exe</code> stays untouched.</p>
+                    </a>
+                    <a class="card-doc" href="/page/iis">
+                        <div class="icon">▢</div>
+                        <h3>IIS deployment</h3>
+                        <p>Hostname-shared topology with URL Rewrite + ARR proxying <code>/api/v1/*</code> to a Node sidecar.</p>
+                    </a>
+                    <a class="card-doc" href="/page/architecture">
+                        <div class="icon">◧</div>
+                        <h3>Architecture</h3>
+                        <p>Request lifecycle, page-action flow, the runtime-agnostic JSON contract, security model.</p>
+                    </a>
+                    <a class="card-doc" href="/page/api">
+                        <div class="icon">⇄</div>
+                        <h3>JSON API</h3>
+                        <p>Every <code>/api/v1/*</code> route, request shape, and response shape. Backed by zod.</p>
+                    </a>
+                    <a class="card-doc" href="/page/why">
+                        <div class="icon">★</div>
+                        <h3>Why this exists</h3>
+                        <p>Twelve research takeaways from 2026 admin-UI patterns, mapped to features.</p>
+                    </a>
+                </div>
+            `>,
+
+            quick: <@page/html resolveTemplate(`
+                <h2>30-second quickstart</h2>
+                <pre><code># clone &amp; vendor cms-vercel (it's pre-publish on npm)
+git clone &lt;this repo&gt; cms-admin-docs
+cd cms-admin-docs
+npm install                  # vendors cms-vercel automatically
+
+# local preview
+node bin/dev-server.mjs      # http://localhost:4040
+
+# deploy
+vercel --prod</code></pre>
+                <p class="text-muted">This page itself is rendered by the cms-vercel runtime — same engine documented here. Page rendered at <code>{{now()}}</code>.</p>
+            `)>,
+
+            body_close: <@page/html `</div></div>`>
+        >
+    >
+end-resource

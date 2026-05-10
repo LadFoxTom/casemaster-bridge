@@ -1,0 +1,150 @@
+/* ============================================================================
+   cms-admin design tokens — dark by default, light via [data-theme="light"].
+   Same token names as the cms-ui CSS overlay (Proposal A) so themes stay
+   coherent across classic HTML and the SPA.
+   ============================================================================ */
+
+:root {
+  --cms-bg:        15 17 22;
+  --cms-surface:   22 26 33;
+  --cms-elev:      30 36 46;
+  --cms-border:    44 52 65;
+  --cms-fg:        233 239 247;
+  --cms-muted:     148 163 184;
+  --cms-accent:    96 165 250;
+  --cms-accent-fg: 15 23 42;
+  --cms-ok:        74 222 128;
+  --cms-warn:      251 191 36;
+  --cms-danger:    248 113 113;
+  --cms-radius:    8px;
+  --cms-row-h:     40px;
+  --cms-density:   1;   /* 1 = comfortable, 0.85 = cozy, 0.7 = compact */
+}
+
+html[data-theme='light'] {
+  --cms-bg:        252 253 255;
+  --cms-surface:   255 255 255;
+  --cms-elev:      245 247 251;
+  --cms-border:    222 228 238;
+  --cms-fg:        15 23 42;
+  --cms-muted:     100 116 139;
+  --cms-accent:    37 99 235;
+  --cms-accent-fg: 248 250 252;
+  --cms-ok:        21 128 61;
+  --cms-warn:      161 98 7;
+  --cms-danger:    185 28 28;
+}
+
+html, body, #root { height: 100%; }
+body { -webkit-font-smoothing: antialiased; }
+
+/* Density-aware row height — used by the data table. */
+:root[data-density='compact']     { --cms-row-h: 28px; --cms-density: 0.7; }
+:root[data-density='cozy']        { --cms-row-h: 34px; --cms-density: 0.85; }
+:root[data-density='comfortable'] { --cms-row-h: 44px; --cms-density: 1; }
+
+/* Focus ring — WCAG 2.2 friendly, always visible on keyboard nav. */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid rgb(var(--cms-accent));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduced motion — respect user preference for vestibular safety. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Scrollbar polish (WebKit only). */
+::-webkit-scrollbar          { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb    { background: rgb(var(--cms-border)); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--cms-muted)); }
+::-webkit-scrollbar-track    { background: transparent; }
+
+/* Status pills. */
+.pill { display:inline-flex; align-items:center; gap:.25rem; padding:.125rem .5rem; border-radius:9999px; font-size:.7rem; font-weight:500; line-height:1.4; border:1px solid transparent; }
+.pill-ok    { background: rgb(var(--cms-ok) / .15);     color: rgb(var(--cms-ok));     border-color: rgb(var(--cms-ok) / .35); }
+.pill-warn  { background: rgb(var(--cms-warn) / .15);   color: rgb(var(--cms-warn));   border-color: rgb(var(--cms-warn) / .35); }
+.pill-bad   { background: rgb(var(--cms-danger) / .15); color: rgb(var(--cms-danger)); border-color: rgb(var(--cms-danger) / .35); }
+.pill-info  { background: rgb(var(--cms-accent) / .15); color: rgb(var(--cms-accent)); border-color: rgb(var(--cms-accent) / .35); }
+.pill-muted { background: rgb(var(--cms-elev));         color: rgb(var(--cms-muted));  border-color: rgb(var(--cms-border)); }
+
+/* KBD shortcut hint. */
+kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.25rem; padding: 0 .35rem; height: 1.25rem;
+  border: 1px solid rgb(var(--cms-border));
+  background: rgb(var(--cms-elev));
+  color: rgb(var(--cms-muted));
+  border-radius: 4px;
+  font-size: .65rem; font-family: ui-monospace, monospace;
+  box-shadow: inset 0 -1px 0 0 rgb(var(--cms-border));
+}
+
+/* Command palette overlay. */
+.cmd-backdrop {
+  position: fixed; inset: 0; background: rgb(0 0 0 / 0.4); backdrop-filter: blur(4px);
+  z-index: 50;
+  animation: fadeIn .12s ease-out;
+}
+.cmd-shell {
+  position: fixed; left: 50%; top: 12vh; transform: translateX(-50%);
+  width: min(640px, 92vw);
+  background: rgb(var(--cms-surface));
+  border: 1px solid rgb(var(--cms-border));
+  border-radius: 12px;
+  box-shadow: 0 24px 60px -12px rgb(0 0 0 / 0.5);
+  overflow: hidden;
+  z-index: 51;
+  animation: scaleIn .15s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: translateX(-50%) translateY(-6px) scale(.98); opacity:0; } to { transform: translateX(-50%) translateY(0) scale(1); opacity:1; } }
+
+/* DataTable. */
+.dt {
+  display: grid; grid-template-rows: auto auto 1fr auto;
+  height: 100%;
+  background: rgb(var(--cms-surface));
+  border: 1px solid rgb(var(--cms-border));
+  border-radius: var(--cms-radius);
+  overflow: hidden;
+}
+.dt-toolbar { display:flex; gap:.5rem; align-items:center; padding:.5rem .75rem; border-bottom:1px solid rgb(var(--cms-border)); background: rgb(var(--cms-elev) / .5); }
+.dt-search { background: rgb(var(--cms-bg)); border:1px solid rgb(var(--cms-border)); border-radius:6px; padding:.35rem .6rem .35rem 2rem; font-size:.8rem; color: rgb(var(--cms-fg)); width: 240px; }
+.dt-head, .dt-row { display: grid; align-items: center; }
+.dt-head { background: rgb(var(--cms-elev)); border-bottom: 1px solid rgb(var(--cms-border)); position: sticky; top:0; z-index: 1; }
+.dt-head > div, .dt-row > div { padding: 0 .75rem; height: var(--cms-row-h); display:flex; align-items:center; min-width:0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-head > div { font-size: .7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color: rgb(var(--cms-muted)); cursor: pointer; user-select:none; gap:.25rem; }
+.dt-row { border-bottom: 1px solid rgb(var(--cms-border) / .5); cursor: pointer; transition: background .08s ease-out; }
+.dt-row:hover { background: rgb(var(--cms-elev) / .5); }
+.dt-row.is-selected { background: rgb(var(--cms-accent) / .1); }
+.dt-empty { padding: 3rem; text-align: center; color: rgb(var(--cms-muted)); }
+.dt-footer { display:flex; align-items:center; justify-content:space-between; padding:.5rem .75rem; border-top:1px solid rgb(var(--cms-border)); background: rgb(var(--cms-elev) / .5); font-size:.75rem; color: rgb(var(--cms-muted)); }
+
+/* Toast (sonner-ish). */
+.toast-stack { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: .5rem; z-index: 60; pointer-events: none; }
+.toast { pointer-events: auto; min-width: 280px; max-width: 380px; padding: .75rem 1rem; background: rgb(var(--cms-surface)); border: 1px solid rgb(var(--cms-border)); border-radius: 8px; box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.4); animation: toastIn .18s ease-out; font-size: .85rem; }
+.toast.toast-ok    { border-color: rgb(var(--cms-ok) / .5); }
+.toast.toast-bad   { border-color: rgb(var(--cms-danger) / .5); }
+@keyframes toastIn { from { transform: translateY(8px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+/* Inputs. */
+.btn { display:inline-flex; align-items:center; gap:.4rem; height: 2rem; padding: 0 .75rem; border-radius:6px; font-size:.8rem; font-weight:500; transition: all .1s ease-out; border: 1px solid transparent; white-space: nowrap; }
+.btn-primary { background: rgb(var(--cms-accent)); color: rgb(var(--cms-accent-fg)); }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost   { background: transparent; color: rgb(var(--cms-fg)); border-color: rgb(var(--cms-border)); }
+.btn-ghost:hover { background: rgb(var(--cms-elev)); }
+.btn-icon { padding: 0 .5rem; }
+input.field, select.field, textarea.field {
+  background: rgb(var(--cms-bg)); border: 1px solid rgb(var(--cms-border));
+  border-radius: 6px; padding: .4rem .6rem; font-size: .85rem; color: rgb(var(--cms-fg));
+  width: 100%;
+}
+input.field:focus, select.field:focus, textarea.field:focus { border-color: rgb(var(--cms-accent)); }
+label.field-label { display:block; font-size: .75rem; font-weight: 500; color: rgb(var(--cms-muted)); margin-bottom: .25rem; }
+
+/* Skeleton loader. */
+.skel { background: linear-gradient(90deg, rgb(var(--cms-elev)) 0%, rgb(var(--cms-border)) 50%, rgb(var(--cms-elev)) 100%); background-size: 200% 100%; animation: skel 1.2s ease-in-out infinite; border-radius: 4px; }
+@keyframes skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }

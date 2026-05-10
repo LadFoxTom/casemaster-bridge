@@ -1,0 +1,25 @@
+{
+  "name": "casemaster-cms-admin-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Documentation site for @casemaster/admin — itself a cms-vercel project.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "//note":      "cms-vercel is pre-publish on npm. The postinstall hook vendors it from GitHub on first install.",
+    "postinstall": "node bin/install-runtime.mjs",
+    "dev":         "vercel dev",
+    "deploy":      "vercel --prod",
+    "build":       "echo nothing to build — pages are .cms"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.0",
+    "vercel":       "^39.0.0"
+  }
+}

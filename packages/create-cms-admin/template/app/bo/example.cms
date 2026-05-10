@@ -1,0 +1,19 @@
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Example',
+        table: 'example',
+        primaryKey: 'id',
+        attributes: <
+            id:   <@bo/attribute label: 'Id',   column: 'id',   dataType: dataType.Long,   optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 200, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list:  < 'id', 'name' >
+        >
+    >
+end-resource

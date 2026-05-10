@@ -1,0 +1,13 @@
+{
+  "name": "wms-vercel-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runnable Casemaster-WMS demo: classic HTML and the cms-admin SPA served from one cms-vercel project",
+  "scripts": {
+    "demo":       "node server.mjs",
+    "demo:real":  "vercel dev",
+    "deploy":     "vercel --prod"
+  },
+  "dependencies": {}
+}

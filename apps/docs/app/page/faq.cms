@@ -1,0 +1,134 @@
+inherits 'base'
+
+function main()
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            wrap:   <@page/html `<div class="cms-layout">`>,
+            side:   <@page/html script.call('_layout:sidebar', 'faq')>,
+            body_o: <@page/html `<div class="cms-content">`>,
+
+            head: <@page/html `
+                <h1>FAQ</h1>
+                <p class="lead">Quick answers to the questions that come up before the first commit.</p>
+            `>,
+
+            faq: <@page/html `
+                <div class="faq">
+                    <details>
+                        <summary>Does the SPA replace classic HTML pages?<span class="q-num">01</span></summary>
+                        <div class="answer">
+                            <p>No. Both serve forever and you choose per route. The SPA is additive — adoption
+                            is incremental. A page that's stable and works in classic HTML can stay there
+                            indefinitely; only pages where the SPA's UX wins (data grids, dashboards, master-detail
+                            workflows) need to migrate.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Do I need to rewrite my <code>.cms</code> files?<span class="q-num">02</span></summary>
+                        <div class="answer">
+                            <p>No. The package reads your existing <code>.cms</code> source and exposes it as
+                            JSON. Page actions like <code>postReceive</code> run unchanged through
+                            <code>/api/v1/page/:path/:fn</code>; the SPA composes its UI on top of your existing
+                            BO declarations, attribute groups, and page logic.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>I'm on CaseMaster.Web.exe and I can't add a Node process. What now?<span class="q-num">03</span></summary>
+                        <div class="answer">
+                            <p>You're the case the C# adapter (<code>@casemaster/api-dotnet</code>) is for.
+                            Today it's a scaffold — interfaces, controllers, and registration are in place;
+                            the data-provider methods still throw <code>NotImplementedException</code>.
+                            Estimated ~2 months of focused C# work to finish.</p>
+                            <p>For everyone else — including IIS-hosted sites and locked-down Windows boxes
+                            that <em>can</em> run one extra Node process — the sidecar shape is production-ready
+                            today and zero new C# code is required.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>How does authentication work?<span class="q-num">04</span></summary>
+                        <div class="answer">
+                            <p>Cookies, no JWT. Both runtimes share the <code>cms_session</code> table. The SPA
+                            carries the same <code>cmsv_sid</code> cookie the classic UI sets. A user signed in
+                            via the <code>.exe</code>'s login page stays signed in when they hit
+                            <code>/admin/</code>, and vice versa.</p>
+                            <p>State-changing requests (<code>POST</code>, <code>PUT</code>) carry an
+                            <code>X-CSRF-Token</code> header from the value in
+                            <code>/api/v1/session/me</code>.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>How does live reload work?<span class="q-num">05</span></summary>
+                        <div class="answer">
+                            <p>Postgres <code>LISTEN/NOTIFY</code>. One CLI installs triggers
+                            (<code>npx cms-admin-emit-live-sql --app ./app | psql</code>); the JSON adapter
+                            holds a dedicated <code>pg</code> connection that <code>LISTEN</code>s on
+                            <code>cms_bo:&lt;name&gt;</code> channels and pushes events through SSE to subscribed SPAs.</p>
+                            <p>An operator processing receipts in the <code>.exe</code> UI causes the SPA's
+                            inventory grid to refresh in real time, and vice versa. One source of truth, two UIs.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>What about Copilot? Is my data leaving my network?<span class="q-num">06</span></summary>
+                        <div class="answer">
+                            <p>Only if you choose to. Copilot is off by default. When you enable it you provide
+                            your own OpenAI/Anthropic API key, stored in <code>localStorage</code>; the key
+                            never leaves the browser. The offline keyword router works without any LLM at all,
+                            so basic navigation queries don't even hit the network.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>What's the bundle size?<span class="q-num">07</span></summary>
+                        <div class="answer">
+                            <p>Initial gzipped JS budget is 250 KB; CSS is 30 KB. Heavy chunks (Monaco for the
+                            SQL playground, Recharts, Copilot, react-grid-layout) lazy-load on first use, so
+                            warehouse-floor pages that don't need them stay light.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Where do I report issues?<span class="q-num">08</span></summary>
+                        <div class="answer">
+                            <p>GitHub Issues on this docs repo. The package source lives in a sibling repo;
+                            issues there are the right place for SPA-specific bugs.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>Can I deploy this without Vercel?<span class="q-num">09</span></summary>
+                        <div class="answer">
+                            <p>Yes. Vercel is just one host. The SPA is plain static files (host anywhere — IIS,
+                            S3, Cloudflare Pages, GitHub Pages). The JSON adapter is a Node 20+ process; run it
+                            on any platform that runs Node — including Windows as a service via NSSM, or in a
+                            container.</p>
+                            <p>Postgres is the only hard dependency.</p>
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>How does this compare to React-Admin / Refine / Retool?<span class="q-num">10</span></summary>
+                        <div class="answer">
+                            <p>React-Admin and Refine are general data-source-agnostic admin frameworks; they
+                            could in theory be wired against any JSON API. Retool is a closed-source low-code
+                            tool. <code>@casemaster/admin</code> is more opinionated — it knows about
+                            <code>.cms</code>'s BO model, attribute groups, page actions, and the
+                            <code>set('//act_*', …)</code> output convention — so you get a working CRUD UI for
+                            free without writing resource declarations.</p>
+                        </div>
+                    </details>
+                </div>
+            `>,
+
+            body_c: <@page/html `</div></div>`>
+        >
+    >
+end-resource
