@@ -4,10 +4,19 @@
   "private": true,
   "type": "module",
   "description": "Runnable Casemaster-WMS demo: classic HTML and the cms-admin SPA served from one cms-vercel project",
+  "engines": { "node": ">=20" },
   "scripts": {
-    "demo":       "node server.mjs",
-    "demo:real":  "vercel dev",
-    "deploy":     "vercel --prod"
+    "//note":      "cms-vercel is pre-publish on npm. The postinstall hook vendors it from GitHub on first install.",
+    "postinstall": "node bin/install-runtime.mjs",
+    "demo":        "node server.mjs",
+    "vercel-dev":  "vercel dev",
+    "deploy":      "vercel --prod"
   },
-  "dependencies": {}
+  "dependencies": {
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.0",
+    "vercel":       "^39.0.0"
+  }
 }
