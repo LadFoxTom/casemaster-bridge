@@ -14,15 +14,16 @@ let startupError: { message: string; stack?: string; phase: string; appDir?: str
 (async function bootstrap() {
   try {
     const here = (() => { try { return dirname(fileURLToPath(import.meta.url)); } catch { return process.cwd(); } })();
-    // Try every plausible location for the bundled .cms app/. Pick the
-    // first that actually exists; let cms-vercel use it via explicit
-    // appDir so its own candidate-list fallback can't pick a wrong path.
+    // On Vercel with a Root Directory set, cwd is the REPO root (/var/task)
+    // and the function source lives at /var/task/<root-dir>/api/. So app/
+    // is at ../app relative to the function, NOT at cwd/app. Try the
+    // import.meta.url-relative path first.
     const candidates = [
       process.env.CMS_APP_DIR,
-      join(process.cwd(), 'app'),
-      '/var/task/app',
-      resolve(here, '..', 'app'),
+      resolve(here, '..', 'app'),         // /var/task/<root-dir>/app on Vercel
       resolve(here, '..', '..', 'app'),
+      join(process.cwd(), 'app'),         // local dev fallback
+      '/var/task/app',
     ].filter(Boolean) as string[];
     const appDir = candidates.find((c) => existsSync(c)) ?? candidates[0];
     let createHandler: any;

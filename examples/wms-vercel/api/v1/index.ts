@@ -19,9 +19,23 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { join } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 // @ts-ignore — vendored SSE writer
 import { writeSseStream } from '../../_runtime/api-vercel.mjs';
+
+const here = (() => { try { return dirname(fileURLToPath(import.meta.url)); } catch { return process.cwd(); } })();
+function findAppDir() {
+  const candidates = [
+    process.env.CMS_APP_DIR,
+    resolve(here, '..', '..', 'app'),       // /var/task/<root-dir>/app on Vercel (api/v1/ is two up from app)
+    resolve(here, '..', 'app'),
+    join(process.cwd(), 'app'),             // local dev fallback
+    '/var/task/app',
+  ].filter(Boolean) as string[];
+  return candidates.find((c) => existsSync(c)) ?? candidates[0];
+}
 
 // ---------- bootstrap, runs once per warm Vercel instance ----------
 
@@ -31,7 +45,7 @@ async function boot() {
   if (bootP) return bootP;
   bootP = (async () => {
     const lib = await import('cms-vercel');
-    const appDir = process.env.CMS_APP_DIR ?? join(process.cwd(), 'app');
+    const appDir = findAppDir();
     const registry = lib.loadApp(appDir);
     let pool: any = null;
     if (process.env.DATABASE_URL) {
