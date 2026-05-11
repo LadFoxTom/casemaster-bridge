@@ -6,6 +6,9 @@
     "api/index.ts":    { "includeFiles": "app/**" },
     "api/v1/index.ts": { "includeFiles": "{app,_runtime}/**" }
   },
+  "redirects": [
+    { "source": "/", "destination": "/admin/", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/v1/:path*",      "destination": "/api/v1?_p=/api/v1/:path*" },
     { "source": "/page/:path*",        "destination": "/api?_p=/page/:path*" },
