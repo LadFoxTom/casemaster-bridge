@@ -208,21 +208,224 @@ function prettyTitle(s: string) {
   return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function deriveNavigation(pages: any[], bos: any[]) {
-  // Group pages by first segment under their root path.
-  const groups = new Map<string, any>();
-  for (const p of pages) {
-    const segs = p.path.split('/');
-    const head = segs.length > 1 ? segs[0] : '_';
-    if (!groups.has(head)) groups.set(head, { label: prettyTitle(head === '_' ? 'pages' : head), children: [] });
-    groups.get(head).children.push({ label: p.title, path: `/admin/${p.path}` });
+/**
+ * Curated workflow-shaped navigation. The full WMS has 164 BOs — flat-
+ * listing them all is unusable, so we group them by domain (matching
+ * the workflow centers in the original WMS dashboard) and put the long
+ * tail in a collapsed "Catalog" group at the bottom. Cmd-K covers
+ * everything else.
+ */
+function deriveNavigation(_pages: any[], bos: any[]) {
+  const have = new Set<string>(bos.map((b: any) => b.name));
+  const seen = new Set<string>();
+
+  // Each leaf is [bo-name, override-label?, override-icon?].
+  // The icon strings match the SPA's icon set.
+  const GROUPS: Array<{ label: string; icon?: string; items: Array<[string, string?, string?]> }> = [
+    {
+      label: 'Inbound', icon: 'package',
+      items: [
+        ['wms/purchase_order',   'Purchase orders'],
+        ['wms/purchase_order_line', 'PO lines'],
+        ['wms/asn',              'ASNs'],
+        ['wms/asn_line',         'ASN lines'],
+        ['wms/receipt',          'Receipts'],
+        ['wms/receipt_line',     'Receipt lines'],
+        ['wms/receipt_discrepancy', 'Discrepancies'],
+        ['wms/putaway_task',     'Putaway tasks'],
+        ['wms/putaway_rule',     'Putaway rules'],
+        ['wms/cross_dock_link',  'Cross-dock links'],
+        ['wms/appointment',      'Appointments'],
+      ],
+    },
+    {
+      label: 'Stock', icon: 'boxes',
+      items: [
+        ['wms/inventory',           'Inventory'],
+        ['wms/inventory_hold',      'Holds'],
+        ['wms/inventory_reservation', 'Reservations'],
+        ['wms/inventory_adjustment','Adjustments'],
+        ['wms/inventory_journal',   'Journal'],
+        ['wms/license_plate',       'License plates (LPNs)'],
+        ['wms/license_plate_event', 'LPN events'],
+        ['wms/lot',                 'Lots'],
+        ['wms/lot_certificate',     'Lot certificates'],
+        ['wms/serial_unit',         'Serial units'],
+      ],
+    },
+    {
+      label: 'Items & Locations', icon: 'tag',
+      items: [
+        ['wms/item',               'Items'],
+        ['wms/item_barcode',       'Barcodes'],
+        ['wms/item_uom',           'UoMs'],
+        ['wms/item_category',      'Categories'],
+        ['wms/item_kit_component', 'Kit components'],
+        ['wms/item_supplier',      'Item suppliers'],
+        ['wms/item_velocity',      'Velocity'],
+        ['wms/location',           'Locations'],
+        ['wms/aisle',              'Aisles'],
+        ['wms/zone',               'Zones'],
+        ['wms/slot_recommendation','Slot recommendations'],
+      ],
+    },
+    {
+      label: 'Outbound', icon: 'truck',
+      items: [
+        ['wms/sales_order',         'Sales orders'],
+        ['wms/sales_order_line',    'SO lines'],
+        ['wms/allocation',          'Allocations'],
+        ['wms/allocation_strategy', 'Allocation strategies'],
+        ['wms/wave',                'Waves'],
+        ['wms/wave_order',          'Wave orders'],
+        ['wms/wave_template',       'Wave templates'],
+        ['wms/pick_task',           'Pick tasks'],
+        ['wms/pick_cart',           'Pick carts'],
+        ['wms/pick_exception',      'Pick exceptions'],
+        ['wms/packing_station',     'Packing stations'],
+        ['wms/package',             'Packages'],
+        ['wms/shipment',            'Shipments'],
+        ['wms/manifest',            'Manifests'],
+        ['wms/shipping_document',   'Shipping docs'],
+      ],
+    },
+    {
+      label: 'Returns', icon: 'inbox',
+      items: [
+        ['wms/rma',                'RMAs'],
+        ['wms/rma_line',           'RMA lines'],
+        ['wms/return_reason',      'Return reasons'],
+        ['wms/return_disposition', 'Dispositions'],
+        ['wms/recall',             'Recalls'],
+        ['wms/recall_lot',         'Recall lots'],
+      ],
+    },
+    {
+      label: 'Counts', icon: 'clipboardCheck',
+      items: [
+        ['wms/count_session', 'Count sessions'],
+        ['wms/count_task',    'Count tasks'],
+        ['wms/count_program', 'Count programs'],
+      ],
+    },
+    {
+      label: 'Replenishment', icon: 'refresh',
+      items: [
+        ['wms/replenishment_task', 'Replen tasks'],
+        ['wms/replenishment_rule', 'Replen rules'],
+      ],
+    },
+    {
+      label: 'Quality', icon: 'check',
+      items: [
+        ['wms/qc_plan',           'QC plans'],
+        ['wms/qc_characteristic', 'QC characteristics'],
+        ['wms/inspection',        'Inspections'],
+        ['wms/inspection_result', 'Inspection results'],
+        ['wms/non_conformance',   'Non-conformances'],
+      ],
+    },
+    {
+      label: 'Yard & Dock', icon: 'mapPin',
+      items: [
+        ['wms/dock_door',  'Dock doors'],
+        ['wms/trailer',    'Trailers'],
+        ['wms/yard_event', 'Yard events'],
+        ['wms/yard_slot',  'Yard slots'],
+        ['wms/load_event', 'Load events'],
+      ],
+    },
+    {
+      label: 'Tasks & Workflows', icon: 'listFilter',
+      items: [
+        ['wms/task',                'Tasks'],
+        ['wms/workflow_instance',   'Workflow instances'],
+        ['wms/workflow_task',       'Workflow tasks'],
+        ['wms/workflow_definition', 'Workflow definitions'],
+        ['wms/labor_activity',      'Labor activity'],
+        ['wms/labor_clock',         'Labor clock'],
+      ],
+    },
+    {
+      label: '3PL Billing', icon: 'shoppingCart',
+      items: [
+        ['wms/rate_card',                'Rate cards'],
+        ['wms/rate_card_line',           'Rate card lines'],
+        ['wms/rate_quote',               'Rate quotes'],
+        ['wms/billing_event',            'Billing events'],
+        ['wms/bill_run',                 'Bill runs'],
+        ['wms/bill_run_line',            'Bill run lines'],
+        ['wms/storage_billing_snapshot', 'Storage snapshots'],
+        ['wms/vas_activity',             'VAS activity'],
+        ['wms/vas_template',             'VAS templates'],
+        ['wms/client_contract',          'Client contracts'],
+      ],
+    },
+    {
+      label: 'Partners & Carriers', icon: 'users',
+      items: [
+        ['wms/partner',         'Partners'],
+        ['wms/partner_address', 'Partner addresses'],
+        ['wms/carrier_service', 'Carrier services'],
+        ['wms/supplier_scorecard', 'Supplier scorecards'],
+      ],
+    },
+    {
+      label: 'Alerts & Audit', icon: 'zap',
+      items: [
+        ['wms/alert_rule',       'Alert rules'],
+        ['wms/alert_event',      'Alert events'],
+        ['wms/alert_delivery',   'Alert deliveries'],
+        ['wms/alert_recipient',  'Alert recipients'],
+        ['wms/audit_log',        'Audit log'],
+        ['wms/anomaly_event',    'Anomaly events'],
+        ['wms/electronic_signature', 'E-signatures'],
+      ],
+    },
+    {
+      label: 'Setup', icon: 'settings',
+      items: [
+        ['wms/warehouse', 'Warehouses'],
+        ['wms/site',      'Sites'],
+        ['wms/tenant',    'Tenants'],
+        ['wms/app_user',  'Users'],
+        ['wms/role',      'Roles'],
+        ['wms/permission','Permissions'],
+        ['wms/role_permission', 'Role-permissions'],
+        ['wms/device',    'Devices'],
+        ['wms/equipment', 'Equipment'],
+        ['wms/configuration_setting', 'Configuration'],
+        ['wms/feature_flag', 'Feature flags'],
+      ],
+    },
+  ];
+
+  // Top-level: Dashboard link first.
+  const nav: any[] = [
+    { label: 'Dashboard', path: '/admin/', icon: 'layoutDashboard' },
+  ];
+
+  for (const g of GROUPS) {
+    const children: any[] = [];
+    for (const [bo, label] of g.items) {
+      if (!have.has(bo)) continue;
+      const meta = bos.find((b) => b.name === bo)!;
+      children.push({ label: label ?? meta.label, path: `/admin/${bo}` });
+      seen.add(bo);
+    }
+    if (children.length) nav.push({ label: g.label, icon: g.icon, children });
   }
-  // Also surface BOs in a top-level Data group.
-  groups.set('_data', {
-    label: 'Data',
-    children: bos.slice(0, 30).map((b: any) => ({ label: b.label, path: `/admin/${b.name}` })),
-  });
-  return [...groups.values()];
+
+  // Catalog: every BO not yet in the curated nav, sorted alphabetically.
+  const catalog = bos
+    .filter((b) => !seen.has(b.name))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((b) => ({ label: b.label || b.name, path: `/admin/${b.name}` }));
+  if (catalog.length) {
+    nav.push({ label: `Catalog (${catalog.length})`, icon: 'database', children: catalog });
+  }
+
+  return nav;
 }
 
 // ---------- BO list ----------
