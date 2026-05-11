@@ -16,8 +16,8 @@ protected function sidebar(active)
             <div class="brand">
                 <div class="logo">CM</div>
                 <div>
-                    <div class="title">@casemaster/admin</div>
-                    <div class="subtitle">A 2026 SPA for CaseMaster apps</div>
+                    <div class="title">casemaster-bridge</div>
+                    <div class="subtitle">A 2026 SPA for any CaseMaster app</div>
                 </div>
             </div>
             <nav>

@@ -18,6 +18,14 @@ protected resource main
 
             faq: <@page/html `
                 <div class="faq">
+                    <details open>
+                        <summary>Where's the live demo I can click around?<span class="q-num">00</span></summary>
+                        <div class="answer">
+                            <p><a href="https://casemaster-bridge-demo.vercel.app/" target="_blank">casemaster-bridge-demo.vercel.app</a> — the full 164-BO Casemaster-WMS, running on the real <code>cms-vercel</code> runtime against a Neon Postgres, with the Bridge SPA on top.</p>
+                            <p>Source: <a href="https://github.com/LadFoxTom/casemaster-bridge" target="_blank">github.com/LadFoxTom/casemaster-bridge</a>. The full WMS source lives at <code>examples/wms-vercel/app/</code>; the Vercel function entry is <code>examples/wms-vercel/api/v1/index.ts</code>.</p>
+                        </div>
+                    </details>
+
                     <details>
                         <summary>Does the SPA replace classic HTML pages?<span class="q-num">01</span></summary>
                         <div class="answer">
@@ -25,6 +33,7 @@ protected resource main
                             is incremental. A page that's stable and works in classic HTML can stay there
                             indefinitely; only pages where the SPA's UX wins (data grids, dashboards, master-detail
                             workflows) need to migrate.</p>
+                            <p>You can verify both sides on the live demo: <code>/admin/</code> is the SPA, <code>/page/wms/inbound</code> is the classic Bootstrap-4 render of the same source.</p>
                         </div>
                     </details>
 

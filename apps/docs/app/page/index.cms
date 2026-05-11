@@ -1,5 +1,5 @@
-// Landing page. Hosts a live iframe of the SPA demo against the
-// in-memory WMS seed served by this same docs server.
+// Landing page. Frames the live deployment of the full 164-BO
+// Casemaster-WMS running through the bridge.
 
 inherits 'base'
 
@@ -16,22 +16,24 @@ protected resource main
 
             hero: <@page/html `
                 <div class="hero">
-                    <div class="eyebrow">@casemaster/admin · v0.1</div>
-                    <h1>A 2026-class admin SPA for any CaseMaster app, on any runtime.</h1>
+                    <div class="eyebrow">casemaster-bridge · live</div>
+                    <h1>The same .cms source.<br>A 2026 admin UI.<br>Both runtimes.</h1>
                     <p class="lead">
-                        Schema-driven React UI. Cmd-K command palette. Virtualized data grids. Optimistic
-                        mutations. Postgres-backed live updates. The same <code>.cms</code> source files,
-                        unchanged on disk.
+                        Casemaster Bridge wraps any CaseMaster app in a polished React SPA: Cmd-K command
+                        palette, virtualized data grids, optimistic mutations, dark mode, schema-driven
+                        navigation. The runtime stays yours — <code>cms-vercel</code> on Vercel, or
+                        <code>CaseMaster.Web.exe</code> on Windows with a JSON sidecar. The same
+                        <code>.cms</code> files. Untouched.
                     </p>
                     <div class="cta">
-                        <a class="btn btn-primary" href="/page/cms-vercel">Install on cms-vercel →</a>
-                        <a class="btn btn-outline-secondary" href="/page/dotnet">Use with CaseMaster.Web.exe →</a>
+                        <a class="btn btn-primary" href="https://casemaster-bridge-demo.vercel.app/" target="_blank">Open the live WMS demo →</a>
+                        <a class="btn btn-outline-secondary" href="https://github.com/LadFoxTom/casemaster-bridge" target="_blank">GitHub ↗</a>
                     </div>
                     <div class="tag-row" style="margin-top:1.5rem">
+                        <span class="tag ok">🟢 Live · 164-BO WMS · Neon Postgres</span>
                         <span class="tag ok">cms-vercel ready</span>
                         <span class="tag ok">.NET sidecar ready</span>
                         <span class="tag todo">.NET in-process plugin (scaffold)</span>
-                        <span class="tag ok">Postgres LISTEN/NOTIFY</span>
                         <span class="tag ok">WCAG 2.2 AA</span>
                     </div>
                 </div>
@@ -41,39 +43,68 @@ protected resource main
                 <div class="demo-frame">
                     <div class="chrome">
                         <div class="dots"><span></span><span></span><span></span></div>
-                        <div class="url">https://your-app.vercel.app/admin/#/wms/inventory</div>
+                        <div class="url">https://casemaster-bridge-demo.vercel.app/admin/#/wms/inventory</div>
                         <div class="badge-live">● Live</div>
                     </div>
-                    <iframe src="/admin/#/wms/inventory" loading="lazy" title="Live WMS demo"></iframe>
+                    <iframe src="https://casemaster-bridge-demo.vercel.app/admin/#/wms/inventory" loading="lazy" title="Live WMS deployment"></iframe>
                     <div class="frame-footer">
-                        <span>Real <code>@casemaster/admin</code> SPA against an in-memory WMS seed (10 BOs, 130+ rows, working page actions).</span>
-                        <a href="/admin/" target="_blank">Open in new tab ↗</a>
+                        <span>The full <strong>164-BO Casemaster-WMS</strong>, written in standard <code>.cms</code>, served by <code>cms-vercel</code> + Neon Postgres, with the Bridge SPA on top.</span>
+                        <a href="https://casemaster-bridge-demo.vercel.app/admin/" target="_blank">Open in new tab ↗</a>
                     </div>
                 </div>
             `>,
 
             try: <@page/html `
-                <h2>Try it without leaving this page</h2>
+                <h2>Try it</h2>
                 <p>
-                    The frame above is the actual <code>@casemaster/admin</code> React SPA — same code that
-                    ships in your deployment. Press <kbd>⌘</kbd><kbd>K</kbd> inside it for the command palette,
-                    <kbd>?</kbd> for shortcuts, <kbd>g</kbd> <kbd>i</kbd> to jump to inventory. The data is
-                    in-memory so edits are instantly visible.
+                    The frame above is the real production deployment — same Vercel function, same Neon
+                    database, same React SPA you'd ship to your operators. Inside:
                 </p>
+                <ul>
+                    <li>Press <kbd>⌘</kbd><kbd>K</kbd> (or <kbd>Ctrl</kbd><kbd>K</kbd>) — fuzzy-search across all 164 BOs and every page</li>
+                    <li>Press <kbd>?</kbd> — see the keyboard shortcut registry (Linear-class)</li>
+                    <li>Press <kbd>g</kbd> <kbd>i</kbd> — jump to inventory; <kbd>g</kbd> <kbd>a</kbd> — ASNs; <kbd>g</kbd> <kbd>o</kbd> — orders</li>
+                    <li>Click any BO in the sidebar — virtualized data grid against real Postgres rows</li>
+                    <li>Toggle dark/light theme, compact/cozy/comfortable density</li>
+                </ul>
+            `>,
+
+            deployed: <@page/html `
+                <h2>What's deployed where</h2>
+                <table>
+                    <thead><tr><th>Service</th><th>URL</th><th>What it is</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>The live WMS</strong></td>
+                            <td><a href="https://casemaster-bridge-demo.vercel.app/" target="_blank">casemaster-bridge-demo.vercel.app</a></td>
+                            <td>Full 164-BO Casemaster-WMS, Bridge SPA on top, Neon Postgres backend</td>
+                        </tr>
+                        <tr>
+                            <td><strong>These docs</strong></td>
+                            <td><a href="https://casemaster-bridge-docs.vercel.app/" target="_blank">casemaster-bridge-docs.vercel.app</a></td>
+                            <td>This site — itself a <code>cms-vercel</code> project</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Source</strong></td>
+                            <td><a href="https://github.com/LadFoxTom/casemaster-bridge" target="_blank">github.com/LadFoxTom/casemaster-bridge</a></td>
+                            <td>Monorepo: SPA, JSON adapter, demo, docs, .NET scaffold</td>
+                        </tr>
+                    </tbody>
+                </table>
             `>,
 
             cards: <@page/html `
-                <h2>Where to next</h2>
+                <h2>Read more</h2>
                 <div class="cards">
                     <a class="card-doc" href="/page/cms-vercel">
                         <div class="icon">▲</div>
-                        <h3>cms-vercel project</h3>
+                        <h3>Install on cms-vercel</h3>
                         <p>Greenfield path. Drop the JSON adapter into <code>api/v1</code>, build the SPA, deploy. One Vercel function.</p>
                     </a>
                     <a class="card-doc" href="/page/dotnet">
                         <div class="icon">⚙</div>
-                        <h3>CaseMaster.Web.exe</h3>
-                        <p>Run cms-vercel as a JSON sidecar against the same Postgres. Your <code>.exe</code> stays untouched.</p>
+                        <h3>CaseMaster.Web.exe sidecar</h3>
+                        <p>Run cms-vercel as a JSON sidecar against your existing Postgres. Your <code>.exe</code> stays untouched.</p>
                     </a>
                     <a class="card-doc" href="/page/iis">
                         <div class="icon">▢</div>
@@ -99,18 +130,21 @@ protected resource main
             `>,
 
             quick: <@page/html resolveTemplate(`
-                <h2>30-second quickstart</h2>
-                <pre><code># clone &amp; vendor cms-vercel (it's pre-publish on npm)
-git clone &lt;this repo&gt; cms-admin-docs
-cd cms-admin-docs
-npm install                  # vendors cms-vercel automatically
+                <h2>30-second self-host</h2>
+                <pre><code># 1. Clone
+git clone https://github.com/LadFoxTom/casemaster-bridge
+cd casemaster-bridge/examples/wms-vercel
 
-# local preview
-node bin/dev-server.mjs      # http://localhost:4040
+# 2. Install (vendors cms-vercel automatically)
+npm install
 
-# deploy
+# 3. Point at your Postgres (or use the demo provider — no DB needed)
+export DATABASE_URL='postgres://user:pw@host/db'
+psql "$DATABASE_URL" -f sql/wms_schema.sql
+
+# 4. Deploy
 vercel --prod</code></pre>
-                <p class="text-muted">This page itself is rendered by the cms-vercel runtime — same engine documented here. Page rendered at <code>{{now()}}</code>.</p>
+                <p class="text-muted">These docs are rendered by the same cms-vercel runtime they describe. Page rendered at <code>{{now()}}</code>.</p>
             `)>,
 
             body_close: <@page/html `</div></div>`>
