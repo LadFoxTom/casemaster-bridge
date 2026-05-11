@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `app_user` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'App user',
+        table: 'app_user',
+        primaryKey: 'id',
+        sequence: 'app_user',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            username: <@bo/attribute label: 'Username', column: 'username', dataType: dataType.String, length: 4000, optional: false()>,
+            email: <@bo/attribute label: 'Email', column: 'email', dataType: dataType.String, length: 4000, optional: true()>,
+            full_name: <@bo/attribute label: 'Full name', column: 'full_name', dataType: dataType.String, length: 4000, optional: true()>,
+            employee_number: <@bo/attribute label: 'Employee number', column: 'employee_number', dataType: dataType.String, length: 4000, optional: true()>,
+            password_hash: <@bo/attribute label: 'Password hash', column: 'password_hash', dataType: dataType.String, length: 4000, optional: true()>,
+            pin_hash: <@bo/attribute label: 'Pin hash', column: 'pin_hash', dataType: dataType.String, length: 4000, optional: true()>,
+            sso_subject: <@bo/attribute label: 'Sso subject', column: 'sso_subject', dataType: dataType.String, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>,
+            must_change_password: <@bo/attribute label: 'Must change password', column: 'must_change_password', dataType: dataType.Boolean, optional: false()>,
+            last_login_at: <@bo/attribute label: 'Last login at', column: 'last_login_at', dataType: dataType.Timestamp, optional: true()>,
+            failed_login_count: <@bo/attribute label: 'Failed login count', column: 'failed_login_count', dataType: dataType.Long, length: 9, optional: false()>,
+            locked_until: <@bo/attribute label: 'Locked until', column: 'locked_until', dataType: dataType.Timestamp, optional: true()>,
+            preferred_language: <@bo/attribute label: 'Preferred language', column: 'preferred_language', dataType: dataType.String, length: 2, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'username' >,
+            list: < 'tenant_id', 'username', 'email', 'full_name', 'employee_number', 'password_hash' >,
+            description: < 'tenant_id', 'username', 'email', 'full_name', 'employee_number', 'password_hash', 'pin_hash', 'sso_subject', 'is_active', 'must_change_password', 'last_login_at', 'failed_login_count' >,
+            search: < 'username', 'full_name', 'employee_number' >
+        >
+    >
+end-resource

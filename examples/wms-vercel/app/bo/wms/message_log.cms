@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `message_log` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Message log',
+        table: 'message_log',
+        primaryKey: 'id',
+        sequence: 'message_log',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            integration_endpoint_id: <@bo/attribute label: 'Integration endpoint id', column: 'integration_endpoint_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/integration_endpoint'>,
+            integration_partner_id: <@bo/attribute label: 'Integration partner id', column: 'integration_partner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/integration_partner'>,
+            direction: <@bo/attribute label: 'Direction', column: 'direction', dataType: dataType.String, length: 4000, optional: false()>,
+            message_type: <@bo/attribute label: 'Message type', column: 'message_type', dataType: dataType.String, length: 4000, optional: false()>,
+            correlation_id: <@bo/attribute label: 'Correlation id', column: 'correlation_id', dataType: dataType.String, length: 36, optional: false()>,
+            external_reference: <@bo/attribute label: 'External reference', column: 'external_reference', dataType: dataType.String, length: 4000, optional: true()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.String, length: 4000, optional: true()>,
+            payload_format: <@bo/attribute label: 'Payload format', column: 'payload_format', dataType: dataType.String, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            error_summary: <@bo/attribute label: 'Error summary', column: 'error_summary', dataType: dataType.String, length: 4000, optional: true()>,
+            received_at: <@bo/attribute label: 'Received at', column: 'received_at', dataType: dataType.Timestamp, optional: true()>,
+            processed_at: <@bo/attribute label: 'Processed at', column: 'processed_at', dataType: dataType.Timestamp, optional: true()>,
+            response_payload: <@bo/attribute label: 'Response payload', column: 'response_payload', dataType: dataType.String, length: 4000, optional: true()>,
+            retry_count: <@bo/attribute label: 'Retry count', column: 'retry_count', dataType: dataType.Long, length: 9, optional: false()>,
+            next_retry_at: <@bo/attribute label: 'Next retry at', column: 'next_retry_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'message_type' >,
+            list: < 'tenant_id', 'integration_endpoint_id', 'integration_partner_id', 'direction', 'message_type', 'correlation_id' >,
+            description: < 'tenant_id', 'integration_endpoint_id', 'integration_partner_id', 'direction', 'message_type', 'correlation_id', 'external_reference', 'payload', 'payload_format', 'status', 'error_summary', 'received_at' >
+        >
+    >
+end-resource

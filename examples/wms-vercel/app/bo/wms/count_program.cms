@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `count_program` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Count program',
+        table: 'count_program',
+        primaryKey: 'id',
+        sequence: 'count_program',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            program_type: <@bo/attribute label: 'Program type', column: 'program_type', dataType: dataType.String, length: 4000, optional: false()>,
+            cadence: <@bo/attribute label: 'Cadence', column: 'cadence', dataType: dataType.String, length: 4000, optional: true()>,
+            tolerance_pct: <@bo/attribute label: 'Tolerance pct', column: 'tolerance_pct', dataType: dataType.Decimal, length: 6, precision: 3, optional: true()>,
+            requires_blind: <@bo/attribute label: 'Requires blind', column: 'requires_blind', dataType: dataType.Boolean, optional: false()>,
+            requires_recount: <@bo/attribute label: 'Requires recount', column: 'requires_recount', dataType: dataType.Boolean, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'program_type', 'cadence' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'program_type', 'cadence', 'tolerance_pct', 'requires_blind', 'requires_recount', 'selector_jsonb', 'is_active' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

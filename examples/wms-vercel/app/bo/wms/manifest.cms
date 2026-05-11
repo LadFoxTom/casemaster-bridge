@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `manifest` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Manifest',
+        table: 'manifest',
+        primaryKey: 'id',
+        sequence: 'manifest',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            manifest_number: <@bo/attribute label: 'Manifest number', column: 'manifest_number', dataType: dataType.String, length: 4000, optional: false()>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            pickup_date: <@bo/attribute label: 'Pickup date', column: 'pickup_date', dataType: dataType.Date, optional: false()>,
+            dock_door_id: <@bo/attribute label: 'Dock door id', column: 'dock_door_id', dataType: dataType.Long, length: 18, optional: true()>,
+            trailer_number: <@bo/attribute label: 'Trailer number', column: 'trailer_number', dataType: dataType.String, length: 4000, optional: true()>,
+            seal_number: <@bo/attribute label: 'Seal number', column: 'seal_number', dataType: dataType.String, length: 4000, optional: true()>,
+            package_count: <@bo/attribute label: 'Package count', column: 'package_count', dataType: dataType.Long, length: 9, optional: false()>,
+            total_weight_kg: <@bo/attribute label: 'Total weight kg', column: 'total_weight_kg', dataType: dataType.Decimal, length: 12, precision: 2, optional: true()>,
+            closed_at: <@bo/attribute label: 'Closed at', column: 'closed_at', dataType: dataType.Timestamp, optional: true()>,
+            closed_by_user_id: <@bo/attribute label: 'Closed by user id', column: 'closed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            transmitted_at: <@bo/attribute label: 'Transmitted at', column: 'transmitted_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'manifest_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'manifest_number', 'carrier_id', 'pickup_date', 'dock_door_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'manifest_number', 'carrier_id', 'pickup_date', 'dock_door_id', 'trailer_number', 'seal_number', 'package_count', 'total_weight_kg', 'closed_at', 'closed_by_user_id' >,
+            search: < 'manifest_number', 'trailer_number', 'seal_number' >
+        >
+    >
+end-resource

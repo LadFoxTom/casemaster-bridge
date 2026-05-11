@@ -1,0 +1,27 @@
+// Casemaster-WMS — audit emission helper.
+//
+// Every state-changing action calls `script.call('wms/audit:emit', ...)`
+// to write a row to `audit_log`. Eventually we want this hooked into the
+// runtime's request lifecycle so it fires automatically on every mutating
+// API call; for now it's an explicit call from each handler.
+
+// emit(action, entity_type, entity_id, operation, payload_json)
+//   action       — CREATE / UPDATE / DELETE / EXECUTE / READ_SENSITIVE
+//   entity_type  — name of the BO entity that was touched (e.g. 'sales_order')
+//   entity_id    — primary key (or null for ENTITY-less ops like LOGIN)
+//   operation    — short label for the operation (e.g. 'allocate', 'pick.confirm')
+//   payload_json — JSON-string snapshot of the relevant inputs (free-form)
+function emit(action, entity_type, entity_id, operation, payload_json)
+    set('uid',  _onError([//session.user.id], null()))   // null when auth bypass is on
+    set('tnt',  1)                                       // single tenant for now
+
+    sql.execute(concat(
+        "INSERT INTO audit_log (tenant_id, occurred_at, user_id, operation, entity_type, entity_id, action, result) VALUES (",
+        [tnt], ", NOW(), ",
+        if(isNull([uid]), 'NULL', formatString('{0}', [uid])), ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', _onError([operation], '')), ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', _onError([entity_type], '')), ", ",
+        if(isNull([entity_id]), 'NULL', formatString('{0}', [entity_id])), ", '",
+        _onError([action], 'EXECUTE'), "', 'SUCCESS')"
+    ))
+end-function

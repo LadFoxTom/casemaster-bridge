@@ -1,0 +1,109 @@
+// Casemaster-WMS — bill run generator (Phase 15).
+//
+// emitEventsForReceipt(receipt_id)   — emit billing_event rows for receive activity
+// emitEventsForPick(task_id)         — emit billing_event row per pick line
+// emitEventsForShip(shipment_id)     — emit billing_event row per shipment
+// snapshotStorage()                  — daily storage snapshot per owner / item / location
+// generateRun(contract_id, period_start, period_end)
+//     — gather unbilled events for the contract owner in the window, sum by
+//       charge_code, write bill_run + bill_run_lines, mark events billed.
+
+function emitEventsForReceipt(receipt_id)
+    sql.execute(concat(
+        "INSERT INTO billing_event (tenant_id, warehouse_id, owner_id, event_at, activity_type, reference_type, reference_id, item_id, qty, uom, charge_code) ",
+        "SELECT r.tenant_id, r.warehouse_id, COALESCE(rl.purchase_order_line_id, 0), NOW(), 'RECEIPT_LINE', 'RECEIPT_LINE', rl.id, rl.item_id, rl.qty_received, rl.uom_code, 'RECEIPT_LINE' ",
+        "FROM receipt r JOIN receipt_line rl ON rl.receipt_id = r.id ",
+        "WHERE r.id = ", [receipt_id]
+    ))
+end-function
+
+function emitEventsForPick(task_id)
+    sql.execute(concat(
+        "INSERT INTO billing_event (tenant_id, warehouse_id, owner_id, event_at, activity_type, reference_type, reference_id, item_id, qty, uom, charge_code) ",
+        "SELECT t.tenant_id, t.warehouse_id, 0, NOW(), 'PICK_LINE', 'TASK', t.id, t.item_id, t.qty_completed, t.uom_code, 'PICK_LINE' ",
+        "FROM task t WHERE t.id = ", [task_id], " AND t.task_type='PICK'"
+    ))
+end-function
+
+function emitEventsForShip(shipment_id)
+    sql.execute(concat(
+        "INSERT INTO billing_event (tenant_id, warehouse_id, owner_id, event_at, activity_type, reference_type, reference_id, qty, uom, charge_code) ",
+        "SELECT s.tenant_id, s.warehouse_id, 0, NOW(), 'SHIP_PARCEL', 'SHIPMENT', s.id, COALESCE(s.package_count, 1), 'PARCEL', 'SHIP_PARCEL' ",
+        "FROM shipment s WHERE s.id = ", [shipment_id]
+    ))
+end-function
+
+function snapshotStorage()
+    // Only snapshot inventory that has an owner_id (3PL goods owner) — the
+    // billing model is per-owner. Inventory belonging to the host operator
+    // (owner_id IS NULL) is not billed for storage in this model.
+    sql.execute(concat(
+        "INSERT INTO storage_billing_snapshot (tenant_id, warehouse_id, snapshot_date, owner_id, item_id, location_id, qty_on_hand, pallet_count, cubic_m, sq_m) ",
+        "SELECT i.tenant_id, i.warehouse_id, CURRENT_DATE, i.owner_id, i.item_id, i.location_id, ",
+        "       SUM(i.qty_on_hand), 0, 0, 0 ",
+        "FROM inventory i ",
+        "WHERE i.owner_id IS NOT NULL ",
+        "GROUP BY i.tenant_id, i.warehouse_id, i.owner_id, i.item_id, i.location_id ",
+        "ON CONFLICT (warehouse_id, snapshot_date, owner_id, item_id, location_id) DO UPDATE ",
+        "SET qty_on_hand = EXCLUDED.qty_on_hand"
+    ))
+end-function
+
+function generateRun(contract_id, period_start, period_end)
+    set('contract', bo.quickLoad('wms/client_contract', [contract_id], group: '*'))
+    if isNull([contract])
+        return null()
+    end-if
+    set('owner_id', bo.attr([contract], 'owner_id'))
+
+    // generate invoice number
+    set('cnt', bo.count('wms/bill_run'))
+    set('inv_no', concat('INV-', format(now(), 'yyyyMMddHHmmss'), '-', add([cnt], 1)))
+
+    sql.execute(concat(
+        "INSERT INTO bill_run (tenant_id, contract_id, period_start, period_end, invoice_number, currency, status) VALUES (",
+        "1, ", [contract_id], ", '",
+        [period_start], "', '", [period_end], "', '",
+        [inv_no], "', 'EUR', 'DRAFT')"
+    ))
+    set('run_id', null())
+    if bo.tryLoad('wms/bill_run',
+                  where: concat('invoice_number="', [inv_no], '"'),
+                  group: 'list',
+                  bo: 'br')
+        set('run_id', bo.pk([br]))
+    end-if
+    if isNull([run_id])
+        return null()
+    end-if
+
+    // aggregate billing events into bill_run_line rows.
+    // We use a flat 0.10/event tariff as a placeholder; a real engine reads
+    // rate_card_line.rate per charge_code.
+    sql.execute(concat(
+        "INSERT INTO bill_run_line (tenant_id, bill_run_id, charge_code, description, quantity, uom, rate, amount, event_count) ",
+        "SELECT 1, ", [run_id], ", be.charge_code, ",
+        "       'Auto-billed events for ' || be.charge_code, ",
+        "       SUM(COALESCE(be.qty,1)), MIN(be.uom), 0.10, SUM(COALESCE(be.qty,1)) * 0.10, COUNT(*) ",
+        "FROM billing_event be ",
+        "WHERE be.is_billed = FALSE AND be.owner_id = ", [owner_id], " ",
+        "  AND be.event_at >= '", [period_start], "' AND be.event_at < '", [period_end], "' ",
+        "GROUP BY be.charge_code"
+    ))
+
+    // mark events billed
+    sql.execute(concat(
+        "UPDATE billing_event SET is_billed = TRUE, bill_run_id = ", [run_id], " ",
+        "WHERE is_billed = FALSE AND owner_id = ", [owner_id], " ",
+        "  AND event_at >= '", [period_start], "' AND event_at < '", [period_end], "'"
+    ))
+
+    // total
+    sql.execute(concat(
+        "UPDATE bill_run SET subtotal = (SELECT COALESCE(SUM(amount),0) FROM bill_run_line WHERE bill_run_id = ", [run_id], "), ",
+        "                   total    = (SELECT COALESCE(SUM(amount),0) FROM bill_run_line WHERE bill_run_id = ", [run_id], ") ",
+        "WHERE id = ", [run_id]
+    ))
+
+    return [run_id]
+end-function

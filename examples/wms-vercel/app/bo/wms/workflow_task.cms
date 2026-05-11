@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `workflow_task` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Workflow task',
+        table: 'workflow_task',
+        primaryKey: 'id',
+        sequence: 'workflow_task',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            workflow_instance_id: <@bo/attribute label: 'Workflow instance id', column: 'workflow_instance_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/workflow_instance'>,
+            step_code: <@bo/attribute label: 'Step code', column: 'step_code', dataType: dataType.String, length: 4000, optional: false()>,
+            task_type: <@bo/attribute label: 'Task type', column: 'task_type', dataType: dataType.String, length: 4000, optional: false()>,
+            assigned_to_role_id: <@bo/attribute label: 'Assigned to role id', column: 'assigned_to_role_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/role'>,
+            assigned_to_user_id: <@bo/attribute label: 'Assigned to user id', column: 'assigned_to_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            due_at: <@bo/attribute label: 'Due at', column: 'due_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            completed_by_user_id: <@bo/attribute label: 'Completed by user id', column: 'completed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            outcome: <@bo/attribute label: 'Outcome', column: 'outcome', dataType: dataType.String, length: 4000, optional: true()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'step_code' >,
+            list: < 'tenant_id', 'workflow_instance_id', 'step_code', 'task_type', 'assigned_to_role_id', 'assigned_to_user_id' >,
+            description: < 'tenant_id', 'workflow_instance_id', 'step_code', 'task_type', 'assigned_to_role_id', 'assigned_to_user_id', 'due_at', 'status', 'completed_by_user_id', 'completed_at', 'outcome', 'payload' >,
+            search: < 'step_code' >
+        >
+    >
+end-resource

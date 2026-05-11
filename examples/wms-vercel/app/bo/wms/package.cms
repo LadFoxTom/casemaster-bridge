@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `package` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Package',
+        table: 'package',
+        primaryKey: 'id',
+        sequence: 'package',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            shipment_id: <@bo/attribute label: 'Shipment id', column: 'shipment_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/shipment'>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: false()>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            carton_type_id: <@bo/attribute label: 'Carton type id', column: 'carton_type_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/carton_type'>,
+            weight_kg: <@bo/attribute label: 'Weight kg', column: 'weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            length_cm: <@bo/attribute label: 'Length cm', column: 'length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            width_cm: <@bo/attribute label: 'Width cm', column: 'width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            height_cm: <@bo/attribute label: 'Height cm', column: 'height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            tracking_number: <@bo/attribute label: 'Tracking number', column: 'tracking_number', dataType: dataType.String, length: 4000, optional: true()>,
+            label_url: <@bo/attribute label: 'Label url', column: 'label_url', dataType: dataType.String, length: 4000, optional: true()>,
+            contents_value: <@bo/attribute label: 'Contents value', column: 'contents_value', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'tracking_number' >,
+            list: < 'tenant_id', 'shipment_id', 'sequence', 'license_plate_id', 'carton_type_id', 'weight_kg' >,
+            description: < 'tenant_id', 'shipment_id', 'sequence', 'license_plate_id', 'carton_type_id', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'tracking_number', 'label_url', 'contents_value' >,
+            search: < 'tracking_number' >
+        >
+    >
+end-resource

@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `idempotency_record` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Idempotency record',
+        table: 'idempotency_record',
+        primaryKey: 'id',
+        sequence: 'idempotency_record',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            idempotency_key: <@bo/attribute label: 'Idempotency key', column: 'idempotency_key', dataType: dataType.String, length: 4000, optional: false()>,
+            operation: <@bo/attribute label: 'Operation', column: 'operation', dataType: dataType.String, length: 4000, optional: false()>,
+            request_hash: <@bo/attribute label: 'Request hash', column: 'request_hash', dataType: dataType.String, length: 4000, optional: false()>,
+            response_status: <@bo/attribute label: 'Response status', column: 'response_status', dataType: dataType.Long, length: 9, optional: true()>,
+            response_body: <@bo/attribute label: 'Response body', column: 'response_body', dataType: dataType.JSON, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            expires_at: <@bo/attribute label: 'Expires at', column: 'expires_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'idempotency_key' >,
+            list: < 'tenant_id', 'idempotency_key', 'operation', 'request_hash', 'response_status' >,
+            description: < 'tenant_id', 'idempotency_key', 'operation', 'request_hash', 'response_status', 'response_body', 'created_at', 'expires_at' >
+        >
+    >
+end-resource

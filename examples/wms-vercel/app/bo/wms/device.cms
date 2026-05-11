@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `device` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Device',
+        table: 'device',
+        primaryKey: 'id',
+        sequence: 'device',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>,
+            device_code: <@bo/attribute label: 'Device code', column: 'device_code', dataType: dataType.String, length: 4000, optional: false()>,
+            device_name: <@bo/attribute label: 'Device name', column: 'device_name', dataType: dataType.String, length: 4000, optional: true()>,
+            device_type: <@bo/attribute label: 'Device type', column: 'device_type', dataType: dataType.String, length: 4000, optional: false()>,
+            manufacturer: <@bo/attribute label: 'Manufacturer', column: 'manufacturer', dataType: dataType.String, length: 4000, optional: true()>,
+            model: <@bo/attribute label: 'Model', column: 'model', dataType: dataType.String, length: 4000, optional: true()>,
+            serial_number: <@bo/attribute label: 'Serial number', column: 'serial_number', dataType: dataType.String, length: 4000, optional: true()>,
+            mac_address: <@bo/attribute label: 'Mac address', column: 'mac_address', dataType: dataType.String, length: 4000, optional: true()>,
+            android_version: <@bo/attribute label: 'Android version', column: 'android_version', dataType: dataType.String, length: 4000, optional: true()>,
+            app_version: <@bo/attribute label: 'App version', column: 'app_version', dataType: dataType.String, length: 4000, optional: true()>,
+            last_seen_at: <@bo/attribute label: 'Last seen at', column: 'last_seen_at', dataType: dataType.Timestamp, optional: true()>,
+            last_user_id: <@bo/attribute label: 'Last user id', column: 'last_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'serial_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'device_code', 'device_name', 'device_type', 'manufacturer' >,
+            description: < 'tenant_id', 'warehouse_id', 'device_code', 'device_name', 'device_type', 'manufacturer', 'model', 'serial_number', 'mac_address', 'android_version', 'app_version', 'last_seen_at' >,
+            search: < 'device_code', 'device_name', 'serial_number' >
+        >
+    >
+end-resource

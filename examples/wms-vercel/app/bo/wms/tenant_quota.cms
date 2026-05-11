@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `tenant_quota` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Tenant quota',
+        table: 'tenant_quota',
+        primaryKey: 'id',
+        sequence: 'tenant_quota',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/tenant'>,
+            quota_type: <@bo/attribute label: 'Quota type', column: 'quota_type', dataType: dataType.String, length: 4000, optional: false()>,
+            quota_value: <@bo/attribute label: 'Quota value', column: 'quota_value', dataType: dataType.Long, length: 18, optional: false()>,
+            consumed_value: <@bo/attribute label: 'Consumed value', column: 'consumed_value', dataType: dataType.Long, length: 18, optional: false()>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Timestamp, optional: false()>,
+            period_end: <@bo/attribute label: 'Period end', column: 'period_end', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'quota_type' >,
+            list: < 'tenant_id', 'quota_type', 'quota_value', 'consumed_value', 'period_start', 'period_end' >,
+            description: < 'tenant_id', 'quota_type', 'quota_value', 'consumed_value', 'period_start', 'period_end' >
+        >
+    >
+end-resource

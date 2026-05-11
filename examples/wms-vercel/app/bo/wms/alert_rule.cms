@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `alert_rule` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Alert rule',
+        table: 'alert_rule',
+        primaryKey: 'id',
+        sequence: 'alert_rule',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            rule_code: <@bo/attribute label: 'Rule code', column: 'rule_code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            event_type_filter: <@bo/attribute label: 'Event type filter', column: 'event_type_filter', dataType: dataType.String, length: 4000, optional: false()>,
+            condition_expression: <@bo/attribute label: 'Condition expression', column: 'condition_expression', dataType: dataType.String, length: 4000, optional: true()>,
+            severity: <@bo/attribute label: 'Severity', column: 'severity', dataType: dataType.String, length: 4000, optional: false()>,
+            throttle_seconds: <@bo/attribute label: 'Throttle seconds', column: 'throttle_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            dedup_window_seconds: <@bo/attribute label: 'Dedup window seconds', column: 'dedup_window_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'rule_code' >,
+            list: < 'tenant_id', 'rule_code', 'name', 'description', 'event_type_filter', 'condition_expression' >,
+            description: < 'tenant_id', 'rule_code', 'name', 'description', 'event_type_filter', 'condition_expression', 'severity', 'throttle_seconds', 'dedup_window_seconds', 'active', 'created_at' >,
+            search: < 'rule_code', 'name' >
+        >
+    >
+end-resource

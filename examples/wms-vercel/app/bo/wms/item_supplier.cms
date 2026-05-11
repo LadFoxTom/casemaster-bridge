@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_supplier` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item supplier',
+        table: 'item_supplier',
+        primaryKey: 'id',
+        sequence: 'item_supplier',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            supplier_sku: <@bo/attribute label: 'Supplier sku', column: 'supplier_sku', dataType: dataType.String, length: 4000, optional: true()>,
+            lead_time_days: <@bo/attribute label: 'Lead time days', column: 'lead_time_days', dataType: dataType.Long, length: 9, optional: true()>,
+            minimum_order_quantity: <@bo/attribute label: 'Minimum order quantity', column: 'minimum_order_quantity', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            purchase_uom_code: <@bo/attribute label: 'Purchase uom code', column: 'purchase_uom_code', dataType: dataType.String, length: 4000, optional: true()>,
+            last_purchase_price: <@bo/attribute label: 'Last purchase price', column: 'last_purchase_price', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            last_purchased_at: <@bo/attribute label: 'Last purchased at', column: 'last_purchased_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'supplier_sku' >,
+            list: < 'tenant_id', 'item_id', 'supplier_id', 'supplier_sku', 'lead_time_days', 'minimum_order_quantity' >,
+            description: < 'tenant_id', 'item_id', 'supplier_id', 'supplier_sku', 'lead_time_days', 'minimum_order_quantity', 'purchase_uom_code', 'last_purchase_price', 'last_purchased_at' >,
+            search: < 'supplier_sku', 'purchase_uom_code' >
+        >
+    >
+end-resource

@@ -1,0 +1,68 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item',
+        table: 'item',
+        primaryKey: 'id',
+        sequence: 'item',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            sku: <@bo/attribute label: 'Sku', column: 'sku', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            long_description: <@bo/attribute label: 'Long description', column: 'long_description', dataType: dataType.String, length: 4000, optional: true()>,
+            category_id: <@bo/attribute label: 'Category id', column: 'category_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item_category'>,
+            brand: <@bo/attribute label: 'Brand', column: 'brand', dataType: dataType.String, length: 4000, optional: true()>,
+            manufacturer: <@bo/attribute label: 'Manufacturer', column: 'manufacturer', dataType: dataType.String, length: 4000, optional: true()>,
+            manufacturer_part_number: <@bo/attribute label: 'Manufacturer part number', column: 'manufacturer_part_number', dataType: dataType.String, length: 4000, optional: true()>,
+            base_uom_code: <@bo/attribute label: 'Base uom code', column: 'base_uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            is_lot_tracked: <@bo/attribute label: 'Is lot tracked', column: 'is_lot_tracked', dataType: dataType.Boolean, optional: false()>,
+            is_serial_tracked: <@bo/attribute label: 'Is serial tracked', column: 'is_serial_tracked', dataType: dataType.Boolean, optional: false()>,
+            is_expiry_tracked: <@bo/attribute label: 'Is expiry tracked', column: 'is_expiry_tracked', dataType: dataType.Boolean, optional: false()>,
+            shelf_life_days: <@bo/attribute label: 'Shelf life days', column: 'shelf_life_days', dataType: dataType.Long, length: 9, optional: true()>,
+            is_hazmat: <@bo/attribute label: 'Is hazmat', column: 'is_hazmat', dataType: dataType.Boolean, optional: false()>,
+            hazmat_class: <@bo/attribute label: 'Hazmat class', column: 'hazmat_class', dataType: dataType.String, length: 4000, optional: true()>,
+            un_number: <@bo/attribute label: 'Un number', column: 'un_number', dataType: dataType.String, length: 4000, optional: true()>,
+            is_perishable: <@bo/attribute label: 'Is perishable', column: 'is_perishable', dataType: dataType.Boolean, optional: false()>,
+            is_controlled: <@bo/attribute label: 'Is controlled', column: 'is_controlled', dataType: dataType.Boolean, optional: false()>,
+            is_fragile: <@bo/attribute label: 'Is fragile', column: 'is_fragile', dataType: dataType.Boolean, optional: false()>,
+            is_kit: <@bo/attribute label: 'Is kit', column: 'is_kit', dataType: dataType.Boolean, optional: false()>,
+            is_serialized_outbound: <@bo/attribute label: 'Is serialized outbound', column: 'is_serialized_outbound', dataType: dataType.Boolean, optional: false()>,
+            requires_inspection_in: <@bo/attribute label: 'Requires inspection in', column: 'requires_inspection_in', dataType: dataType.Boolean, optional: false()>,
+            requires_inspection_out: <@bo/attribute label: 'Requires inspection out', column: 'requires_inspection_out', dataType: dataType.Boolean, optional: false()>,
+            rotation_method: <@bo/attribute label: 'Rotation method', column: 'rotation_method', dataType: dataType.String, length: 4000, optional: false()>,
+            abc_class: <@bo/attribute label: 'Abc class', column: 'abc_class', dataType: dataType.String, length: 1, optional: true()>,
+            velocity_score: <@bo/attribute label: 'Velocity score', column: 'velocity_score', dataType: dataType.Decimal, length: 8, precision: 4, optional: true()>,
+            standard_cost: <@bo/attribute label: 'Standard cost', column: 'standard_cost', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            list_price: <@bo/attribute label: 'List price', column: 'list_price', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            weight_kg: <@bo/attribute label: 'Weight kg', column: 'weight_kg', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            length_cm: <@bo/attribute label: 'Length cm', column: 'length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            width_cm: <@bo/attribute label: 'Width cm', column: 'width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            height_cm: <@bo/attribute label: 'Height cm', column: 'height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            volume_l: <@bo/attribute label: 'Volume l', column: 'volume_l', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            minimum_temperature_c: <@bo/attribute label: 'Minimum temperature c', column: 'minimum_temperature_c', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            maximum_temperature_c: <@bo/attribute label: 'Maximum temperature c', column: 'maximum_temperature_c', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            country_of_origin: <@bo/attribute label: 'Country of origin', column: 'country_of_origin', dataType: dataType.String, length: 2, optional: true()>,
+            customs_tariff_code: <@bo/attribute label: 'Customs tariff code', column: 'customs_tariff_code', dataType: dataType.String, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'sku' >,
+            list: < 'tenant_id', 'sku', 'name', 'description', 'long_description', 'category_id' >,
+            description: < 'tenant_id', 'sku', 'name', 'description', 'long_description', 'category_id', 'brand', 'manufacturer', 'manufacturer_part_number', 'base_uom_code', 'is_lot_tracked', 'is_serial_tracked' >,
+            search: < 'sku', 'name', 'manufacturer_part_number', 'base_uom_code' >
+        >
+    >
+end-resource

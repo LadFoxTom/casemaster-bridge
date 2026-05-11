@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `bill_run` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Bill run',
+        table: 'bill_run',
+        primaryKey: 'id',
+        sequence: 'bill_run',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            contract_id: <@bo/attribute label: 'Contract id', column: 'contract_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/client_contract'>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Date, optional: false()>,
+            period_end: <@bo/attribute label: 'Period end', column: 'period_end', dataType: dataType.Date, optional: false()>,
+            invoice_number: <@bo/attribute label: 'Invoice number', column: 'invoice_number', dataType: dataType.String, length: 4000, optional: true()>,
+            subtotal: <@bo/attribute label: 'Subtotal', column: 'subtotal', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            tax: <@bo/attribute label: 'Tax', column: 'tax', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            total: <@bo/attribute label: 'Total', column: 'total', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            generated_at: <@bo/attribute label: 'Generated at', column: 'generated_at', dataType: dataType.Timestamp, optional: false()>,
+            approved_by_user_id: <@bo/attribute label: 'Approved by user id', column: 'approved_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            approved_at: <@bo/attribute label: 'Approved at', column: 'approved_at', dataType: dataType.Timestamp, optional: true()>,
+            sent_at: <@bo/attribute label: 'Sent at', column: 'sent_at', dataType: dataType.Timestamp, optional: true()>,
+            paid_at: <@bo/attribute label: 'Paid at', column: 'paid_at', dataType: dataType.Timestamp, optional: true()>,
+            erp_invoice_id: <@bo/attribute label: 'Erp invoice id', column: 'erp_invoice_id', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'invoice_number' >,
+            list: < 'tenant_id', 'contract_id', 'period_start', 'period_end', 'invoice_number', 'subtotal' >,
+            description: < 'tenant_id', 'contract_id', 'period_start', 'period_end', 'invoice_number', 'subtotal', 'tax', 'total', 'currency', 'status', 'generated_at', 'approved_by_user_id' >,
+            search: < 'invoice_number' >
+        >
+    >
+end-resource

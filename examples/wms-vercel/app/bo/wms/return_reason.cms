@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `return_reason` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Return reason',
+        table: 'return_reason',
+        primaryKey: 'id',
+        sequence: 'return_reason',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            is_customer_fault: <@bo/attribute label: 'Is customer fault', column: 'is_customer_fault', dataType: dataType.Boolean, optional: false()>,
+            triggers_supplier_claim: <@bo/attribute label: 'Triggers supplier claim', column: 'triggers_supplier_claim', dataType: dataType.Boolean, optional: false()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'code', 'name', 'is_customer_fault', 'triggers_supplier_claim', 'is_active' >,
+            description: < 'tenant_id', 'code', 'name', 'is_customer_fault', 'triggers_supplier_claim', 'is_active' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

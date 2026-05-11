@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `mobile_screen_config` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Mobile screen config',
+        table: 'mobile_screen_config',
+        primaryKey: 'id',
+        sequence: 'mobile_screen_config',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            screen_code: <@bo/attribute label: 'Screen code', column: 'screen_code', dataType: dataType.String, length: 4000, optional: false()>,
+            role_id: <@bo/attribute label: 'Role id', column: 'role_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/role'>,
+            config: <@bo/attribute label: 'Config', column: 'config', dataType: dataType.JSON, length: 4000, optional: false()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.Long, length: 9, optional: false()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'screen_code' >,
+            list: < 'tenant_id', 'screen_code', 'role_id', 'version', 'active' >,
+            description: < 'tenant_id', 'screen_code', 'role_id', 'config', 'version', 'active' >,
+            search: < 'screen_code' >
+        >
+    >
+end-resource

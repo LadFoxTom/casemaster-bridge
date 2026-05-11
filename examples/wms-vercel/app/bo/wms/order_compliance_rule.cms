@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `order_compliance_rule` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Order compliance rule',
+        table: 'order_compliance_rule',
+        primaryKey: 'id',
+        sequence: 'order_compliance_rule',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            customer_id: <@bo/attribute label: 'Customer id', column: 'customer_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            item_category_id: <@bo/attribute label: 'Item category id', column: 'item_category_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item_category'>,
+            country_code: <@bo/attribute label: 'Country code', column: 'country_code', dataType: dataType.String, length: 2, optional: true()>,
+            rule_type: <@bo/attribute label: 'Rule type', column: 'rule_type', dataType: dataType.String, length: 4000, optional: false()>,
+            rule_definition: <@bo/attribute label: 'Rule definition', column: 'rule_definition', dataType: dataType.JSON, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'country_code' >,
+            list: < 'tenant_id', 'customer_id', 'item_category_id', 'country_code', 'rule_type', 'is_active' >,
+            description: < 'tenant_id', 'customer_id', 'item_category_id', 'country_code', 'rule_type', 'rule_definition', 'is_active' >,
+            search: < 'country_code' >
+        >
+    >
+end-resource

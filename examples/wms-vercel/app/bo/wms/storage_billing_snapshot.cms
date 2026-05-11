@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `storage_billing_snapshot` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Storage billing snapshot',
+        table: 'storage_billing_snapshot',
+        primaryKey: 'id',
+        sequence: 'storage_billing_snapshot',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            snapshot_date: <@bo/attribute label: 'Snapshot date', column: 'snapshot_date', dataType: dataType.Date, optional: false()>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            qty_on_hand: <@bo/attribute label: 'Qty on hand', column: 'qty_on_hand', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            pallet_count: <@bo/attribute label: 'Pallet count', column: 'pallet_count', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            cubic_m: <@bo/attribute label: 'Cubic m', column: 'cubic_m', dataType: dataType.Decimal, length: 12, precision: 3, optional: true()>,
+            sq_m: <@bo/attribute label: 'Sq m', column: 'sq_m', dataType: dataType.Decimal, length: 12, precision: 3, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'warehouse_id', 'snapshot_date', 'owner_id', 'item_id', 'location_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'snapshot_date', 'owner_id', 'item_id', 'location_id', 'qty_on_hand', 'pallet_count', 'cubic_m', 'sq_m' >
+        >
+    >
+end-resource

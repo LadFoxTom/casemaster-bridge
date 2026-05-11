@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `labor_clock` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Labor clock',
+        table: 'labor_clock',
+        primaryKey: 'id',
+        sequence: 'labor_clock',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            clock_in_at: <@bo/attribute label: 'Clock in at', column: 'clock_in_at', dataType: dataType.Timestamp, optional: false()>,
+            clock_out_at: <@bo/attribute label: 'Clock out at', column: 'clock_out_at', dataType: dataType.Timestamp, optional: true()>,
+            shift_code: <@bo/attribute label: 'Shift code', column: 'shift_code', dataType: dataType.String, length: 4000, optional: true()>,
+            paid_break_minutes: <@bo/attribute label: 'Paid break minutes', column: 'paid_break_minutes', dataType: dataType.Long, length: 9, optional: true()>,
+            unpaid_break_minutes: <@bo/attribute label: 'Unpaid break minutes', column: 'unpaid_break_minutes', dataType: dataType.Long, length: 9, optional: true()>,
+            total_paid_minutes: <@bo/attribute label: 'Total paid minutes', column: 'total_paid_minutes', dataType: dataType.Long, length: 9, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'shift_code' >,
+            list: < 'tenant_id', 'user_id', 'shift_code', 'paid_break_minutes', 'unpaid_break_minutes', 'total_paid_minutes' >,
+            description: < 'tenant_id', 'user_id', 'clock_in_at', 'clock_out_at', 'shift_code', 'paid_break_minutes', 'unpaid_break_minutes', 'total_paid_minutes', 'notes' >,
+            search: < 'shift_code' >
+        >
+    >
+end-resource

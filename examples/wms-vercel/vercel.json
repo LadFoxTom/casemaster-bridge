@@ -3,8 +3,8 @@
   "version": 2,
   "outputDirectory": "public",
   "functions": {
-    "api/index.ts":    { "includeFiles": "{app,_runtime,seed}/**" },
-    "api/v1/index.ts": { "includeFiles": "{_runtime,seed}/**" }
+    "api/index.ts":    { "includeFiles": "app/**" },
+    "api/v1/index.ts": { "includeFiles": "{app,_runtime}/**" }
   },
   "rewrites": [
     { "source": "/api/v1/:path*",      "destination": "/api/v1?_p=/api/v1/:path*" },

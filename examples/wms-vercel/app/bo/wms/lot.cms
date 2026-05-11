@@ -1,0 +1,44 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `lot` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Lot',
+        table: 'lot',
+        primaryKey: 'id',
+        sequence: 'lot',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            lot_number: <@bo/attribute label: 'Lot number', column: 'lot_number', dataType: dataType.String, length: 4000, optional: false()>,
+            supplier_lot_number: <@bo/attribute label: 'Supplier lot number', column: 'supplier_lot_number', dataType: dataType.String, length: 4000, optional: true()>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            manufactured_date: <@bo/attribute label: 'Manufactured date', column: 'manufactured_date', dataType: dataType.Date, optional: true()>,
+            best_before_date: <@bo/attribute label: 'Best before date', column: 'best_before_date', dataType: dataType.Date, optional: true()>,
+            expiry_date: <@bo/attribute label: 'Expiry date', column: 'expiry_date', dataType: dataType.Date, optional: true()>,
+            received_date: <@bo/attribute label: 'Received date', column: 'received_date', dataType: dataType.Date, optional: true()>,
+            country_of_origin: <@bo/attribute label: 'Country of origin', column: 'country_of_origin', dataType: dataType.String, length: 2, optional: true()>,
+            quality_status: <@bo/attribute label: 'Quality status', column: 'quality_status', dataType: dataType.String, length: 4000, optional: false()>,
+            is_recalled: <@bo/attribute label: 'Is recalled', column: 'is_recalled', dataType: dataType.Boolean, optional: false()>,
+            recall_id: <@bo/attribute label: 'Recall id', column: 'recall_id', dataType: dataType.Long, length: 18, optional: true()>,
+            attributes: <@bo/attribute label: 'Attributes', column: 'attributes', dataType: dataType.JSON, length: 4000, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'lot_number' >,
+            list: < 'tenant_id', 'item_id', 'lot_number', 'supplier_lot_number', 'supplier_id', 'manufactured_date' >,
+            description: < 'tenant_id', 'item_id', 'lot_number', 'supplier_lot_number', 'supplier_id', 'manufactured_date', 'best_before_date', 'expiry_date', 'received_date', 'country_of_origin', 'quality_status', 'is_recalled' >,
+            search: < 'lot_number', 'supplier_lot_number' >
+        >
+    >
+end-resource

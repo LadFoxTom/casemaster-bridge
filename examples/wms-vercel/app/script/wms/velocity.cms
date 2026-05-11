@@ -1,0 +1,60 @@
+// Casemaster-WMS — item velocity rollup (Phase 12).
+//
+// rollup(period_days)
+//     — populate `item_velocity` rows for the trailing N days based on
+//       PICK journal entries. Computes pick_count, line_count, qty_picked,
+//       and a recency-weighted velocity_score; classifies items into
+//       A/B/C bands (top 20% / next 30% / rest by qty_picked).
+//
+// Real implementation should also weight by recency, do per-warehouse
+// segmentation, and run on a scheduler. This first pass is a single
+// in-process pass over the journal.
+
+function rollup(period_days)
+    set('days', _onError([period_days], 90))
+    set('period_start', concat(format(today(), 'yyyy-MM-dd'), ' 00:00:00'))
+    set('period_end',   concat(format(today(), 'yyyy-MM-dd'), ' 23:59:59'))
+
+    // Replace any prior rollup for today to keep the daily snapshot clean.
+    sql.execute(concat(
+        "DELETE FROM item_velocity WHERE period_end::date = CURRENT_DATE"
+    ))
+
+    // Aggregate PICK journal entries per (warehouse, item) over the window.
+    sql.execute(concat(
+        "INSERT INTO item_velocity (tenant_id, warehouse_id, item_id, period_start, period_end, pick_count, line_count, qty_picked, computed_at) ",
+        "SELECT 1, j.warehouse_id, j.item_id, ",
+        "       CURRENT_DATE - INTERVAL '", [days], " days', ",
+        "       CURRENT_DATE, ",
+        "       count(*), count(distinct j.reference_id), abs(sum(j.qty)), NOW() ",
+        "FROM inventory_journal j ",
+        "WHERE j.transaction_type = 'PICK' ",
+        "  AND j.journal_timestamp >= NOW() - INTERVAL '", [days], " days' ",
+        "GROUP BY j.warehouse_id, j.item_id"
+    ))
+
+    // ABC banding: top 20% of qty_picked → A, next 30% → B, rest → C.
+    sql.execute(concat(
+        "WITH ranked AS ( ",
+        "  SELECT id, ",
+        "         percent_rank() OVER (PARTITION BY warehouse_id ORDER BY qty_picked DESC) AS pr ",
+        "  FROM item_velocity ",
+        "  WHERE period_end::date = CURRENT_DATE ",
+        ") ",
+        "UPDATE item_velocity v ",
+        "SET abc_class = CASE ",
+        "                  WHEN r.pr <= 0.20 THEN 'A' ",
+        "                  WHEN r.pr <= 0.50 THEN 'B' ",
+        "                  ELSE 'C' END, ",
+        "    velocity_score = (1.0 - r.pr) * 100 ",
+        "FROM ranked r ",
+        "WHERE r.id = v.id"
+    ))
+
+    // Mirror abc_class onto the item table for quick reads.
+    sql.execute(concat(
+        "UPDATE item SET abc_class = v.abc_class, velocity_score = v.velocity_score ",
+        "FROM item_velocity v ",
+        "WHERE v.item_id = item.id AND v.period_end::date = CURRENT_DATE"
+    ))
+end-function

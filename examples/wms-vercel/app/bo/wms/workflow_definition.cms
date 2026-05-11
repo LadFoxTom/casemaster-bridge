@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `workflow_definition` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Workflow definition',
+        table: 'workflow_definition',
+        primaryKey: 'id',
+        sequence: 'workflow_definition',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            workflow_code: <@bo/attribute label: 'Workflow code', column: 'workflow_code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.Long, length: 9, optional: false()>,
+            bpmn_xml: <@bo/attribute label: 'Bpmn xml', column: 'bpmn_xml', dataType: dataType.String, length: 4000, optional: true()>,
+            json_definition: <@bo/attribute label: 'Json definition', column: 'json_definition', dataType: dataType.JSON, length: 4000, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'workflow_code' >,
+            list: < 'tenant_id', 'workflow_code', 'name', 'version', 'bpmn_xml', 'active' >,
+            description: < 'tenant_id', 'workflow_code', 'name', 'version', 'bpmn_xml', 'json_definition', 'active' >,
+            search: < 'workflow_code', 'name' >
+        >
+    >
+end-resource

@@ -1,0 +1,220 @@
+// Casemaster-WMS — Cycle Counts center.
+//   /page/wms/counts                 overview
+//   /page/wms/counts/f/session?id=N  count session detail with tasks
+
+inherits 'base'
+
+function main()
+    set('open_sessions',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'cs',
+                    entity:  'wms/count_session',
+                    where:   'status="OPEN" | status="IN_PROGRESS"',
+                    orderBy: '-started_at'
+                >
+            >,
+            rows: 25
+        )
+    )
+    set('open_tasks',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ct',
+                    entity:  'wms/count_task',
+                    where:   'status="OPEN" | status="IN_PROGRESS" | status="COUNTED" | status="VARIANCE_OUT"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 100
+        )
+    )
+    set('programs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'cp', entity: 'wms/count_program', orderBy: 'code'>
+            >,
+            rows: 25
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'counts')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '🧮 Cycle counts'>,
+            s_h: <@page/html `<h5 class="mt-3">Open sessions</h5>`>,
+            s_table: <@page/data/table
+                iterator: [open_sessions],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'session', qs: <id: $bo.pk([cs])>>
+                >
+            >,
+            t_h: <@page/html `<h5 class="mt-4">Pending count tasks</h5>`>,
+            t_table: <@page/data/table
+                iterator: [open_tasks],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            p_h: <@page/html `<h5 class="mt-4">Count programs</h5>`>,
+            p_table: <@page/data/table
+                iterator: [programs],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+function session()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('cs', bo.quickLoad('wms/count_session', [id], group: '*'))
+    if isNull([cs])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('tasks',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'ct', entity: 'wms/count_task', where: 'session_id={[id]}', orderBy: 'id'>
+            >,
+            rows: 500
+        )
+    )
+
+    set('s_no',     bo.attr([cs], 'session_number'))
+    set('s_status', bo.attr([cs], 'status'))
+    set('s_type',   bo.attr([cs], 'session_type'))
+
+    page.render(page.get('./sessionView'))
+end-function
+
+function submitCount()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('counted_qty', _onError(qs.getUntrusted('counted_qty'), ''))
+    set('confirm',     _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postSubmitCount', [id], [counted_qty])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('ct', bo.quickLoad('wms/count_task', [id], group: '*'))
+
+    page.render(page.get('./submitCountView'))
+end-function
+
+protected resource submitCountView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'counts')>,
+            crumbs: <@page/html `<p><a href="../counts" class="btn btn-sm btn-outline-secondary">&larr; Counts</a></p>`>,
+            title: <@page/title label: 'Submit count'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            header: <@page/html
+                if(isNull([ct]), '',
+                    resolveTemplate(`<div class="card mb-3"><div class="card-body">
+                        <h5>Count task #{{[id]}}</h5>
+                        <p class="small mb-0">Location id: {{bo.attr([ct], 'location_id')}} &middot; Item id: {{_onError(bo.attr([ct], 'item_id'), '—')}} &middot; Expected: {{_onError(bo.attr([ct], 'expected_qty'), '—')}} {{ if(bo.attr([ct], 'is_blind'), '<span class="badge badge-secondary">BLIND</span>', '') }}</p>
+                    </div></div>`)
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="submitCount" class="card"><div class="card-body">
+                    <input type="hidden" name="id" value="{{[id]}}">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Counted qty</label><input type="number" min="0" step="0.000001" name="counted_qty" value="{{[counted_qty]}}" class="form-control" required></div>
+                    <button class="btn btn-success" type="submit">Submit count</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postSubmitCount(task_id, counted_qty_str)
+    set('ct', bo.quickLoad('wms/count_task', [task_id], group: '*'))
+    if isNull([ct])
+        set('//act_err', 'Count task not found')
+        exit-function
+    end-if
+    set('counted', _onError(dbl([counted_qty_str]), -1))
+    if lt([counted], 0)
+        set('//act_err', 'Counted qty must be a non-negative number')
+        exit-function
+    end-if
+
+    set('expected', _onError(bo.attr([ct], 'expected_qty'), 0))
+    set('variance', sub([counted], [expected]))
+
+    bo.setAttr([ct], 'counted_qty',  [counted])
+    bo.setAttr([ct], 'variance_qty', [variance])
+    bo.setAttr([ct], 'counted_at',   now())
+    bo.setAttr([ct], 'final_qty',    [counted])
+
+    if eq([variance], 0)
+        bo.setAttr([ct], 'status', 'VARIANCE_OK')
+    else
+        bo.setAttr([ct], 'status', 'VARIANCE_OUT')
+    end-if
+    bo.persist([ct])
+
+    set('//act_msg', concat('Count submitted: counted ', [counted], ', expected ', [expected], ', variance ', [variance], '.'))
+end-function
+
+protected resource sessionView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'counts')>,
+            crumbs: <@page/html `<p><a href="../counts" class="btn btn-sm btn-outline-secondary">&larr; Counts</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Count session <code>{{[s_no]}}</code></h4>
+                    <p class="text-muted small mb-0">
+                        Status <span class="badge badge-info">{{[s_status]}}</span>
+                        &middot; Type {{[s_type]}}
+                    </p>
+                </div></div>`)
+            >,
+            t_h: <@page/html `<h5 class="mt-3">Tasks</h5>`>,
+            t_table: <@page/data/table
+                iterator: [tasks],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

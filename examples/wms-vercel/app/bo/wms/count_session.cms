@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `count_session` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Count session',
+        table: 'count_session',
+        primaryKey: 'id',
+        sequence: 'count_session',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            program_id: <@bo/attribute label: 'Program id', column: 'program_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/count_program'>,
+            session_number: <@bo/attribute label: 'Session number', column: 'session_number', dataType: dataType.String, length: 4000, optional: false()>,
+            session_type: <@bo/attribute label: 'Session type', column: 'session_type', dataType: dataType.String, length: 4000, optional: false()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            expected_location_count: <@bo/attribute label: 'Expected location count', column: 'expected_location_count', dataType: dataType.Long, length: 9, optional: true()>,
+            completed_location_count: <@bo/attribute label: 'Completed location count', column: 'completed_location_count', dataType: dataType.Long, length: 9, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'session_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'program_id', 'session_number', 'session_type', 'status' >,
+            description: < 'tenant_id', 'warehouse_id', 'program_id', 'session_number', 'session_type', 'started_at', 'completed_at', 'status', 'expected_location_count', 'completed_location_count' >,
+            search: < 'session_number' >
+        >
+    >
+end-resource

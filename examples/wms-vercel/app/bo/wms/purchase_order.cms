@@ -1,0 +1,40 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `purchase_order` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Purchase order',
+        table: 'purchase_order',
+        primaryKey: 'id',
+        sequence: 'purchase_order',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            po_number: <@bo/attribute label: 'Po number', column: 'po_number', dataType: dataType.String, length: 4000, optional: false()>,
+            external_reference: <@bo/attribute label: 'External reference', column: 'external_reference', dataType: dataType.String, length: 4000, optional: true()>,
+            expected_date: <@bo/attribute label: 'Expected date', column: 'expected_date', dataType: dataType.Date, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_document_id: <@bo/attribute label: 'Erp document id', column: 'erp_document_id', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'po_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'owner_id', 'supplier_id', 'po_number', 'external_reference' >,
+            description: < 'tenant_id', 'warehouse_id', 'owner_id', 'supplier_id', 'po_number', 'external_reference', 'expected_date', 'status', 'currency', 'notes', 'erp_document_id', 'created_at' >,
+            search: < 'po_number' >
+        >
+    >
+end-resource

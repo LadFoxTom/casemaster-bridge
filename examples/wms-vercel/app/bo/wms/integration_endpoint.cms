@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `integration_endpoint` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Integration endpoint',
+        table: 'integration_endpoint',
+        primaryKey: 'id',
+        sequence: 'integration_endpoint',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            direction: <@bo/attribute label: 'Direction', column: 'direction', dataType: dataType.String, length: 4000, optional: false()>,
+            transport: <@bo/attribute label: 'Transport', column: 'transport', dataType: dataType.String, length: 4000, optional: false()>,
+            target_url: <@bo/attribute label: 'Target url', column: 'target_url', dataType: dataType.String, length: 4000, optional: true()>,
+            auth_method: <@bo/attribute label: 'Auth method', column: 'auth_method', dataType: dataType.String, length: 4000, optional: true()>,
+            auth_config: <@bo/attribute label: 'Auth config', column: 'auth_config', dataType: dataType.JSON, length: 4000, optional: true()>,
+            schema_version: <@bo/attribute label: 'Schema version', column: 'schema_version', dataType: dataType.String, length: 4000, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list: < 'tenant_id', 'name', 'direction', 'transport', 'target_url', 'auth_method' >,
+            description: < 'tenant_id', 'name', 'direction', 'transport', 'target_url', 'auth_method', 'auth_config', 'schema_version', 'active', 'created_at' >,
+            search: < 'name' >
+        >
+    >
+end-resource

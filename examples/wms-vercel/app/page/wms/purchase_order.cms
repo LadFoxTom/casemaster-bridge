@@ -1,0 +1,40 @@
+// Generated from sql/wms_schema.sql by codegen_pages.py.
+// List view over the wms/purchase_order BO.
+
+inherits 'base'
+
+function main()
+    set('rows',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/purchase_order',
+                    orderBy: 'id'
+                >
+            >,
+            rows: 500
+        )
+    )
+    set('main', page.get('./main'))
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            title: <@page/title label: 'Purchase Order'>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; WMS dashboard</a></p>`>,
+            count: <@page/html
+                resolveTemplate(
+                    `<p class="text-muted">{{iterator.count([rows])}} row(s) in <code>purchase_order</code>.</p>`
+                )
+            >,
+            table: <@page/data/table
+                iterator: [rows],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

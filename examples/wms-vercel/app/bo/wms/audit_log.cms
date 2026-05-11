@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `audit_log` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Audit log',
+        table: 'audit_log',
+        primaryKey: 'id',
+        sequence: 'audit_log',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            occurred_at: <@bo/attribute label: 'Occurred at', column: 'occurred_at', dataType: dataType.Timestamp, optional: false()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true()>,
+            api_credential_id: <@bo/attribute label: 'Api credential id', column: 'api_credential_id', dataType: dataType.Long, length: 18, optional: true()>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: true()>,
+            correlation_id: <@bo/attribute label: 'Correlation id', column: 'correlation_id', dataType: dataType.String, length: 36, optional: true()>,
+            ip_address: <@bo/attribute label: 'Ip address', column: 'ip_address', dataType: dataType.String, length: 50, optional: true()>,
+            operation: <@bo/attribute label: 'Operation', column: 'operation', dataType: dataType.String, length: 4000, optional: false()>,
+            entity_type: <@bo/attribute label: 'Entity type', column: 'entity_type', dataType: dataType.String, length: 4000, optional: false()>,
+            entity_id: <@bo/attribute label: 'Entity id', column: 'entity_id', dataType: dataType.Long, length: 18, optional: true()>,
+            action: <@bo/attribute label: 'Action', column: 'action', dataType: dataType.String, length: 4000, optional: false()>,
+            before_hash: <@bo/attribute label: 'Before hash', column: 'before_hash', dataType: dataType.String, length: 4000, optional: true()>,
+            after_hash: <@bo/attribute label: 'After hash', column: 'after_hash', dataType: dataType.String, length: 4000, optional: true()>,
+            payload_encrypted: <@bo/attribute label: 'Payload encrypted', column: 'payload_encrypted', dataType: dataType.String, length: 4000, optional: true()>,
+            result: <@bo/attribute label: 'Result', column: 'result', dataType: dataType.String, length: 4000, optional: false()>,
+            failure_reason: <@bo/attribute label: 'Failure reason', column: 'failure_reason', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'correlation_id' >,
+            list: < 'tenant_id', 'user_id', 'api_credential_id', 'device_id', 'correlation_id', 'ip_address' >,
+            description: < 'tenant_id', 'occurred_at', 'user_id', 'api_credential_id', 'device_id', 'correlation_id', 'ip_address', 'operation', 'entity_type', 'entity_id', 'action', 'before_hash' >
+        >
+    >
+end-resource

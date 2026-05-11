@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `equipment_command` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Equipment command',
+        table: 'equipment_command',
+        primaryKey: 'id',
+        sequence: 'equipment_command',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            equipment_id: <@bo/attribute label: 'Equipment id', column: 'equipment_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/equipment'>,
+            command_type: <@bo/attribute label: 'Command type', column: 'command_type', dataType: dataType.String, length: 4000, optional: false()>,
+            correlation_id: <@bo/attribute label: 'Correlation id', column: 'correlation_id', dataType: dataType.String, length: 4000, optional: false()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            attempt_count: <@bo/attribute label: 'Attempt count', column: 'attempt_count', dataType: dataType.Long, length: 9, optional: false()>,
+            sent_at: <@bo/attribute label: 'Sent at', column: 'sent_at', dataType: dataType.Timestamp, optional: true()>,
+            acknowledged_at: <@bo/attribute label: 'Acknowledged at', column: 'acknowledged_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            last_error: <@bo/attribute label: 'Last error', column: 'last_error', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'command_type' >,
+            list: < 'tenant_id', 'equipment_id', 'command_type', 'correlation_id', 'status', 'attempt_count' >,
+            description: < 'tenant_id', 'equipment_id', 'command_type', 'correlation_id', 'payload', 'status', 'attempt_count', 'sent_at', 'acknowledged_at', 'completed_at', 'last_error' >
+        >
+    >
+end-resource

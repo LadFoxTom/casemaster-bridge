@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `erp_posting_queue` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Erp posting queue',
+        table: 'erp_posting_queue',
+        primaryKey: 'id',
+        sequence: 'erp_posting_queue',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            source_table: <@bo/attribute label: 'Source table', column: 'source_table', dataType: dataType.String, length: 4000, optional: false()>,
+            source_id: <@bo/attribute label: 'Source id', column: 'source_id', dataType: dataType.Long, length: 18, optional: false()>,
+            posting_type: <@bo/attribute label: 'Posting type', column: 'posting_type', dataType: dataType.String, length: 4000, optional: false()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            erp_document_number: <@bo/attribute label: 'Erp document number', column: 'erp_document_number', dataType: dataType.String, length: 4000, optional: true()>,
+            sent_at: <@bo/attribute label: 'Sent at', column: 'sent_at', dataType: dataType.Timestamp, optional: true()>,
+            acknowledged_at: <@bo/attribute label: 'Acknowledged at', column: 'acknowledged_at', dataType: dataType.Timestamp, optional: true()>,
+            last_error: <@bo/attribute label: 'Last error', column: 'last_error', dataType: dataType.String, length: 4000, optional: true()>,
+            retry_count: <@bo/attribute label: 'Retry count', column: 'retry_count', dataType: dataType.Long, length: 9, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'source_table' >,
+            list: < 'tenant_id', 'source_table', 'source_id', 'posting_type', 'status', 'erp_document_number' >,
+            description: < 'tenant_id', 'source_table', 'source_id', 'posting_type', 'payload', 'status', 'erp_document_number', 'sent_at', 'acknowledged_at', 'last_error', 'retry_count' >,
+            search: < 'erp_document_number' >
+        >
+    >
+end-resource

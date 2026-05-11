@@ -1,0 +1,52 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `shipment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Shipment',
+        table: 'shipment',
+        primaryKey: 'id',
+        sequence: 'shipment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            shipment_number: <@bo/attribute label: 'Shipment number', column: 'shipment_number', dataType: dataType.String, length: 4000, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            carrier_service_id: <@bo/attribute label: 'Carrier service id', column: 'carrier_service_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/carrier_service'>,
+            ship_to_address_id: <@bo/attribute label: 'Ship to address id', column: 'ship_to_address_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner_address'>,
+            planned_ship_date: <@bo/attribute label: 'Planned ship date', column: 'planned_ship_date', dataType: dataType.Date, optional: true()>,
+            actual_ship_date: <@bo/attribute label: 'Actual ship date', column: 'actual_ship_date', dataType: dataType.Date, optional: true()>,
+            tracking_number: <@bo/attribute label: 'Tracking number', column: 'tracking_number', dataType: dataType.String, length: 4000, optional: true()>,
+            master_tracking_number: <@bo/attribute label: 'Master tracking number', column: 'master_tracking_number', dataType: dataType.String, length: 4000, optional: true()>,
+            carrier_label_url: <@bo/attribute label: 'Carrier label url', column: 'carrier_label_url', dataType: dataType.String, length: 4000, optional: true()>,
+            insured_value: <@bo/attribute label: 'Insured value', column: 'insured_value', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            cod_amount: <@bo/attribute label: 'Cod amount', column: 'cod_amount', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            declared_weight_kg: <@bo/attribute label: 'Declared weight kg', column: 'declared_weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            actual_weight_kg: <@bo/attribute label: 'Actual weight kg', column: 'actual_weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            declared_volume_l: <@bo/attribute label: 'Declared volume l', column: 'declared_volume_l', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            package_count: <@bo/attribute label: 'Package count', column: 'package_count', dataType: dataType.Long, length: 9, optional: false()>,
+            pallet_count: <@bo/attribute label: 'Pallet count', column: 'pallet_count', dataType: dataType.Long, length: 9, optional: false()>,
+            freight_cost: <@bo/attribute label: 'Freight cost', column: 'freight_cost', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            erp_posting_id: <@bo/attribute label: 'Erp posting id', column: 'erp_posting_id', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_posted_at: <@bo/attribute label: 'Erp posted at', column: 'erp_posted_at', dataType: dataType.Timestamp, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'shipment_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'shipment_number', 'sales_order_id', 'carrier_id', 'carrier_service_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'shipment_number', 'sales_order_id', 'carrier_id', 'carrier_service_id', 'ship_to_address_id', 'planned_ship_date', 'actual_ship_date', 'tracking_number', 'master_tracking_number', 'carrier_label_url' >,
+            search: < 'shipment_number', 'tracking_number', 'master_tracking_number' >
+        >
+    >
+end-resource

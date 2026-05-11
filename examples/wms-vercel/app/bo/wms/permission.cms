@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `permission` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Permission',
+        table: 'permission',
+        primaryKey: 'id',
+        sequence: 'permission',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: true()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            module: <@bo/attribute label: 'Module', column: 'module', dataType: dataType.String, length: 4000, optional: true()>,
+            category: <@bo/attribute label: 'Category', column: 'category', dataType: dataType.String, length: 4000, optional: true()>,
+            sensitive: <@bo/attribute label: 'Sensitive', column: 'sensitive', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'code', 'name', 'description', 'module', 'category', 'sensitive' >,
+            description: < 'code', 'name', 'description', 'module', 'category', 'sensitive' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_kit_component` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item kit component',
+        table: 'item_kit_component',
+        primaryKey: 'id',
+        sequence: 'item_kit_component',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            parent_item_id: <@bo/attribute label: 'Parent item id', column: 'parent_item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            component_item_id: <@bo/attribute label: 'Component item id', column: 'component_item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            quantity: <@bo/attribute label: 'Quantity', column: 'quantity', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: false()>,
+            is_optional: <@bo/attribute label: 'Is optional', column: 'is_optional', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'parent_item_id', 'component_item_id', 'quantity', 'sequence', 'is_optional' >,
+            description: < 'tenant_id', 'parent_item_id', 'component_item_id', 'quantity', 'sequence', 'is_optional' >
+        >
+    >
+end-resource

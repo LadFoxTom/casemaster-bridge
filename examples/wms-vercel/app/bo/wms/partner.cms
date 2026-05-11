@@ -1,0 +1,45 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `partner` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Partner',
+        table: 'partner',
+        primaryKey: 'id',
+        sequence: 'partner',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            legal_name: <@bo/attribute label: 'Legal name', column: 'legal_name', dataType: dataType.String, length: 4000, optional: true()>,
+            is_supplier: <@bo/attribute label: 'Is supplier', column: 'is_supplier', dataType: dataType.Boolean, optional: false()>,
+            is_customer: <@bo/attribute label: 'Is customer', column: 'is_customer', dataType: dataType.Boolean, optional: false()>,
+            is_carrier: <@bo/attribute label: 'Is carrier', column: 'is_carrier', dataType: dataType.Boolean, optional: false()>,
+            is_3pl_owner: <@bo/attribute label: 'Is 3pl owner', column: 'is_3pl_owner', dataType: dataType.Boolean, optional: false()>,
+            tax_id: <@bo/attribute label: 'Tax id', column: 'tax_id', dataType: dataType.String, length: 4000, optional: true()>,
+            vat_number: <@bo/attribute label: 'Vat number', column: 'vat_number', dataType: dataType.String, length: 4000, optional: true()>,
+            duns_number: <@bo/attribute label: 'Duns number', column: 'duns_number', dataType: dataType.String, length: 4000, optional: true()>,
+            eori_number: <@bo/attribute label: 'Eori number', column: 'eori_number', dataType: dataType.String, length: 4000, optional: true()>,
+            payment_terms: <@bo/attribute label: 'Payment terms', column: 'payment_terms', dataType: dataType.String, length: 4000, optional: true()>,
+            default_currency: <@bo/attribute label: 'Default currency', column: 'default_currency', dataType: dataType.String, length: 3, optional: true()>,
+            credit_limit: <@bo/attribute label: 'Credit limit', column: 'credit_limit', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'code', 'name', 'legal_name', 'is_supplier', 'is_customer' >,
+            description: < 'tenant_id', 'code', 'name', 'legal_name', 'is_supplier', 'is_customer', 'is_carrier', 'is_3pl_owner', 'tax_id', 'vat_number', 'duns_number', 'eori_number' >,
+            search: < 'code', 'name', 'legal_name', 'vat_number' >
+        >
+    >
+end-resource

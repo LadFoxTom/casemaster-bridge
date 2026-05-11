@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `recall_lot` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Recall lot',
+        table: 'recall_lot',
+        primaryKey: 'id',
+        sequence: 'recall_lot',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            recall_id: <@bo/attribute label: 'Recall id', column: 'recall_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/recall'>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/lot'>,
+            qty_originally_received: <@bo/attribute label: 'Qty originally received', column: 'qty_originally_received', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            qty_in_stock: <@bo/attribute label: 'Qty in stock', column: 'qty_in_stock', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            qty_shipped: <@bo/attribute label: 'Qty shipped', column: 'qty_shipped', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            qty_recovered: <@bo/attribute label: 'Qty recovered', column: 'qty_recovered', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            qty_destroyed: <@bo/attribute label: 'Qty destroyed', column: 'qty_destroyed', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'recall_id', 'lot_id', 'qty_originally_received', 'qty_in_stock', 'qty_shipped' >,
+            description: < 'tenant_id', 'recall_id', 'lot_id', 'qty_originally_received', 'qty_in_stock', 'qty_shipped', 'qty_recovered', 'qty_destroyed' >
+        >
+    >
+end-resource

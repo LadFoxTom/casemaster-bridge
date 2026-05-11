@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `integration_partner` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Integration partner',
+        table: 'integration_partner',
+        primaryKey: 'id',
+        sequence: 'integration_partner',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            partner_id: <@bo/attribute label: 'Partner id', column: 'partner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            integration_type: <@bo/attribute label: 'Integration type', column: 'integration_type', dataType: dataType.String, length: 4000, optional: false()>,
+            edi_isa_id: <@bo/attribute label: 'Edi isa id', column: 'edi_isa_id', dataType: dataType.String, length: 4000, optional: true()>,
+            edi_gs_id: <@bo/attribute label: 'Edi gs id', column: 'edi_gs_id', dataType: dataType.String, length: 4000, optional: true()>,
+            test_mode: <@bo/attribute label: 'Test mode', column: 'test_mode', dataType: dataType.Boolean, optional: false()>,
+            config: <@bo/attribute label: 'Config', column: 'config', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'partner_id', 'code', 'name', 'integration_type', 'edi_isa_id' >,
+            description: < 'tenant_id', 'partner_id', 'code', 'name', 'integration_type', 'edi_isa_id', 'edi_gs_id', 'test_mode', 'config' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

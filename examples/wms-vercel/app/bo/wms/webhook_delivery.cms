@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `webhook_delivery` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Webhook delivery',
+        table: 'webhook_delivery',
+        primaryKey: 'id',
+        sequence: 'webhook_delivery',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            webhook_subscription_id: <@bo/attribute label: 'Webhook subscription id', column: 'webhook_subscription_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/webhook_subscription'>,
+            event_id: <@bo/attribute label: 'Event id', column: 'event_id', dataType: dataType.String, length: 36, optional: false()>,
+            event_type: <@bo/attribute label: 'Event type', column: 'event_type', dataType: dataType.String, length: 4000, optional: false()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: false()>,
+            attempt_count: <@bo/attribute label: 'Attempt count', column: 'attempt_count', dataType: dataType.Long, length: 9, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            response_status: <@bo/attribute label: 'Response status', column: 'response_status', dataType: dataType.Long, length: 9, optional: true()>,
+            response_body: <@bo/attribute label: 'Response body', column: 'response_body', dataType: dataType.String, length: 4000, optional: true()>,
+            next_attempt_at: <@bo/attribute label: 'Next attempt at', column: 'next_attempt_at', dataType: dataType.Timestamp, optional: true()>,
+            delivered_at: <@bo/attribute label: 'Delivered at', column: 'delivered_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'event_type' >,
+            list: < 'tenant_id', 'webhook_subscription_id', 'event_id', 'event_type', 'attempt_count', 'status' >,
+            description: < 'tenant_id', 'webhook_subscription_id', 'event_id', 'event_type', 'payload', 'attempt_count', 'status', 'response_status', 'response_body', 'next_attempt_at', 'delivered_at' >
+        >
+    >
+end-resource

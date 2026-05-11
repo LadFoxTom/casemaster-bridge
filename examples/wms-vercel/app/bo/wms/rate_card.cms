@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `rate_card` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Rate card',
+        table: 'rate_card',
+        primaryKey: 'id',
+        sequence: 'rate_card',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            contract_id: <@bo/attribute label: 'Contract id', column: 'contract_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/client_contract'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: false()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'contract_id', 'code', 'name', 'effective_from', 'effective_to' >,
+            description: < 'tenant_id', 'contract_id', 'code', 'name', 'effective_from', 'effective_to' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

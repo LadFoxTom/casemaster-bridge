@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `device_app_state` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Device app state',
+        table: 'device_app_state',
+        primaryKey: 'id',
+        sequence: 'device_app_state',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/device'>,
+            installed_version_code: <@bo/attribute label: 'Installed version code', column: 'installed_version_code', dataType: dataType.Long, length: 9, optional: true()>,
+            last_seen_at: <@bo/attribute label: 'Last seen at', column: 'last_seen_at', dataType: dataType.Timestamp, optional: true()>,
+            last_user_id: <@bo/attribute label: 'Last user id', column: 'last_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            pending_queue_size: <@bo/attribute label: 'Pending queue size', column: 'pending_queue_size', dataType: dataType.Long, length: 9, optional: true()>,
+            parked_queue_size: <@bo/attribute label: 'Parked queue size', column: 'parked_queue_size', dataType: dataType.Long, length: 9, optional: true()>,
+            battery_percent: <@bo/attribute label: 'Battery percent', column: 'battery_percent', dataType: dataType.Long, length: 9, optional: true()>,
+            network_type: <@bo/attribute label: 'Network type', column: 'network_type', dataType: dataType.String, length: 4000, optional: true()>,
+            storage_free_mb: <@bo/attribute label: 'Storage free mb', column: 'storage_free_mb', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'network_type' >,
+            list: < 'tenant_id', 'device_id', 'installed_version_code', 'last_user_id', 'pending_queue_size', 'parked_queue_size' >,
+            description: < 'tenant_id', 'device_id', 'installed_version_code', 'last_seen_at', 'last_user_id', 'pending_queue_size', 'parked_queue_size', 'battery_percent', 'network_type', 'storage_free_mb' >
+        >
+    >
+end-resource

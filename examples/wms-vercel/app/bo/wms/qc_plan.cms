@@ -1,0 +1,46 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `qc_plan` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Qc plan',
+        table: 'qc_plan',
+        primaryKey: 'id',
+        sequence: 'qc_plan',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            plan_code: <@bo/attribute label: 'Plan code', column: 'plan_code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            trigger_type: <@bo/attribute label: 'Trigger type', column: 'trigger_type', dataType: dataType.String, length: 4000, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item'>,
+            item_category_id: <@bo/attribute label: 'Item category id', column: 'item_category_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item_category'>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            sampling_method: <@bo/attribute label: 'Sampling method', column: 'sampling_method', dataType: dataType.String, length: 4000, optional: false()>,
+            aql_level: <@bo/attribute label: 'Aql level', column: 'aql_level', dataType: dataType.String, length: 4000, optional: true()>,
+            aql_inspection_level: <@bo/attribute label: 'Aql inspection level', column: 'aql_inspection_level', dataType: dataType.String, length: 4000, optional: true()>,
+            fixed_sample_size: <@bo/attribute label: 'Fixed sample size', column: 'fixed_sample_size', dataType: dataType.Long, length: 9, optional: true()>,
+            sample_percent: <@bo/attribute label: 'Sample percent', column: 'sample_percent', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            skip_lot_ratio: <@bo/attribute label: 'Skip lot ratio', column: 'skip_lot_ratio', dataType: dataType.Long, length: 9, optional: true()>,
+            auto_hold_on_fail: <@bo/attribute label: 'Auto hold on fail', column: 'auto_hold_on_fail', dataType: dataType.Boolean, optional: false()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: true()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.Long, length: 9, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'plan_code' >,
+            list: < 'tenant_id', 'plan_code', 'name', 'trigger_type', 'item_id', 'item_category_id' >,
+            description: < 'tenant_id', 'plan_code', 'name', 'trigger_type', 'item_id', 'item_category_id', 'supplier_id', 'sampling_method', 'aql_level', 'aql_inspection_level', 'fixed_sample_size', 'sample_percent' >,
+            search: < 'plan_code', 'name' >
+        >
+    >
+end-resource

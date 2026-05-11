@@ -1,0 +1,40 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `supplier_scorecard` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Supplier scorecard',
+        table: 'supplier_scorecard',
+        primaryKey: 'id',
+        sequence: 'supplier_scorecard',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Date, optional: false()>,
+            period_end: <@bo/attribute label: 'Period end', column: 'period_end', dataType: dataType.Date, optional: false()>,
+            receipts_count: <@bo/attribute label: 'Receipts count', column: 'receipts_count', dataType: dataType.Long, length: 9, optional: true()>,
+            on_time_count: <@bo/attribute label: 'On time count', column: 'on_time_count', dataType: dataType.Long, length: 9, optional: true()>,
+            in_full_count: <@bo/attribute label: 'In full count', column: 'in_full_count', dataType: dataType.Long, length: 9, optional: true()>,
+            accurate_asn_count: <@bo/attribute label: 'Accurate asn count', column: 'accurate_asn_count', dataType: dataType.Long, length: 9, optional: true()>,
+            failed_inspections: <@bo/attribute label: 'Failed inspections', column: 'failed_inspections', dataType: dataType.Long, length: 9, optional: true()>,
+            total_ncr_count: <@bo/attribute label: 'Total ncr count', column: 'total_ncr_count', dataType: dataType.Long, length: 9, optional: true()>,
+            quality_score: <@bo/attribute label: 'Quality score', column: 'quality_score', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            delivery_score: <@bo/attribute label: 'Delivery score', column: 'delivery_score', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            overall_score: <@bo/attribute label: 'Overall score', column: 'overall_score', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            rating: <@bo/attribute label: 'Rating', column: 'rating', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'rating' >,
+            list: < 'tenant_id', 'supplier_id', 'period_start', 'period_end', 'receipts_count', 'on_time_count' >,
+            description: < 'tenant_id', 'supplier_id', 'period_start', 'period_end', 'receipts_count', 'on_time_count', 'in_full_count', 'accurate_asn_count', 'failed_inspections', 'total_ncr_count', 'quality_score', 'delivery_score' >
+        >
+    >
+end-resource

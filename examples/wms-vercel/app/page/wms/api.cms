@@ -1,0 +1,139 @@
+// Casemaster-WMS — REST/JSON API surface (Phase 4 entry point).
+//
+// Real production API would live at /api/v1/* with proper auth, idempotency
+// and OpenAPI docs. This page is a minimal demonstrator that:
+//   1. Documents the planned endpoint shapes (HTML page on /page/wms/api).
+//   2. Exposes ?resource=items|locations|inventory&format=json — returns
+//      JSON for that resource. Useful for ERP smoke-testing without a real
+//      auth tier yet.
+//
+// The route is auth-bypassed because it sits under /page/wms*. Production
+// must add OAuth client-credentials auth + per-credential rate limiting.
+
+inherits 'base'
+
+function main()
+    set('resource', _onError(qs.getUntrusted('resource'), ''))
+    set('format',   _onError(qs.getUntrusted('format'), 'html'))
+
+    if eq([format], 'json')
+        // Render JSON inside a `<pre>` element on a normal HTML page. Real
+        // application/json output requires bypassing the framework chrome
+        // (response.write + skipping page.render); that's deferred to the
+        // production /api/v1/* implementation.
+        set('json', script.call('./_jsonForResource', [resource]))
+        page.render(page.get('./jsonView'))
+        exit-function
+    end-if
+
+    page.render(page.get('./docsView'))
+end-function
+
+// JSON renderer — single resource keyed by the `resource` query string.
+// Only items / locations / inventory implemented; extend by adding cases.
+protected function _jsonForResource(resource)
+    if eq([resource], 'items')
+        return script.call('./_dumpJson', 'item', "id, sku, name, base_uom_code, status, weight_kg, abc_class")
+    end-if
+    if eq([resource], 'locations')
+        return script.call('./_dumpJson', 'location', "id, code, barcode, location_type, status, zone_id")
+    end-if
+    if eq([resource], 'inventory')
+        return script.call('./_dumpJson', 'inventory', "id, item_id, location_id, qty_on_hand, qty_reserved, qty_on_hold, quality_status, uom_code")
+    end-if
+    if eq([resource], 'shipments')
+        return script.call('./_dumpJson', 'shipment', "id, shipment_number, sales_order_id, carrier_id, status, tracking_number")
+    end-if
+    if eq([resource], 'orders')
+        return script.call('./_dumpJson', 'sales_order', "id, order_number, customer_id, status, required_ship_date, priority")
+    end-if
+    return '{"error": "unknown resource", "supported": ["items", "locations", "inventory", "shipments", "orders"]}'
+end-function
+
+// Build a JSON array by iterating an entity. The cms `iterator.ofEntity`
+// path returns BO rows; we read attributes by name and concatenate strings.
+// (Quick-and-dirty: a real implementation would use json.pb2json over a
+// proper PB built from each row.)
+protected function _dumpJson(table, fields)
+    set('rows',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'r', entity: concat('wms/', [table]), orderBy: 'id'>
+            >,
+            rows: 500
+        )
+    )
+    set('first', true())
+    set('out', '[')
+    iterate [rows]
+        if not([first])
+            set('out', concat([out], ','))
+        end-if
+        set('first', false())
+        // Build a simple JSON object per row — id only as a marker; the
+        // `fields` arg is for documentation. Real serialization would walk
+        // every BO attribute.
+        set('out', concat([out],
+            '{"id": ', formatString('{0}', bo.pk([r])), '}'
+        ))
+    end-iterate
+    set('out', concat([out], ']'))
+    return [out]
+end-function
+
+protected resource jsonView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="api" class="btn btn-sm btn-outline-secondary">&larr; API docs</a></p>`>,
+            title: <@page/title label: 'API JSON preview'>,
+            body: <@page/html
+                resolveTemplate(`<pre class="border rounded p-3 bg-light">{{[json]}}</pre>`)
+            >
+        >
+    >
+end-resource
+
+protected resource docsView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: 'API'>,
+            intro: <@page/html `<p class="text-muted">Demonstrator REST surface. Real production /api/v1/* with OAuth, idempotency and OpenAPI is on the roadmap.</p>`>,
+            doc: <@page/html
+                resolveTemplate(`
+                <h5>Try a JSON read</h5>
+                <ul>
+                    <li><a href="api?resource=items&format=json">/page/wms/api?resource=items&amp;format=json</a></li>
+                    <li><a href="api?resource=locations&format=json">/page/wms/api?resource=locations&amp;format=json</a></li>
+                    <li><a href="api?resource=inventory&format=json">/page/wms/api?resource=inventory&amp;format=json</a></li>
+                    <li><a href="api?resource=orders&format=json">/page/wms/api?resource=orders&amp;format=json</a></li>
+                    <li><a href="api?resource=shipments&format=json">/page/wms/api?resource=shipments&amp;format=json</a></li>
+                </ul>
+                <h5 class="mt-4">Planned shape</h5>
+                <pre class="border rounded p-3 bg-light">GET    /api/v1/items
+GET    /api/v1/items/{id}
+POST   /api/v1/items                          (Idempotency-Key: ...)
+PATCH  /api/v1/items/{id}
+DELETE /api/v1/items/{id}
+
+action endpoints (POST, idempotent):
+  /api/v1/orders/{id}/allocate
+  /api/v1/orders/{id}/cancel
+  /api/v1/waves/{id}/release
+  /api/v1/picks/{task_id}/confirm
+  /api/v1/shipments/{id}/ship
+  /api/v1/asns/{id}/receive
+  /api/v1/inventory/adjust
+  /api/v1/rmas/{id}/dispose
+
+auth:
+  OAuth 2.0 client_credentials → /oauth/token
+  Bearer in subsequent requests
+  Idempotency-Key header for all POSTs (TTL 7 days, see idempotency_record)
+</pre>`)
+            >
+        >
+    >
+end-resource

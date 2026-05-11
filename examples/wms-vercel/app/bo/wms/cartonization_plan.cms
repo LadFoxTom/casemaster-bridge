@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `cartonization_plan` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Cartonization plan',
+        table: 'cartonization_plan',
+        primaryKey: 'id',
+        sequence: 'cartonization_plan',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order'>,
+            carton_count: <@bo/attribute label: 'Carton count', column: 'carton_count', dataType: dataType.Long, length: 9, optional: false()>,
+            plan_jsonb: <@bo/attribute label: 'Plan jsonb', column: 'plan_jsonb', dataType: dataType.JSON, length: 4000, optional: false()>,
+            generated_at: <@bo/attribute label: 'Generated at', column: 'generated_at', dataType: dataType.Timestamp, optional: false()>,
+            used_at: <@bo/attribute label: 'Used at', column: 'used_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'sales_order_id', 'carton_count' >,
+            description: < 'tenant_id', 'sales_order_id', 'carton_count', 'plan_jsonb', 'generated_at', 'used_at' >
+        >
+    >
+end-resource

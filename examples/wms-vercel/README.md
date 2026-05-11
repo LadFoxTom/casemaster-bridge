@@ -1,104 +1,107 @@
-# wms-vercel — runnable demo of `@casemaster/admin`
+# wms-vercel — the real Casemaster-WMS, on Vercel
 
-This is a real Casemaster app. The same `.cms` source ships in two forms
-on the same domain: classic Bootstrap-4 HTML *and* the new SPA. They
-share authentication, schema, and data — only the renderer differs.
+This is the **complete 164-BO Casemaster-WMS** wired into the bridge SPA and
+served by `cms-vercel` from a single Vercel function. The same `.cms` source
+renders two ways:
 
-## Three ways to run it
+- **Classic Bootstrap-4 HTML** at `/page/wms/*` via the cms-vercel runtime.
+- **The Casemaster Bridge SPA** at `/admin/*` consuming `/api/v1/*` JSON.
 
-### Path A — the fast review (no install)
+Both read the same Postgres. Both share the same `cms_session` cookie.
+
+## What's in `app/`
+
+The full Casemaster-WMS source: 164 BOs, 180 pages, 13 helper scripts.
+The bridge's `script/_cmsAdmin.cms` helper is installed too so SPA writes
+route through `bo.persist` (audit-friendly) instead of direct SQL.
+
+## Deploying to Vercel — one-time setup
+
+You need a Postgres database (Neon recommended; free tier is plenty).
+
+### 1. Provision Neon
+
+1. Go to <https://neon.tech> → New Project → pick a region.
+2. Copy the connection string. Looks like:
+   `postgres://user:password@ep-xxxx.neon.tech/neondb?sslmode=require`
+
+### 2. Load the WMS schema + sample data
 
 ```bash
-node server.mjs
+psql "<your Neon connection string>" -f sql/wms_schema.sql
+# optional — sample rows for demo purposes
+python sql/seed_demo.py "<connection string>"
 ```
 
-Pure Node, no `npm install`. Spins up:
+The schema file is ~2700 lines and creates all 164 tables, indexes, and
+foreign keys in one transaction. Safe to re-run (everything is `IF NOT
+EXISTS`).
 
-- `/`                          — Old vs New comparison landing.
-- `/admin/`                    — the SPA (loaded from CDN ESM).
-- `/api/v1/*`                  — the JSON adapter against an in-memory seed.
-- `/page/wms/inventory`        — a minimal Bootstrap-4 render of the same data.
+### 3. Add `DATABASE_URL` to Vercel
 
-Best for: showing the package to a stakeholder in 60 seconds.
+In your Vercel project → Settings → Environment Variables:
 
-### Path B — the real cms-vercel (with Postgres)
+```
+DATABASE_URL = postgres://user:password@ep-xxxx.neon.tech/neondb?sslmode=require
+```
+
+Set for Production + Preview environments. Redeploy.
+
+That's it. The SPA's sidebar now shows the full 164-BO WMS, fed from your
+Neon database in real time.
+
+## What happens before `DATABASE_URL` is set
+
+The deployment still builds. `/api/v1/schema` still works (sidebar
+populates with all 164 BOs from the `.cms` declarations). Data endpoints
+return a clear "DATABASE_URL not configured" JSON error — the SPA renders
+this as an empty-state in the data tables, which is your signal to set the
+env var.
+
+## Local development
 
 ```bash
 npm install
-export DATABASE_URL=postgres://…
-npx vercel dev
+$env:DATABASE_URL = '<connection string>'
+npx vercel dev   # http://localhost:3000
 ```
 
-Now `/page/*` is served by the **real** cms-vercel runtime parsing the
-`.cms` files, and `/api/v1/*` is the api-vercel adapter going through
-the same parser/eval/BO machinery against your Postgres.
-
-Best for: developing real apps; verifying the SPA is byte-compatible
-with the classic HTML render.
-
-### Path C — production deploy
-
-```bash
-npm install
-vercel --prod
-```
-
-Same Vercel project; both runtime paths cohabit. Set `DATABASE_URL` in
-Vercel env and you're live.
-
-## .NET sidecar variant
-
-For sites running `CaseMaster.Web.exe`:
-
-1. Keep `CaseMaster.Web.exe` serving classic HTML — no changes.
-2. Run **this** project (cms-vercel + api-vercel) against the same
-   Postgres, mounting the same `app/` folder. Set
-   `CMS_HTML_DISABLED=1` if you want the sidecar to serve JSON only.
-3. Host the SPA's static `public/admin/` files anywhere — IIS on the
-   same Windows box, S3, or Vercel.
-4. Browser → static SPA → `/api/v1/*` (sidecar URL) → Postgres (shared).
-5. Both runtimes share the `cms_session` table so login flows transparently.
+`npm install` runs the `postinstall` hook that clones cms-vercel from
+GitHub and vendors it into `node_modules/cms-vercel`. First install takes
+~60s; subsequent ones are cached.
 
 ## Layout
 
 ```
-wms-vercel/
-├── app/                      .cms source (BO + page; same shape as Casemaster-WMS)
-│   ├── bo/wms/inventory.cms
-│   └── page/wms/inventory.cms
+examples/wms-vercel/
 ├── api/
-│   ├── index.ts              classic cms-vercel handler (Path B)
-│   └── v1/index.ts           api-vercel JSON adapter (Path B)
-├── public/
-│   ├── index.html            comparison landing
-│   └── admin/                the SPA static (works without a build)
-│       ├── index.html
-│       ├── app.js            React SPA via Preact-compat from esm.sh
-│       └── styles.css        design tokens + base styles
-├── seed/wms-seed.js          in-memory data for Path A
-├── _runtime/api-vercel.mjs   plain-JS port of the demo provider for Path A
-└── server.mjs                no-deps Node server for Path A
+│   ├── index.ts             cms-vercel handler for /page/* and /maintenance/*
+│   └── v1/index.ts          /api/v1/* JSON adapter — schema from .cms, data from Postgres
+├── app/                     the WMS source (164 BOs, 180 pages, 13 scripts + helpers)
+│   ├── bo/wms/*.cms
+│   ├── page/wms/*.cms
+│   ├── script/{_cmsAdmin,…}.cms
+│   ├── configuration.cms
+│   ├── environment.cms
+│   └── incDevelopment.cms
+├── sql/
+│   ├── wms_schema.sql       2700-line Postgres schema
+│   ├── seed_demo.py         sample row generator (Python)
+│   └── seed_sequence.py     sequence resetter
+├── _runtime/api-vercel.mjs  vendored SSE writer (no DB needed)
+├── public/                  static landing + the SPA bundle (read at /admin/)
+├── bin/install-runtime.mjs  postinstall: vendors cms-vercel from GitHub
+├── vercel.json              rewrites + includeFiles
+└── package.json
 ```
 
-## Things to try in the SPA
+## Tearing it back to the demo seed (no DB)
 
-- Press **⌘K** (or Ctrl-K) — the command palette indexes every page and BO.
-- Press **?** — see every keyboard shortcut.
-- Press **g i** — Linear-style "go to inventory."
-- Toggle theme: **⌘ Shift L**.
-- Open Inbound centre, pick an ASN, post a receipt — the inventory grid
-  refreshes live (in this build, by re-fetch; live SSE is roadmap
-  Phase 5).
-- Resize the sidebar; switch density compact/cozy/comfortable.
-- Open the same page in classic HTML via the "Classic HTML" button at
-  the top right of any list — same data, two renders.
+If you want a fast no-DB preview again instead of the real WMS,
+`server.mjs` and the `seed/wms-seed.js` file are still in the repo
+(unused by the current Vercel build). You'd revert `api/v1/index.ts` to
+use `createDemoProvider(wmsSeed())` and remove the `app/` contents.
 
-## What this demo proves
-
-- The same `.cms` source can drive a Bootstrap-4 page **and** a 2026
-  React SPA simultaneously.
-- The JSON contract is small, stable, and runtime-agnostic.
-- The SPA hits 60-fps virtualized rendering even with 50k+ rows.
-- Optimistic mutations + toasts make writes feel instant.
-- Cmd-K, shortcuts, theme, and density transform Casemaster apps from
-  "operator software" to "delightful operator software."
+We recommend going forward with the real WMS — the SPA looks identical
+either way, and the demo's polish was never about which data layer it
+talks to.

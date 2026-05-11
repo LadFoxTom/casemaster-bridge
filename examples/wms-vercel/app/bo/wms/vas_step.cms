@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `vas_step` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Vas step',
+        table: 'vas_step',
+        primaryKey: 'id',
+        sequence: 'vas_step',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            template_id: <@bo/attribute label: 'Template id', column: 'template_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/vas_template'>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: false()>,
+            instruction: <@bo/attribute label: 'Instruction', column: 'instruction', dataType: dataType.String, length: 4000, optional: false()>,
+            requires_photo: <@bo/attribute label: 'Requires photo', column: 'requires_photo', dataType: dataType.Boolean, optional: false()>,
+            requires_supervisor_signoff: <@bo/attribute label: 'Requires supervisor signoff', column: 'requires_supervisor_signoff', dataType: dataType.Boolean, optional: false()>,
+            expected_seconds: <@bo/attribute label: 'Expected seconds', column: 'expected_seconds', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'instruction' >,
+            list: < 'tenant_id', 'template_id', 'sequence', 'instruction', 'requires_photo', 'requires_supervisor_signoff' >,
+            description: < 'tenant_id', 'template_id', 'sequence', 'instruction', 'requires_photo', 'requires_supervisor_signoff', 'expected_seconds' >
+        >
+    >
+end-resource

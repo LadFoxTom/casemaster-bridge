@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `zone` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Zone',
+        table: 'zone',
+        primaryKey: 'id',
+        sequence: 'zone',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            zone_type: <@bo/attribute label: 'Zone type', column: 'zone_type', dataType: dataType.String, length: 4000, optional: false()>,
+            temperature_class: <@bo/attribute label: 'Temperature class', column: 'temperature_class', dataType: dataType.String, length: 4000, optional: true()>,
+            is_hazmat: <@bo/attribute label: 'Is hazmat', column: 'is_hazmat', dataType: dataType.Boolean, optional: false()>,
+            is_secure: <@bo/attribute label: 'Is secure', column: 'is_secure', dataType: dataType.Boolean, optional: false()>,
+            pick_velocity_class: <@bo/attribute label: 'Pick velocity class', column: 'pick_velocity_class', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'zone_type', 'temperature_class' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'zone_type', 'temperature_class', 'is_hazmat', 'is_secure', 'pick_velocity_class', 'created_at', 'updated_at' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

@@ -1,0 +1,58 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `task` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Task',
+        table: 'task',
+        primaryKey: 'id',
+        sequence: 'task',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            task_type: <@bo/attribute label: 'Task type', column: 'task_type', dataType: dataType.String, length: 4000, optional: false()>,
+            task_number: <@bo/attribute label: 'Task number', column: 'task_number', dataType: dataType.String, length: 4000, optional: false()>,
+            wave_id: <@bo/attribute label: 'Wave id', column: 'wave_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/wave'>,
+            reference_type: <@bo/attribute label: 'Reference type', column: 'reference_type', dataType: dataType.String, length: 4000, optional: true()>,
+            reference_id: <@bo/attribute label: 'Reference id', column: 'reference_id', dataType: dataType.Long, length: 18, optional: true()>,
+            priority: <@bo/attribute label: 'Priority', column: 'priority', dataType: dataType.Long, length: 9, optional: false()>,
+            zone_id: <@bo/attribute label: 'Zone id', column: 'zone_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/zone'>,
+            from_location_id: <@bo/attribute label: 'From location id', column: 'from_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            to_location_id: <@bo/attribute label: 'To location id', column: 'to_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item'>,
+            qty_required: <@bo/attribute label: 'Qty required', column: 'qty_required', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            qty_completed: <@bo/attribute label: 'Qty completed', column: 'qty_completed', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: true()>,
+            required_equipment_type: <@bo/attribute label: 'Required equipment type', column: 'required_equipment_type', dataType: dataType.String, length: 4000, optional: true()>,
+            required_qualification: <@bo/attribute label: 'Required qualification', column: 'required_qualification', dataType: dataType.String, length: 4000, optional: true()>,
+            assigned_to_user_id: <@bo/attribute label: 'Assigned to user id', column: 'assigned_to_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            assigned_to_device_id: <@bo/attribute label: 'Assigned to device id', column: 'assigned_to_device_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/device'>,
+            assigned_at: <@bo/attribute label: 'Assigned at', column: 'assigned_at', dataType: dataType.Timestamp, optional: true()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            expected_seconds: <@bo/attribute label: 'Expected seconds', column: 'expected_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            actual_seconds: <@bo/attribute label: 'Actual seconds', column: 'actual_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: true()>,
+            parent_task_id: <@bo/attribute label: 'Parent task id', column: 'parent_task_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/task'>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'task_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'task_type', 'task_number', 'wave_id', 'reference_type' >,
+            description: < 'tenant_id', 'warehouse_id', 'task_type', 'task_number', 'wave_id', 'reference_type', 'reference_id', 'priority', 'zone_id', 'from_location_id', 'to_location_id', 'license_plate_id' >,
+            search: < 'task_number', 'uom_code' >
+        >
+    >
+end-resource

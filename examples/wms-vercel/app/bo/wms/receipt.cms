@@ -1,0 +1,44 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `receipt` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Receipt',
+        table: 'receipt',
+        primaryKey: 'id',
+        sequence: 'receipt',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            receipt_number: <@bo/attribute label: 'Receipt number', column: 'receipt_number', dataType: dataType.String, length: 4000, optional: false()>,
+            asn_id: <@bo/attribute label: 'Asn id', column: 'asn_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/asn'>,
+            purchase_order_id: <@bo/attribute label: 'Purchase order id', column: 'purchase_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/purchase_order'>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            receipt_type: <@bo/attribute label: 'Receipt type', column: 'receipt_type', dataType: dataType.String, length: 4000, optional: false()>,
+            dock_door_id: <@bo/attribute label: 'Dock door id', column: 'dock_door_id', dataType: dataType.Long, length: 18, optional: true()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            received_by_user_id: <@bo/attribute label: 'Received by user id', column: 'received_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_posting_id: <@bo/attribute label: 'Erp posting id', column: 'erp_posting_id', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_posted_at: <@bo/attribute label: 'Erp posted at', column: 'erp_posted_at', dataType: dataType.Timestamp, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'receipt_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'receipt_number', 'asn_id', 'purchase_order_id', 'supplier_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'receipt_number', 'asn_id', 'purchase_order_id', 'supplier_id', 'receipt_type', 'dock_door_id', 'started_at', 'completed_at', 'received_by_user_id', 'status' >,
+            search: < 'receipt_number' >
+        >
+    >
+end-resource

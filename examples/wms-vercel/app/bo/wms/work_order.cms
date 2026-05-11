@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `work_order` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Work order',
+        table: 'work_order',
+        primaryKey: 'id',
+        sequence: 'work_order',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            work_order_number: <@bo/attribute label: 'Work order number', column: 'work_order_number', dataType: dataType.String, length: 4000, optional: false()>,
+            work_order_type: <@bo/attribute label: 'Work order type', column: 'work_order_type', dataType: dataType.String, length: 4000, optional: false()>,
+            parent_item_id: <@bo/attribute label: 'Parent item id', column: 'parent_item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            qty_planned: <@bo/attribute label: 'Qty planned', column: 'qty_planned', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_completed: <@bo/attribute label: 'Qty completed', column: 'qty_completed', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            target_lot_id: <@bo/attribute label: 'Target lot id', column: 'target_lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            target_location_id: <@bo/attribute label: 'Target location id', column: 'target_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            planned_start: <@bo/attribute label: 'Planned start', column: 'planned_start', dataType: dataType.Timestamp, optional: true()>,
+            actual_start: <@bo/attribute label: 'Actual start', column: 'actual_start', dataType: dataType.Timestamp, optional: true()>,
+            actual_end: <@bo/attribute label: 'Actual end', column: 'actual_end', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'work_order_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'work_order_number', 'work_order_type', 'parent_item_id', 'qty_planned' >,
+            description: < 'tenant_id', 'warehouse_id', 'work_order_number', 'work_order_type', 'parent_item_id', 'qty_planned', 'qty_completed', 'target_lot_id', 'target_location_id', 'sales_order_id', 'status', 'planned_start' >,
+            search: < 'work_order_number' >
+        >
+    >
+end-resource

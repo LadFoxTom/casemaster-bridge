@@ -1,0 +1,37 @@
+// Casemaster-WMS — min/max replenishment evaluator (Phase 12).
+//
+// evaluate()
+//     — for each `item_slot_assignment` with slot_role = PRIMARY_PICK and a
+//       min_qty set, compare current pick-face inventory to min_qty. Where
+//       below min, find a reserve location with enough qty_on_hand and
+//       create one OPEN replenishment_task to bring the pick face up to
+//       max_qty (or reorder_point if max not set).
+
+function evaluate()
+    sql.execute(concat(
+        "WITH need AS ( ",
+        "    SELECT sa.item_id, sa.location_id AS pick_loc, sa.min_qty, COALESCE(sa.max_qty, sa.min_qty) AS max_qty, ",
+        "           COALESCE((SELECT SUM(qty_on_hand) FROM inventory ",
+        "                     WHERE location_id = sa.location_id AND item_id = sa.item_id), 0) AS current_qty ",
+        "    FROM item_slot_assignment sa ",
+        "    WHERE sa.slot_role = 'PRIMARY_PICK' AND sa.is_active = TRUE AND sa.min_qty IS NOT NULL ",
+        "), low AS ( ",
+        "    SELECT item_id, pick_loc, max_qty - current_qty AS deficit, ",
+        "           (SELECT i.location_id FROM inventory i ",
+        "             WHERE i.item_id = need.item_id AND i.qty_on_hand > 0 ",
+        "               AND i.location_id <> need.pick_loc ",
+        "             ORDER BY i.qty_on_hand DESC LIMIT 1) AS source_loc ",
+        "    FROM need ",
+        "    WHERE current_qty < min_qty ",
+        ") ",
+        "INSERT INTO replenishment_task (tenant_id, task_id, item_id, source_location_id, target_location_id, qty_required, qty_moved, uom_code, triggered_by) ",
+        "SELECT 1, ",
+        "       nextval('task_id_seq'), ",
+        "       low.item_id, low.source_loc, low.pick_loc, low.deficit, 0, 'EA', 'MIN_MAX' ",
+        "FROM low ",
+        "WHERE low.source_loc IS NOT NULL ",
+        "ON CONFLICT (task_id) DO NOTHING"
+    ))
+    // NOTE: this nextval() approach assumes there's a parallel `task` row;
+    // a real implementation would INSERT INTO task and reuse the new id.
+end-function

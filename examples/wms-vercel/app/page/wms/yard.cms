@@ -1,0 +1,94 @@
+// Casemaster-WMS — Yard & Dock center.
+//   /page/wms/yard                       overview
+
+inherits 'base'
+
+function main()
+    set('appointments',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'a',
+                    entity:  'wms/appointment',
+                    where:   'status="SCHEDULED" | status="CONFIRMED" | status="ARRIVED" | status="AT_DOOR" | status="IN_PROGRESS"',
+                    orderBy: 'scheduled_start'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('dock_doors',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'd', entity: 'wms/dock_door', orderBy: 'code'>
+            >,
+            rows: 50
+        )
+    )
+    set('yard_slots',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'ys', entity: 'wms/yard_slot', orderBy: 'code'>
+            >,
+            rows: 50
+        )
+    )
+    set('recent_events',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'e', entity: 'wms/yard_event', orderBy: '-event_at'>
+            >,
+            rows: 50
+        )
+    )
+    set('trailers',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 't', entity: 'wms/trailer', orderBy: 'trailer_number'>
+            >,
+            rows: 50
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'yard')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '🏗 Yard &amp; Dock'>,
+            a_h: <@page/html `<h5 class="mt-3">Appointments (active)</h5>`>,
+            a_table: <@page/data/table
+                iterator: [appointments],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            d_h: <@page/html `<h5 class="mt-4">Dock doors</h5>`>,
+            d_table: <@page/data/table
+                iterator: [dock_doors],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            ys_h: <@page/html `<h5 class="mt-4">Yard slots</h5>`>,
+            ys_table: <@page/data/table
+                iterator: [yard_slots],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            t_h: <@page/html `<h5 class="mt-4">Trailers</h5>`>,
+            t_table: <@page/data/table
+                iterator: [trailers],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            e_h: <@page/html `<h5 class="mt-4">Recent yard events</h5>`>,
+            e_table: <@page/data/table
+                iterator: [recent_events],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

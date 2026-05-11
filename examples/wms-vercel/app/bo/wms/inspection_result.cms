@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inspection_result` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inspection result',
+        table: 'inspection_result',
+        primaryKey: 'id',
+        sequence: 'inspection_result',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            inspection_id: <@bo/attribute label: 'Inspection id', column: 'inspection_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/inspection'>,
+            qc_characteristic_id: <@bo/attribute label: 'Qc characteristic id', column: 'qc_characteristic_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/qc_characteristic'>,
+            sample_index: <@bo/attribute label: 'Sample index', column: 'sample_index', dataType: dataType.Long, length: 9, optional: false()>,
+            measured_value: <@bo/attribute label: 'Measured value', column: 'measured_value', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            measured_text: <@bo/attribute label: 'Measured text', column: 'measured_text', dataType: dataType.String, length: 4000, optional: true()>,
+            pass: <@bo/attribute label: 'Pass', column: 'pass', dataType: dataType.Boolean, optional: false()>,
+            defect_code: <@bo/attribute label: 'Defect code', column: 'defect_code', dataType: dataType.String, length: 4000, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_uri: <@bo/attribute label: 'Photo uri', column: 'photo_uri', dataType: dataType.String, length: 4000, optional: true()>,
+            recorded_at: <@bo/attribute label: 'Recorded at', column: 'recorded_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'measured_text' >,
+            list: < 'tenant_id', 'inspection_id', 'qc_characteristic_id', 'sample_index', 'measured_value', 'measured_text' >,
+            description: < 'tenant_id', 'inspection_id', 'qc_characteristic_id', 'sample_index', 'measured_value', 'measured_text', 'pass', 'defect_code', 'notes', 'photo_uri', 'recorded_at' >,
+            search: < 'defect_code' >
+        >
+    >
+end-resource

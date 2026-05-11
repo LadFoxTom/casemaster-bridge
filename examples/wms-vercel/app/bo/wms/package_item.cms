@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `package_item` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Package item',
+        table: 'package_item',
+        primaryKey: 'id',
+        sequence: 'package_item',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            package_id: <@bo/attribute label: 'Package id', column: 'package_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/package'>,
+            sales_order_line_id: <@bo/attribute label: 'Sales order line id', column: 'sales_order_line_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order_line'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            serial_numbers: <@bo/attribute label: 'Serial numbers', column: 'serial_numbers', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'package_id', 'sales_order_line_id', 'item_id', 'qty', 'uom_code' >,
+            description: < 'tenant_id', 'package_id', 'sales_order_line_id', 'item_id', 'qty', 'uom_code', 'lot_id', 'serial_numbers' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

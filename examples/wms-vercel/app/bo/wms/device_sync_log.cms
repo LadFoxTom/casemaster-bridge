@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `device_sync_log` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Device sync log',
+        table: 'device_sync_log',
+        primaryKey: 'id',
+        sequence: 'device_sync_log',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/device'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            sync_type: <@bo/attribute label: 'Sync type', column: 'sync_type', dataType: dataType.String, length: 4000, optional: false()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            records_pulled: <@bo/attribute label: 'Records pulled', column: 'records_pulled', dataType: dataType.Long, length: 9, optional: true()>,
+            records_pushed: <@bo/attribute label: 'Records pushed', column: 'records_pushed', dataType: dataType.Long, length: 9, optional: true()>,
+            records_failed: <@bo/attribute label: 'Records failed', column: 'records_failed', dataType: dataType.Long, length: 9, optional: true()>,
+            bytes_transferred: <@bo/attribute label: 'Bytes transferred', column: 'bytes_transferred', dataType: dataType.Long, length: 18, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            error: <@bo/attribute label: 'Error', column: 'error', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'sync_type' >,
+            list: < 'tenant_id', 'device_id', 'user_id', 'sync_type', 'records_pulled', 'records_pushed' >,
+            description: < 'tenant_id', 'device_id', 'user_id', 'sync_type', 'started_at', 'completed_at', 'records_pulled', 'records_pushed', 'records_failed', 'bytes_transferred', 'status', 'error' >
+        >
+    >
+end-resource

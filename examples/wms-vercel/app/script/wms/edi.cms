@@ -1,0 +1,56 @@
+// Casemaster-WMS — EDI in/out skeleton (Phase 7).
+//
+// parse856(blob, partner_code)
+//     — accept an X12 856 (Advance Ship Notice) raw payload, write
+//       message_log + an asn + asn_lines. This is a SKELETON that walks the
+//       segments naively (no real X12 grammar — production would use a
+//       proper parser like the `bots` library or a vendor SDK).
+// emit945(shipment_id, partner_code)
+//     — emit a Warehouse Shipping Advice 945 X12 string, write to message_log
+//       in OUTBOUND direction. Returns the string for the AS2/SFTP poster.
+
+function parse856(blob, partner_code)
+    // log inbound message
+    sql.execute(concat(
+        "INSERT INTO message_log (tenant_id, direction, message_type, correlation_id, external_reference, payload_format, status, received_at) VALUES (",
+        "1, 'INBOUND', 'EDI_856', gen_random_uuid(), ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [partner_code]), ", ",
+        "'EDI_X12', 'RECEIVED', NOW())"
+    ))
+
+    // SKELETON: a real parser would walk ISA / GS / ST / BSN / HL / TD1 / SN1 segments.
+    // We extract a couple of demo fields naively to prove the path: BSN02 is
+    // shipment id, REF*PO is the PO number. Until we have a real parser we
+    // just ensure the message is logged and leave ASN creation to the caller.
+
+    // mark message as PARSED so a downstream worker can pick it up
+    sql.execute("UPDATE message_log SET status='PARSED', processed_at=NOW() WHERE direction='INBOUND' AND message_type='EDI_856' AND status='RECEIVED'")
+end-function
+
+function emit945(shipment_id, partner_code)
+    set('sh', bo.quickLoad('wms/shipment', [shipment_id], group: '*'))
+    if isNull([sh])
+        return null()
+    end-if
+    set('sh_no', bo.attr([sh], 'shipment_number'))
+    // SKELETON 945 string. A real emitter builds full X12 envelope + segments.
+    set('payload', concat(
+        "ISA*00*          *00*          *ZZ*WMS*ZZ*",
+        _onError([partner_code], 'PARTNER'),
+        "*", format(now(), 'yyMMdd'), "*", format(now(), 'HHmm'),
+        "*U*00401*000000001*0*P*>~",
+        "GS*SW*WMS*", _onError([partner_code], 'PARTNER'),
+        "*", format(now(), 'yyyyMMdd'), "*", format(now(), 'HHmm'),
+        "*1*X*004010~",
+        "ST*945*0001~",
+        "W06*F*", [sh_no], "~",
+        "SE*4*0001~GE*1*1~IEA*1*000000001~"
+    ))
+    sql.execute(concat(
+        "INSERT INTO message_log (tenant_id, direction, message_type, correlation_id, external_reference, payload_format, status, processed_at) VALUES (",
+        "1, 'OUTBOUND', 'EDI_945', gen_random_uuid(), ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [sh_no]), ", ",
+        "'EDI_X12', 'PROCESSED', NOW())"
+    ))
+    return [payload]
+end-function

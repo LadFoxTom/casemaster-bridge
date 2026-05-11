@@ -1,0 +1,135 @@
+// Casemaster-WMS — admin page to trigger background jobs.
+// Each card is one button that calls the corresponding script function.
+// In production these run on a scheduler / cron / queue worker; this page
+// is the manual fallback while the scheduler isn't wired.
+
+inherits 'base'
+
+function main()
+    set('action', _onError(qs.getUntrusted('action'), ''))
+    set('outcome', '')
+    set('err', '')
+
+    if ne([action], '')
+        try
+            switch [action]
+                case 'velocity'
+                    script.call('wms/velocity:rollup', 90)
+                    set('outcome', 'Item velocity rollup completed (90-day window).')
+                case 'replen_eval'
+                    script.call('wms/replen_eval:evaluate')
+                    set('outcome', 'Replenishment evaluation done.')
+                case 'storage_snapshot'
+                    script.call('wms/billing_run:snapshotStorage')
+                    set('outcome', 'Storage snapshot for today written to storage_billing_snapshot.')
+                case 'erp_drain'
+                    set('n', script.call('wms/erp_post:drain'))
+                    set('outcome', concat('Processed ', _onError([n], 0), ' ERP posting queue rows.'))
+                case 'alert_deliver'
+                    set('n', script.call('wms/alerts:deliver'))
+                    set('outcome', concat('Delivered ', _onError([n], 0), ' alert event(s).'))
+                case 'webhook_drain'
+                    set('n', script.call('wms/webhook_send:drain'))
+                    set('outcome', concat('Drained ', _onError([n], 0), ' webhook deliveries.'))
+                case 'workflow_tick'
+                    set('n', script.call('wms/workflow:tick'))
+                    set('outcome', concat('Workflow tick advanced ', _onError([n], 0), ' tasks.'))
+                case 'kpi_snapshot'
+                    script.call('./snapshotKPIs')
+                    set('outcome', 'KPI snapshot row written for today.')
+            end-switch
+        catch
+            set('err', concat('Job failed: ', _onError(error.firstMessage(), 'unknown')))
+        end-try
+    end-if
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected function snapshotKPIs()
+    // Phase 18 — populate kpi_snapshot from the operational store.
+    sql.execute(concat(
+        "INSERT INTO kpi_definition (tenant_id, kpi_code, name, aggregation, direction) ",
+        "VALUES (1, 'OPEN_PICKS',  'Open pick tasks',       'COUNT', 'LOWER_IS_BETTER'), ",
+        "       (1, 'INV_HOLDS',   'Active inventory holds','COUNT', 'LOWER_IS_BETTER'), ",
+        "       (1, 'OPEN_RMAS',   'Open RMAs',             'COUNT', 'LOWER_IS_BETTER') ",
+        "ON CONFLICT (tenant_id, kpi_code) DO NOTHING"
+    ))
+    sql.execute(concat(
+        "INSERT INTO kpi_snapshot (tenant_id, kpi_definition_id, period_start, period_end, value) ",
+        "SELECT 1, k.id, date_trunc('day', NOW()), date_trunc('day', NOW()) + INTERVAL '1 day', ",
+        "       CASE k.kpi_code ",
+        "         WHEN 'OPEN_PICKS' THEN (SELECT count(*) FROM task WHERE task_type='PICK' AND status IN ('OPEN','ASSIGNED','IN_PROGRESS')) ",
+        "         WHEN 'INV_HOLDS'  THEN (SELECT count(*) FROM inventory_hold WHERE status='ACTIVE') ",
+        "         WHEN 'OPEN_RMAS'  THEN (SELECT count(*) FROM rma WHERE status NOT IN ('RESOLVED','CLOSED')) ",
+        "         ELSE 0 END ",
+        "FROM kpi_definition k ",
+        "WHERE k.tenant_id = 1 AND k.kpi_code IN ('OPEN_PICKS','INV_HOLDS','OPEN_RMAS')"
+    ))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '⚙️ Background jobs'>,
+            intro: <@page/html `<p class="text-muted">Manual triggers for the work that should run on a scheduler in production. Each click runs the named function once and reports its outcome.</p>`>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            jobs: <@page/html
+                resolveTemplate(`<div class="row">
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Slotting / velocity</h6>
+                        <p class="small text-muted">Rolling-window pick velocity per item; ABC banding update.</p>
+                        <a href="jobs?action=velocity" class="btn btn-sm btn-primary">Run velocity rollup</a>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Replenishment</h6>
+                        <p class="small text-muted">Compare pick-face on-hand vs min/max; create OPEN replen tasks.</p>
+                        <a href="jobs?action=replen_eval" class="btn btn-sm btn-primary">Evaluate min/max</a>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Storage billing</h6>
+                        <p class="small text-muted">Daily snapshot of stored qty per owner / item / location.</p>
+                        <a href="jobs?action=storage_snapshot" class="btn btn-sm btn-primary">Snapshot storage</a>
+                    </div></div></div>
+
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>ERP posting queue</h6>
+                        <p class="small text-muted">Drain PENDING erp_posting_queue rows (stub connector).</p>
+                        <a href="jobs?action=erp_drain" class="btn btn-sm btn-primary">Drain ERP queue</a>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Alert delivery</h6>
+                        <p class="small text-muted">Drain OPEN alert_event rows; create alert_delivery rows per recipient.</p>
+                        <a href="jobs?action=alert_deliver" class="btn btn-sm btn-primary">Deliver alerts</a>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Webhook delivery</h6>
+                        <p class="small text-muted">Drain PENDING webhook_delivery rows (stub HTTP send).</p>
+                        <a href="jobs?action=webhook_drain" class="btn btn-sm btn-primary">Drain webhooks</a>
+                    </div></div></div>
+
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>Workflow tick</h6>
+                        <p class="small text-muted">Advance scheduled / timer-based workflow tasks.</p>
+                        <a href="jobs?action=workflow_tick" class="btn btn-sm btn-primary">Workflow tick</a>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h6>KPI snapshot</h6>
+                        <p class="small text-muted">Write today's row in kpi_snapshot for OPEN_PICKS / INV_HOLDS / OPEN_RMAS.</p>
+                        <a href="jobs?action=kpi_snapshot" class="btn btn-sm btn-primary">Snapshot KPIs</a>
+                    </div></div></div>
+                </div>`)
+            >
+        >
+    >
+end-resource

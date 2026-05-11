@@ -1,0 +1,148 @@
+// Casemaster-WMS — Setup center.
+//   /page/wms/setup           overview with grouped links
+
+inherits 'base'
+
+function main()
+    set('cnt_tenants',     bo.count('wms/tenant'))
+    set('cnt_sites',       bo.count('wms/site'))
+    set('cnt_warehouses',  bo.count('wms/warehouse'))
+    set('cnt_users',       bo.count('wms/app_user'))
+    set('cnt_roles',       bo.count('wms/role'))
+    set('cnt_devices',     bo.count('wms/device'))
+    set('cnt_alerts',      bo.count('wms/alert_rule'))
+    set('cnt_workflows',   bo.count('wms/workflow_definition'))
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '⚙ Setup'>,
+
+            grid: <@page/html
+                resolveTemplate(`
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Organisation</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="tenant">Tenants</a> <span class="badge badge-light">{{[cnt_tenants]}}</span></li>
+                            <li><a href="site">Sites</a> <span class="badge badge-light">{{[cnt_sites]}}</span></li>
+                            <li><a href="warehouse">Warehouses</a> <span class="badge badge-light">{{[cnt_warehouses]}}</span></li>
+                            <li><a href="zone">Zones</a></li>
+                            <li><a href="aisle">Aisles</a></li>
+                            <li><a href="location">Locations</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Master data</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="item">Items / SKUs</a></li>
+                            <li><a href="item_category">Item categories</a></li>
+                            <li><a href="item_barcode">Item barcodes</a></li>
+                            <li><a href="item_uom">UoM</a></li>
+                            <li><a href="item_supplier">Item-supplier links</a></li>
+                            <li><a href="item_kit_component">Kit components</a></li>
+                            <li><a href="partner">Partners (suppliers / customers / carriers)</a></li>
+                            <li><a href="partner_address">Partner addresses</a></li>
+                            <li><a href="carrier_service">Carrier services</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Identity</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="app_user">Users</a> <span class="badge badge-light">{{[cnt_users]}}</span></li>
+                            <li><a href="role">Roles</a> <span class="badge badge-light">{{[cnt_roles]}}</span></li>
+                            <li><a href="permission">Permissions</a></li>
+                            <li><a href="role_permission">Role&times;permission</a></li>
+                            <li><a href="user_role">User&times;role</a></li>
+                            <li><a href="user_scope">User scopes</a></li>
+                            <li><a href="api_credential">API credentials</a></li>
+                            <li><a href="auth_session">Auth sessions</a></li>
+                        </ul>
+                    </div></div></div>
+
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Devices &amp; mobile</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="device">Devices</a> <span class="badge badge-light">{{[cnt_devices]}}</span></li>
+                            <li><a href="device_session">Device sessions</a></li>
+                            <li><a href="device_sync_log">Sync log</a></li>
+                            <li><a href="device_app_state">Device state</a></li>
+                            <li><a href="idempotency_record">Idempotency keys</a></li>
+                            <li><a href="stuck_transaction">Stuck transactions</a></li>
+                            <li><a href="mobile_app_release">Mobile releases</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Rules &amp; templates</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="putaway_rule">Putaway rules</a></li>
+                            <li><a href="allocation_strategy">Allocation strategies</a></li>
+                            <li><a href="replenishment_rule">Replen rules</a></li>
+                            <li><a href="wave_template">Wave templates</a></li>
+                            <li><a href="adjustment_reason">Adjustment reasons</a></li>
+                            <li><a href="return_reason">Return reasons</a></li>
+                            <li><a href="qc_plan">QC plans</a></li>
+                            <li><a href="vas_template">VAS templates</a></li>
+                            <li><a href="carton_type">Carton types</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Alerts &amp; workflow</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="alert_rule">Alert rules</a> <span class="badge badge-light">{{[cnt_alerts]}}</span></li>
+                            <li><a href="alert_recipient">Alert recipients</a></li>
+                            <li><a href="alert_event">Alert events</a></li>
+                            <li><a href="workflow_definition">Workflow definitions</a> <span class="badge badge-light">{{[cnt_workflows]}}</span></li>
+                            <li><a href="workflow_instance">Workflow instances</a></li>
+                            <li><a href="workflow_task">Workflow tasks</a></li>
+                        </ul>
+                    </div></div></div>
+
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Integration</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="integration_endpoint">Endpoints</a></li>
+                            <li><a href="integration_partner">Integration partners</a></li>
+                            <li><a href="message_log">Message log</a></li>
+                            <li><a href="edi_map">EDI maps</a></li>
+                            <li><a href="webhook_subscription">Webhook subscriptions</a></li>
+                            <li><a href="webhook_delivery">Webhook deliveries</a></li>
+                            <li><a href="erp_posting_queue">ERP posting queue</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Compliance</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="retention_policy">Retention policies</a></li>
+                            <li><a href="legal_hold">Legal holds</a></li>
+                            <li><a href="pii_data_subject_request">DSAR</a></li>
+                            <li><a href="compliance_attribute">Compliance attributes</a></li>
+                            <li><a href="denied_party_screening">Denied-party screening</a></li>
+                            <li><a href="electronic_signature">Electronic signatures</a></li>
+                            <li><a href="audit_log">Audit log</a></li>
+                            <li><a href="encryption_key_metadata">Encryption keys</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-4 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">System</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="configuration_setting">Configuration settings</a></li>
+                            <li><a href="feature_flag">Feature flags</a></li>
+                            <li><a href="schema_migration">Schema migrations</a></li>
+                            <li><a href="table_metadata">Table metadata</a></li>
+                            <li><a href="deployment">Deployments</a></li>
+                            <li><a href="service_release">Service releases</a></li>
+                            <li><a href="tenant_quota">Tenant quotas</a></li>
+                        </ul>
+                    </div></div></div>
+                </div>
+                `)
+            >
+        >
+    >
+end-resource

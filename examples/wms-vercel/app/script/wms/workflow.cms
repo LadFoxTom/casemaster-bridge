@@ -1,0 +1,89 @@
+// Casemaster-WMS — minimal workflow engine.
+//
+// start(workflow_code, business_key, payload_json)
+//     — create workflow_instance + first workflow_task
+// tick()
+//     — drain workflow_task rows: fire timers, advance human tasks that have
+//       been completed, route via gateways
+//
+// Currently supports workflows with a linear sequence of HUMAN tasks. Built-in
+// workflow registered: 'inventory_adjustment_approval' (one human task →
+// supervisor approves → adjustment posted). A real BPMN engine with timers,
+// parallel gateways, and service tasks belongs in a follow-up.
+
+function start(workflow_code, business_key, payload_json)
+    // ensure a definition exists
+    sql.execute(concat(
+        "INSERT INTO workflow_definition (tenant_id, workflow_code, name, version, active) VALUES (",
+        "1, ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [workflow_code]), ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [workflow_code]), ", ",
+        "1, TRUE) ON CONFLICT (tenant_id, workflow_code, version) DO NOTHING"
+    ))
+    set('def_id', null())
+    if bo.tryLoad('wms/workflow_definition',
+                  where: concat('workflow_code="', [workflow_code], '" & version=1'),
+                  group: 'list',
+                  bo:    'wd')
+        set('def_id', bo.pk([wd]))
+    end-if
+    if isNull([def_id])
+        return null()
+    end-if
+
+    sql.execute(concat(
+        "INSERT INTO workflow_instance (tenant_id, workflow_definition_id, business_key, status, current_step, state) VALUES (",
+        "1, ",
+        [def_id], ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [business_key]), ", ",
+        "'RUNNING', 'task_1', ",
+        if(isNull([payload_json]), "'{}'::jsonb", concat("'", replace([payload_json], "'", "''"), "'::jsonb")),
+        ")"
+    ))
+    set('inst_id', null())
+    if bo.tryLoad('wms/workflow_instance',
+                  where: concat('workflow_definition_id=', [def_id], ' & business_key="', [business_key], '"'),
+                  group: 'list',
+                  bo:    'wi')
+        set('inst_id', bo.pk([wi]))
+    end-if
+    if isNull([inst_id])
+        return null()
+    end-if
+
+    // first human task
+    sql.execute(concat(
+        "INSERT INTO workflow_task (tenant_id, workflow_instance_id, step_code, task_type, status) VALUES (",
+        "1, ",
+        [inst_id], ", 'task_1', 'HUMAN', 'OPEN')"
+    ))
+    return [inst_id]
+end-function
+
+// Mark a human task COMPLETED with an outcome; advance the instance.
+function complete(task_id, user_id, outcome)
+    set('t', bo.quickLoad('wms/workflow_task', [task_id], group: '*'))
+    if isNull([t])
+        return null()
+    end-if
+    bo.setAttr([t], 'status',                'COMPLETED')
+    bo.setAttr([t], 'completed_by_user_id',  [user_id])
+    bo.setAttr([t], 'completed_at',          now())
+    bo.setAttr([t], 'outcome',               _onError([outcome], 'APPROVED'))
+    bo.persist([t])
+
+    // close the instance (single-step for now)
+    set('inst_id', bo.attr([t], 'workflow_instance_id'))
+    set('inst', bo.quickLoad('wms/workflow_instance', [inst_id], group: '*'))
+    if isNotNull([inst])
+        bo.setAttr([inst], 'status',       'COMPLETED')
+        bo.setAttr([inst], 'completed_at', now())
+        bo.persist([inst])
+    end-if
+    return [inst_id]
+end-function
+
+// Drain timers / scheduled steps. No-op until we add timer-typed tasks.
+function tick()
+    return 0
+end-function

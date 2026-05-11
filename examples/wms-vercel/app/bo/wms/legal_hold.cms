@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `legal_hold` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Legal hold',
+        table: 'legal_hold',
+        primaryKey: 'id',
+        sequence: 'legal_hold',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            case_reference: <@bo/attribute label: 'Case reference', column: 'case_reference', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            scope: <@bo/attribute label: 'Scope', column: 'scope', dataType: dataType.JSON, length: 4000, optional: false()>,
+            placed_by_user_id: <@bo/attribute label: 'Placed by user id', column: 'placed_by_user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            placed_at: <@bo/attribute label: 'Placed at', column: 'placed_at', dataType: dataType.Timestamp, optional: false()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>,
+            released_by_user_id: <@bo/attribute label: 'Released by user id', column: 'released_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'case_reference', 'description', 'placed_by_user_id', 'released_by_user_id' >,
+            description: < 'tenant_id', 'case_reference', 'description', 'scope', 'placed_by_user_id', 'placed_at', 'released_at', 'released_by_user_id' >
+        >
+    >
+end-resource

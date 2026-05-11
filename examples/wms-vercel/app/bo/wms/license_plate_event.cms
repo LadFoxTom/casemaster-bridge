@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `license_plate_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'License plate event',
+        table: 'license_plate_event',
+        primaryKey: 'id',
+        sequence: 'license_plate_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/license_plate'>,
+            event_type: <@bo/attribute label: 'Event type', column: 'event_type', dataType: dataType.String, length: 4000, optional: false()>,
+            event_at: <@bo/attribute label: 'Event at', column: 'event_at', dataType: dataType.Timestamp, optional: false()>,
+            from_location_id: <@bo/attribute label: 'From location id', column: 'from_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            to_location_id: <@bo/attribute label: 'To location id', column: 'to_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/device'>,
+            reference_type: <@bo/attribute label: 'Reference type', column: 'reference_type', dataType: dataType.String, length: 4000, optional: true()>,
+            reference_id: <@bo/attribute label: 'Reference id', column: 'reference_id', dataType: dataType.Long, length: 18, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'event_type' >,
+            list: < 'tenant_id', 'license_plate_id', 'event_type', 'from_location_id', 'to_location_id', 'user_id' >,
+            description: < 'tenant_id', 'license_plate_id', 'event_type', 'event_at', 'from_location_id', 'to_location_id', 'user_id', 'device_id', 'reference_type', 'reference_id', 'notes' >
+        >
+    >
+end-resource

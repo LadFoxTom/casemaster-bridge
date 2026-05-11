@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `recall` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Recall',
+        table: 'recall',
+        primaryKey: 'id',
+        sequence: 'recall',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            recall_number: <@bo/attribute label: 'Recall number', column: 'recall_number', dataType: dataType.String, length: 4000, optional: false()>,
+            recall_type: <@bo/attribute label: 'Recall type', column: 'recall_type', dataType: dataType.String, length: 4000, optional: false()>,
+            severity: <@bo/attribute label: 'Severity', column: 'severity', dataType: dataType.String, length: 4000, optional: false()>,
+            initiator: <@bo/attribute label: 'Initiator', column: 'initiator', dataType: dataType.String, length: 4000, optional: true()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: false()>,
+            initiated_at: <@bo/attribute label: 'Initiated at', column: 'initiated_at', dataType: dataType.Timestamp, optional: false()>,
+            closed_at: <@bo/attribute label: 'Closed at', column: 'closed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'recall_number' >,
+            list: < 'tenant_id', 'recall_number', 'recall_type', 'severity', 'initiator', 'description' >,
+            description: < 'tenant_id', 'recall_number', 'recall_type', 'severity', 'initiator', 'description', 'initiated_at', 'closed_at', 'status' >,
+            search: < 'recall_number' >
+        >
+    >
+end-resource

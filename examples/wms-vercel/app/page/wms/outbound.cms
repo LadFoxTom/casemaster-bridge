@@ -1,0 +1,1634 @@
+// Casemaster-WMS — Outbound workflow center.
+//   /page/wms/outbound                       overview (orders by status, waves, picks, ship-ready)
+//   /page/wms/outbound/f/order?id=N          sales order detail + Allocate / Release / Cancel
+//   /page/wms/outbound/f/allocate?id=N&confirm=1
+//                                            allocate-action
+//   /page/wms/outbound/f/wave?id=N           wave detail
+//   /page/wms/outbound/f/newWave?confirm=1   create wave from all ALLOCATED orders
+//   /page/wms/outbound/f/releaseWave?id=N&confirm=1
+//                                            release wave + create pick tasks
+//   /page/wms/outbound/f/pick?id=N           pick-task detail
+//   /page/wms/outbound/f/pickConfirm?id=N&qty=&confirm=1
+//                                            confirm a pick: decrement inventory + journal
+//   /page/wms/outbound/f/shipment?id=N       shipment detail
+//   /page/wms/outbound/f/ship?id=N&confirm=1 mark shipment shipped
+
+inherits 'base'
+
+// ============================================================================
+// MAIN — outbound overview
+// ============================================================================
+function main()
+    set('orders_pending',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'so',
+                    entity:  'wms/sales_order',
+                    where:   'status="IMPORTED" | status="VALIDATED" | status="HOLD"',
+                    orderBy: 'required_ship_date'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('orders_allocated',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'so',
+                    entity:  'wms/sales_order',
+                    where:   'status="ALLOCATED"',
+                    orderBy: 'required_ship_date'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('orders_in_pick',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'so',
+                    entity:  'wms/sales_order',
+                    where:   'status="RELEASED" | status="IN_PICKING" | status="PICKED"',
+                    orderBy: 'required_ship_date'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('waves_active',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'w',
+                    entity:  'wms/wave',
+                    where:   'status="PLANNED" | status="ALLOCATED" | status="RELEASED" | status="IN_PROGRESS"',
+                    orderBy: '-planned_at'
+                >
+            >,
+            rows: 25
+        )
+    )
+    set('picks_open',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    't',
+                    entity:  'wms/task',
+                    where:   'task_type="PICK" & (status="OPEN" | status="ASSIGNED" | status="IN_PROGRESS")',
+                    orderBy: '-priority'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('shipments_ready',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sh',
+                    entity:  'wms/shipment',
+                    where:   'status="PLANNED" | status="IN_PACKING" | status="PACKED" | status="MANIFESTED"',
+                    orderBy: 'planned_ship_date'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '🚚 Outbound'>,
+            intro: <@page/html `<p class="text-muted">From order import to truck departure. Click an order to allocate; create a wave to release picks; confirm picks, then pack and ship.</p>`>,
+
+            actions: <@page/html
+                resolveTemplate(`<p class="mb-3">
+                    <a href="outbound/f/newWave?confirm=1" class="btn btn-sm btn-success">Create wave from all allocated orders</a>
+                </p>`)
+            >,
+
+            pen_h: <@page/html `<h5 class="mt-3">Pending — needs allocation</h5>`>,
+            pen_table: <@page/data/table
+                iterator: [orders_pending],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'order', qs: <id: $bo.pk([so])>>
+                >
+            >,
+
+            alc_h: <@page/html `<h5 class="mt-4">Allocated — ready to wave</h5>`>,
+            alc_table: <@page/data/table
+                iterator: [orders_allocated],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'order', qs: <id: $bo.pk([so])>>
+                >
+            >,
+
+            wav_h: <@page/html `<h5 class="mt-4">Active waves</h5>`>,
+            wav_table: <@page/data/table
+                iterator: [waves_active],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'wave', qs: <id: $bo.pk([w])>>
+                >
+            >,
+
+            pck_h: <@page/html `<h5 class="mt-4">Open pick tasks</h5>`>,
+            pck_table: <@page/data/table
+                iterator: [picks_open],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'pick', qs: <id: $bo.pk([t])>>
+                >
+            >,
+
+            inp_h: <@page/html `<h5 class="mt-4">Orders in picking</h5>`>,
+            inp_table: <@page/data/table
+                iterator: [orders_in_pick],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'order', qs: <id: $bo.pk([so])>>
+                >
+            >,
+
+            shp_h: <@page/html `<h5 class="mt-4">Shipments ready</h5>`>,
+            shp_table: <@page/data/table
+                iterator: [shipments_ready],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'shipment', qs: <id: $bo.pk([sh])>>
+                >
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// ORDER detail
+// ============================================================================
+function order()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('so', bo.quickLoad('wms/sales_order', [id], group: '*'))
+    if isNull([so])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sl',
+                    entity:  'wms/sales_order_line',
+                    where:   'sales_order_id={[id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('allocations',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'al',
+                    entity:  'wms/allocation',
+                    where:   '#exists[wms/sales_order_line, sales_order_id={[id]}]',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('holds',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'h',
+                    entity:  'wms/order_hold',
+                    where:   'sales_order_id={[id]}',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('shipments',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sh',
+                    entity:  'wms/shipment',
+                    where:   'sales_order_id={[id]}',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 25
+        )
+    )
+
+    set('order_no', bo.attr([so], 'order_number'))
+    set('order_status', bo.attr([so], 'status'))
+    set('order_priority', bo.attr([so], 'priority'))
+    set('ship_date', _onError(bo.attr([so], 'required_ship_date'), ''))
+
+    page.render(page.get('./orderView'))
+end-function
+
+protected resource orderView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-1">Sales Order <code>{{[order_no]}}</code></h4>
+                            <p class="text-muted small mb-0">
+                                Status <span class="badge badge-info">{{[order_status]}}</span>
+                                &middot; Priority {{[order_priority]}}
+                                &middot; Required ship {{ if(eq([ship_date], ''), '—', [ship_date]) }}
+                            </p>
+                        </div>
+                        <div>
+                            <a class="btn btn-success" href="allocate?id={{[id]}}&confirm=1">Allocate stock</a>
+                        </div>
+                    </div>
+                </div></div>`)
+            >,
+
+            lines_h: <@page/html `<h5 class="mt-3">Lines</h5>`>,
+            lines_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            alloc_h: <@page/html `<h5 class="mt-4">Allocations</h5>`>,
+            alloc_table: <@page/data/table
+                iterator: [allocations],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            holds_h: <@page/html `<h5 class="mt-4">Holds</h5>`>,
+            holds_table: <@page/data/table
+                iterator: [holds],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            ships_h: <@page/html `<h5 class="mt-4">Shipments</h5>`>,
+            ships_table: <@page/data/table
+                iterator: [shipments],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'shipment', qs: <id: $bo.pk([sh])>>
+                >
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// ALLOCATE — create allocations from available inventory.
+// FIFO by inventory.id; respects qty_on_hand - qty_reserved per row.
+// Updates sales_order_line.qty_allocated, sales_order.status to ALLOCATED
+// when all lines are fully covered.
+// ============================================================================
+function allocate()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    set('outcome', '')
+    set('err', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postAllocate', [id])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    else
+        set('outcome', 'Click confirm to allocate.')
+    end-if
+
+    page.render(page.get('./allocateView'))
+end-function
+
+protected resource allocateView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html
+                resolveTemplate(`<p>
+                    <a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a>
+                    <a href="order?id={{[id]}}" class="btn btn-sm btn-outline-secondary">&larr; Order</a>
+                </p>`)
+            >,
+            title: <@page/title label: 'Allocate stock'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`)
+                )
+            >,
+            back: <@page/html
+                resolveTemplate(`<p><a href="order?id={{[id]}}" class="btn btn-primary">Back to order</a></p>`)
+            >
+        >
+    >
+end-resource
+
+protected function postAllocate(so_id)
+    set('so', bo.quickLoad('wms/sales_order', [so_id], group: '*'))
+    if isNull([so])
+        set('//act_err', 'Order not found')
+        exit-function
+    end-if
+
+    set('warehouse_id', bo.attr([so], 'warehouse_id'))
+    set('tenant_id',    bo.attr([so], 'tenant_id'))
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sl',
+                    entity:  'wms/sales_order_line',
+                    where:   'sales_order_id={[so_id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('alloc_count', 0)
+    set('all_full',    true())
+
+    iterate [lines]
+        set('sl_id',         bo.pk([sl]))
+        set('item_id',       bo.attr([sl], 'item_id'))
+        set('qty_ordered',   bo.attr([sl], 'qty_ordered'))
+        set('qty_allocated', _onError(bo.attr([sl], 'qty_allocated'), 0))
+        set('uom',           bo.attr([sl], 'uom_code'))
+        set('still_needed',  sub([qty_ordered], [qty_allocated]))
+
+        if gt([still_needed], 0)
+            // walk available inventory rows for this item, FIFO by id
+            set('invIter',
+                iterator.ofEntity(
+                    entities: <
+                        <@iterator/entity
+                            name:    'iv',
+                            entity:  'wms/inventory',
+                            where:   'warehouse_id={[warehouse_id]} & item_id={[item_id]} & quality_status="AVAILABLE" & qty_on_hand > qty_reserved',
+                            orderBy: 'id'
+                        >
+                    >,
+                    rows: 200
+                )
+            )
+
+            iterate [invIter]
+                if gt([still_needed], 0)
+                    set('iv_id',          bo.pk([iv]))
+                    set('iv_on_hand',     bo.attr([iv], 'qty_on_hand'))
+                    set('iv_reserved',    bo.attr([iv], 'qty_reserved'))
+                    set('iv_avail',       sub([iv_on_hand], [iv_reserved]))
+                    set('take',           if(lt([still_needed], [iv_avail]), [still_needed], [iv_avail]))
+
+                    if gt([take], 0)
+                        // INSERT via sql.execute — bo.persist no-ops on
+                        // inserts in this build (Casemaster sequence /
+                        // admin-schema scaffolding not bootstrapped).
+                        sql.execute(concat(
+                            "INSERT INTO allocation (tenant_id, sales_order_line_id, inventory_id, qty_allocated, uom_code, allocated_at, allocated_by, status) VALUES (",
+                            [tenant_id], ", ",
+                            [sl_id], ", ",
+                            [iv_id], ", ",
+                            [take], ", '",
+                            [uom], "', NOW(), 'AUTO', 'ACTIVE')"
+                        ))
+                        sql.execute(concat(
+                            "INSERT INTO inventory_reservation (tenant_id, warehouse_id, inventory_id, sales_order_line_id, qty, reservation_type, status) VALUES (",
+                            [tenant_id], ", ",
+                            [warehouse_id], ", ",
+                            [iv_id], ", ",
+                            [sl_id], ", ",
+                            [take], ", 'HARD', 'ACTIVE')"
+                        ))
+
+                        // bump inventory.qty_reserved
+                        bo.setAttr([iv], 'qty_reserved', add([iv_reserved], [take]))
+                        bo.persist([iv])
+
+                        // bump line.qty_allocated
+                        set('qty_allocated', add([qty_allocated], [take]))
+                        bo.setAttr([sl], 'qty_allocated', [qty_allocated])
+                        bo.persist([sl])
+
+                        set('still_needed', sub([still_needed], [take]))
+                        set('alloc_count', add([alloc_count], 1))
+                    end-if
+                end-if
+            end-iterate
+        end-if
+
+        if gt(sub([qty_ordered], [qty_allocated]), 0)
+            set('all_full', false())
+        end-if
+    end-iterate
+
+    if [all_full]
+        bo.setAttr([so], 'status', 'ALLOCATED')
+        bo.persist([so])
+    end-if
+
+    set('//act_msg', concat('Created ', [alloc_count], ' allocation row(s). Order ', if([all_full], 'fully ', 'partially '), 'allocated.'))
+end-function
+
+// ============================================================================
+// WAVE — single wave detail
+// ============================================================================
+function wave()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('w', bo.quickLoad('wms/wave', [id], group: '*'))
+    if isNull([w])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('orders',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'wo',
+                    entity:  'wms/wave_order',
+                    where:   'wave_id={[id]}',
+                    orderBy: 'sequence'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('tasks',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    't',
+                    entity:  'wms/task',
+                    where:   'wave_id={[id]}',
+                    orderBy: 'sequence'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    set('w_no',     bo.attr([w], 'wave_number'))
+    set('w_status', bo.attr([w], 'status'))
+    set('w_strategy', bo.attr([w], 'pick_strategy'))
+    set('w_orders',   bo.attr([w], 'order_count'))
+
+    page.render(page.get('./waveView'))
+end-function
+
+protected resource waveView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-1">Wave <code>{{[w_no]}}</code></h4>
+                            <p class="text-muted small mb-0">
+                                Status <span class="badge badge-info">{{[w_status]}}</span>
+                                &middot; Strategy {{[w_strategy]}}
+                                &middot; Orders {{[w_orders]}}
+                            </p>
+                        </div>
+                        <div>
+                            <a class="btn btn-success" href="releaseWave?id={{[id]}}&confirm=1">Release wave (create pick tasks)</a>
+                        </div>
+                    </div>
+                </div></div>`)
+            >,
+            o_h: <@page/html `<h5 class="mt-3">Orders in this wave</h5>`>,
+            o_table: <@page/data/table
+                iterator: [orders],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            t_h: <@page/html `<h5 class="mt-4">Tasks</h5>`>,
+            t_table: <@page/data/table
+                iterator: [tasks],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'pick', qs: <id: $bo.pk([t])>>
+                >
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// NEW WAVE — bundle all ALLOCATED orders into a single new wave
+// ============================================================================
+function newWave()
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        set('//act_wave_id', null())
+        script.call('./postNewWave')
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+        set('wave_id', [//act_wave_id])
+    else
+        set('wave_id', null())
+    end-if
+
+    page.render(page.get('./newWaveView'))
+end-function
+
+protected resource newWaveView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Create wave'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    resolveTemplate(`<div class="alert alert-success">{{[outcome]}} {{ if(isNotNull([wave_id]), buildString('<a href=&quot;wave?id=', [wave_id], '&quot; class=&quot;btn btn-sm btn-primary ml-2&quot;>View wave</a>'), '') }}</div>`)
+                )
+            >,
+            back: <@page/html `<p><a href="../outbound" class="btn btn-primary">Back to Outbound</a></p>`>
+        >
+    >
+end-resource
+
+protected function postNewWave()
+    // collect ALLOCATED orders
+    set('orders',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'so',
+                    entity:  'wms/sales_order',
+                    where:   'status="ALLOCATED"',
+                    orderBy: 'required_ship_date'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('order_count', 0)
+    set('warehouse_id', null())
+    set('tenant_id', null())
+
+    iterate [orders]
+        set('order_count', add([order_count], 1))
+        if isNull([warehouse_id])
+            set('warehouse_id', bo.attr([so], 'warehouse_id'))
+            set('tenant_id', bo.attr([so], 'tenant_id'))
+        end-if
+    end-iterate
+
+    if eq([order_count], 0)
+        set('//act_err', 'No allocated orders to wave')
+        exit-function
+    end-if
+
+    set('wcount', bo.count('wms/wave'))
+    set('wno', concat('WAVE-', format(now(), 'yyyyMMddHHmmss'), '-', add([wcount], 1)))
+
+    sql.execute(concat(
+        "INSERT INTO wave (tenant_id, warehouse_id, wave_number, pick_strategy, planned_at, status, order_count) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", '",
+        [wno], "', 'BATCH', NOW(), 'PLANNED', ",
+        [order_count], ")"
+    ))
+
+    // recover the new wave id from the unique wave_number
+    if not(bo.tryLoad('wms/wave',
+                      where: concat('wave_number="', [wno], '"'),
+                      group: 'list',
+                      bo:    'w_new'))
+        set('//act_err', 'Wave inserted but could not be reloaded')
+        exit-function
+    end-if
+    set('wave_id', bo.pk([w_new]))
+
+    set('seq', 0)
+    set('orders2',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'so',
+                    entity:  'wms/sales_order',
+                    where:   'status="ALLOCATED"',
+                    orderBy: 'required_ship_date'
+                >
+            >,
+            rows: 200
+        )
+    )
+    iterate [orders2]
+        set('seq', add([seq], 1))
+        set('wo_so_id', bo.pk([so]))
+        sql.execute(concat(
+            "INSERT INTO wave_order (tenant_id, wave_id, sales_order_id, sequence) VALUES (",
+            [tenant_id], ", ",
+            [wave_id], ", ",
+            [wo_so_id], ", ",
+            [seq], ")"
+        ))
+    end-iterate
+
+    set('//act_msg', concat('Created wave ', [wno], ' with ', [order_count], ' order(s).'))
+    set('//act_wave_id', [wave_id])
+end-function
+
+// ============================================================================
+// RELEASE WAVE — create one PICK task per allocation row in the wave's orders
+// ============================================================================
+function releaseWave()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postReleaseWave', [id])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    page.render(page.get('./releaseWaveView'))
+end-function
+
+protected resource releaseWaveView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Release wave'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`)
+                )
+            >,
+            back: <@page/html
+                resolveTemplate(`<p><a href="wave?id={{[id]}}" class="btn btn-primary">Back to wave</a></p>`)
+            >
+        >
+    >
+end-resource
+
+protected function postReleaseWave(wave_id)
+    set('w', bo.quickLoad('wms/wave', [wave_id], group: '*'))
+    if isNull([w])
+        set('//act_err', 'Wave not found')
+        exit-function
+    end-if
+
+    set('warehouse_id', bo.attr([w], 'warehouse_id'))
+    set('tenant_id',    bo.attr([w], 'tenant_id'))
+
+    set('wos',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'wo',
+                    entity:  'wms/wave_order',
+                    where:   'wave_id={[wave_id]}',
+                    orderBy: 'sequence'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    set('task_count', 0)
+    set('seq', 0)
+    set('tcount_seed', bo.count('wms/task'))
+
+    iterate [wos]
+        set('so_id', bo.attr([wo], 'sales_order_id'))
+        set('alIter',
+            iterator.ofEntity(
+                entities: <
+                    <@iterator/entity
+                        name:    'al',
+                        entity:  'wms/allocation',
+                        where:   'status="ACTIVE" & #exists[wms/sales_order_line, sales_order_id={[so_id]}]',
+                        orderBy: 'id'
+                    >
+                >,
+                rows: 500
+            )
+        )
+        iterate [alIter]
+            set('al_id', bo.pk([al]))
+            set('sl_id', bo.attr([al], 'sales_order_line_id'))
+            set('iv_id', bo.attr([al], 'inventory_id'))
+            set('qty',   bo.attr([al], 'qty_allocated'))
+            set('uom',   bo.attr([al], 'uom_code'))
+
+            set('iv', bo.quickLoad('wms/inventory', [iv_id], group: '*'))
+            set('loc_id', bo.attr([iv], 'location_id'))
+            set('item_id', bo.attr([iv], 'item_id'))
+
+            set('seq', add([seq], 1))
+            set('tno', concat('PICK-', format(now(), 'yyyyMMddHHmmss'), '-', add([tcount_seed], [seq])))
+
+            sql.execute(concat(
+                "INSERT INTO task (tenant_id, warehouse_id, task_type, task_number, wave_id, reference_type, reference_id, priority, from_location_id, item_id, qty_required, qty_completed, uom_code, sequence, status) VALUES (",
+                [tenant_id], ", ",
+                [warehouse_id], ", 'PICK', '",
+                [tno], "', ",
+                [wave_id], ", 'ALLOCATION', ",
+                [al_id], ", 50, ",
+                [loc_id], ", ",
+                [item_id], ", ",
+                [qty], ", 0, '",
+                [uom], "', ",
+                [seq], ", 'OPEN')"
+            ))
+
+            // recover the just-inserted task id by its unique task_number
+            if not(bo.tryLoad('wms/task',
+                              where: concat('task_number="', [tno], '"'),
+                              group: 'list',
+                              bo:    'tk_new'))
+                set('//act_err', concat('Task inserted but could not be reloaded: ', [tno]))
+                exit-function
+            end-if
+            set('task_id', bo.pk([tk_new]))
+
+            sql.execute(concat(
+                "INSERT INTO pick_task (tenant_id, task_id, sales_order_line_id, allocation_id, qty_required, qty_picked, qty_short, pick_method) VALUES (",
+                [tenant_id], ", ",
+                [task_id], ", ",
+                [sl_id], ", ",
+                [al_id], ", ",
+                [qty], ", 0, 0, 'RF')"
+            ))
+
+            set('task_count', add([task_count], 1))
+        end-iterate
+
+        // mark order as RELEASED
+        set('so_bo', bo.quickLoad('wms/sales_order', [so_id], group: '*'))
+        if isNotNull([so_bo])
+            bo.setAttr([so_bo], 'status', 'RELEASED')
+            bo.persist([so_bo])
+        end-if
+    end-iterate
+
+    bo.setAttr([w], 'status',      'RELEASED')
+    bo.setAttr([w], 'released_at', now())
+    bo.persist([w])
+
+    set('//act_msg', concat('Released wave; created ', [task_count], ' pick task(s).'))
+end-function
+
+// ============================================================================
+// PICK — task detail + confirm form
+// ============================================================================
+function pick()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('t', bo.quickLoad('wms/task', [id], group: '*'))
+    if isNull([t])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('qty_str', _onError(qs.getUntrusted('qty'), ''))
+
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postPickConfirm', [id], [qty_str])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+        // reload task
+        set('t', bo.quickLoad('wms/task', [id], group: '*'))
+    end-if
+
+    set('t_no',          bo.attr([t], 'task_number'))
+    set('t_status',      bo.attr([t], 'status'))
+    set('t_qty_req',     bo.attr([t], 'qty_required'))
+    set('t_qty_done',    bo.attr([t], 'qty_completed'))
+    set('t_outstanding', sub([t_qty_req], _onError([t_qty_done], 0)))
+    if lt([t_outstanding], 0)
+        set('t_outstanding', 0)
+    end-if
+
+    set('t_item_id', bo.attr([t], 'item_id'))
+    set('t_loc_id',  bo.attr([t], 'from_location_id'))
+    set('t_uom',     bo.attr([t], 'uom_code'))
+
+    set('it_bo',  bo.quickLoad('wms/item', [t_item_id], group: '*'))
+    set('t_sku',  _onError(bo.attr([it_bo], 'sku'), ''))
+    set('t_name', _onError(bo.attr([it_bo], 'name'), ''))
+    set('lc_bo',  bo.quickLoad('wms/location', [t_loc_id], group: '*'))
+    set('t_loc',  _onError(bo.attr([lc_bo], 'code'), ''))
+
+    page.render(page.get('./pickView'))
+end-function
+
+protected resource pickView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Pick task <code>{{[t_no]}}</code></h4>
+                    <p class="lead mb-1">From <code>{{[t_loc]}}</code> &middot; SKU <code>{{[t_sku]}}</code> {{[t_name]}}</p>
+                    <p class="small mb-0">
+                        Required <b>{{[t_qty_req]}} {{[t_uom]}}</b>
+                        &middot; Picked so far <b>{{_onError([t_qty_done], 0)}}</b>
+                        &middot; Outstanding <b class="text-primary">{{[t_outstanding]}}</b>
+                        &middot; Status <span class="badge badge-info">{{[t_status]}}</span>
+                    </p>
+                </div></div>`)
+            >,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                if(or(eq([t_status], 'COMPLETED'), eq([t_outstanding], 0)),
+                    '',
+                    resolveTemplate(`
+                    <form method="GET" action="pick" class="card mb-3"><div class="card-body">
+                        <input type="hidden" name="id" value="{{[id]}}">
+                        <input type="hidden" name="confirm" value="1">
+                        <div class="form-group">
+                            <label>Quantity picked</label>
+                            <input type="number" min="0" max="{{[t_outstanding]}}" step="0.000001" name="qty" value="{{[t_outstanding]}}" class="form-control">
+                        </div>
+                        <button class="btn btn-success" type="submit">Confirm pick</button>
+                    </div></form>`)
+                )
+            >
+        >
+    >
+end-resource
+
+protected function postPickConfirm(task_id, qty_str)
+    set('t', bo.quickLoad('wms/task', [task_id], group: '*'))
+    if isNull([t])
+        set('//act_err', 'Task not found')
+        exit-function
+    end-if
+
+    set('status', bo.attr([t], 'status'))
+    if eq([status], 'COMPLETED')
+        set('//act_err', 'Task already completed')
+        exit-function
+    end-if
+
+    set('qty', _onError(dbl([qty_str]), 0))
+    if le([qty], 0)
+        set('//act_err', 'Qty must be > 0')
+        exit-function
+    end-if
+
+    set('qty_req',  bo.attr([t], 'qty_required'))
+    set('qty_done', _onError(bo.attr([t], 'qty_completed'), 0))
+    set('outstanding', sub([qty_req], [qty_done]))
+    if gt([qty], [outstanding])
+        set('qty', [outstanding])
+    end-if
+
+    set('warehouse_id', bo.attr([t], 'warehouse_id'))
+    set('tenant_id',    bo.attr([t], 'tenant_id'))
+    set('item_id',      bo.attr([t], 'item_id'))
+    set('loc_id',       bo.attr([t], 'from_location_id'))
+    set('uom',          bo.attr([t], 'uom_code'))
+
+    // find pick_task companion + allocation
+    set('pt_id', null())
+    set('al_id', null())
+    set('sl_id', null())
+    set('ptIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'pt', entity: 'wms/pick_task', where: 'task_id={[task_id]}', orderBy: 'id'>
+            >,
+            rows: 1
+        )
+    )
+    iterate [ptIter]
+        set('pt_id', bo.pk([pt]))
+        set('al_id', _onError(bo.attr([pt], 'allocation_id'), null()))
+        set('sl_id', bo.attr([pt], 'sales_order_line_id'))
+    end-iterate
+
+    if isNull([al_id])
+        set('//act_err', 'Allocation row missing for this task')
+        exit-function
+    end-if
+
+    set('al', bo.quickLoad('wms/allocation', [al_id], group: '*'))
+    set('iv_id', bo.attr([al], 'inventory_id'))
+    set('iv', bo.quickLoad('wms/inventory', [iv_id], group: '*'))
+
+    // decrement on-hand and reserved by qty
+    set('iv_oh', bo.attr([iv], 'qty_on_hand'))
+    set('iv_rs', bo.attr([iv], 'qty_reserved'))
+    bo.setAttr([iv], 'qty_on_hand',  sub([iv_oh], [qty]))
+    bo.setAttr([iv], 'qty_reserved', sub([iv_rs], [qty]))
+    bo.setAttr([iv], 'last_movement_at', now())
+    bo.persist([iv])
+
+    // task progress
+    set('new_done', add([qty_done], [qty]))
+    bo.setAttr([t], 'qty_completed', [new_done])
+    if ge([new_done], [qty_req])
+        bo.setAttr([t], 'status',       'COMPLETED')
+        bo.setAttr([t], 'completed_at', now())
+    else
+        bo.setAttr([t], 'status', 'IN_PROGRESS')
+        if isNull(bo.attr([t], 'started_at'))
+            bo.setAttr([t], 'started_at', now())
+        end-if
+    end-if
+    bo.persist([t])
+
+    // pick_task progress
+    if isNotNull([pt_id])
+        set('pt_bo', bo.quickLoad('wms/pick_task', [pt_id], group: '*'))
+        set('pt_done', _onError(bo.attr([pt_bo], 'qty_picked'), 0))
+        bo.setAttr([pt_bo], 'qty_picked', add([pt_done], [qty]))
+        bo.persist([pt_bo])
+    end-if
+
+    // sales_order_line.qty_picked
+    if isNotNull([sl_id])
+        set('sl_bo', bo.quickLoad('wms/sales_order_line', [sl_id], group: '*'))
+        set('sl_done', _onError(bo.attr([sl_bo], 'qty_picked'), 0))
+        bo.setAttr([sl_bo], 'qty_picked', add([sl_done], [qty]))
+        bo.persist([sl_bo])
+    end-if
+
+    // journal — INSERT via sql.execute (bo.persist no-ops on insert)
+    sql.execute(concat(
+        "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, from_location_id, qty, uom_code) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", NOW(), 'PICK', 'TASK', ",
+        [task_id], ", ",
+        [item_id], ", ",
+        [loc_id], ", ",
+        sub(0, [qty]), ", '",
+        [uom], "')"
+    ))
+
+    set('//act_msg', concat('Picked ', [qty], ' ', [uom], '. Task is ', if(ge([new_done], [qty_req]), 'COMPLETED.', 'IN_PROGRESS.')))
+end-function
+
+// ============================================================================
+// SHIPMENT — detail + ship action
+// ============================================================================
+function shipment()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('sh', bo.quickLoad('wms/shipment', [id], group: '*'))
+    if isNull([sh])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('packages',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'p', entity: 'wms/package', where: 'shipment_id={[id]}', orderBy: 'sequence'>
+            >,
+            rows: 100
+        )
+    )
+
+    set('sh_no',     bo.attr([sh], 'shipment_number'))
+    set('sh_status', bo.attr([sh], 'status'))
+    set('sh_so',     _onError(bo.attr([sh], 'sales_order_id'), null()))
+
+    page.render(page.get('./shipmentView'))
+end-function
+
+protected resource shipmentView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="mb-1">Shipment <code>{{[sh_no]}}</code></h4>
+                            <p class="text-muted small mb-0">
+                                Status <span class="badge badge-info">{{[sh_status]}}</span>
+                                {{ if(isNotNull([sh_so]), buildString(' &middot; <a href=&quot;order?id=', [sh_so], '&quot;>Sales Order</a>'), '') }}
+                            </p>
+                        </div>
+                        <div>
+                            <a class="btn btn-success" href="ship?id={{[id]}}&confirm=1">Mark shipped</a>
+                        </div>
+                    </div>
+                </div></div>`)
+            >,
+            pkg_h: <@page/html `<h5 class="mt-3">Packages</h5>`>,
+            pkg_table: <@page/data/table
+                iterator: [packages],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// CANCEL — release all allocations + reservations on an order, set CANCELLED
+// ============================================================================
+function cancel()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postCancel', [id])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+    page.render(page.get('./cancelView'))
+end-function
+
+protected resource cancelView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Cancel order'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        resolveTemplate(`<div class="alert alert-warning">Click confirm to cancel order #{{[id]}} and release all allocations.</div><p><a href="cancel?id={{[id]}}&confirm=1" class="btn btn-danger">Confirm cancel</a></p>`)
+                    )
+                )
+            >,
+            back: <@page/html
+                resolveTemplate(`<p><a href="order?id={{[id]}}" class="btn btn-primary">Back to order</a></p>`)
+            >
+        >
+    >
+end-resource
+
+protected function postCancel(so_id)
+    set('so', bo.quickLoad('wms/sales_order', [so_id], group: '*'))
+    if isNull([so])
+        set('//act_err', 'Order not found')
+        exit-function
+    end-if
+    set('cur_status', bo.attr([so], 'status'))
+    if or(eq([cur_status], 'SHIPPED'), eq([cur_status], 'CANCELLED'))
+        set('//act_err', concat('Cannot cancel order with status ', [cur_status]))
+        exit-function
+    end-if
+
+    // walk active allocations for this order, release inventory.qty_reserved
+    set('allocs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'al',
+                    entity:  'wms/allocation',
+                    where:   'status="ACTIVE" & #exists[wms/sales_order_line, sales_order_id={[so_id]}]',
+                    orderBy: 'id'
+                >
+            >,
+            rows: 500
+        )
+    )
+    set('released', 0)
+    iterate [allocs]
+        set('al_qty', bo.attr([al], 'qty_allocated'))
+        set('iv_id',  bo.attr([al], 'inventory_id'))
+        set('iv', bo.quickLoad('wms/inventory', [iv_id], group: '*'))
+        if isNotNull([iv])
+            set('iv_rsv', bo.attr([iv], 'qty_reserved'))
+            bo.setAttr([iv], 'qty_reserved', sub([iv_rsv], [al_qty]))
+            bo.persist([iv])
+        end-if
+        bo.setAttr([al], 'status',      'RELEASED')
+        bo.setAttr([al], 'released_at', now())
+        bo.persist([al])
+        set('released', add([released], 1))
+    end-iterate
+
+    // update reservations to RELEASED via SQL (bulk UPDATE works through BO too but bulk SQL is faster)
+    sql.execute(concat(
+        "UPDATE inventory_reservation SET status='RELEASED', released_at=NOW() WHERE status='ACTIVE' AND sales_order_line_id IN (SELECT id FROM sales_order_line WHERE sales_order_id=",
+        [so_id], ")"
+    ))
+
+    // zero out line totals + cancel
+    sql.execute(concat(
+        "UPDATE sales_order_line SET qty_allocated=0, qty_cancelled=qty_ordered, status='CANCELLED' WHERE sales_order_id=",
+        [so_id]
+    ))
+    bo.setAttr([so], 'status', 'CANCELLED')
+    bo.persist([so])
+
+    set('//act_msg', concat('Cancelled order ', bo.attr([so], 'order_number'), '; released ', [released], ' allocation(s).'))
+end-function
+
+// ============================================================================
+// PACK STATION — collapse all picked-but-not-packed lines for one order into
+// a single package. Real packing UX would scan items into multiple cartons;
+// we ship the simple "one carton per order" form and let cartonization
+// (Phase 12) replace it later.
+// ============================================================================
+function pack()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('weight',  _onError(qs.getUntrusted('weight'),  ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postPack', [id], [weight])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('so', bo.quickLoad('wms/sales_order', [id], group: '*'))
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'sl', entity: 'wms/sales_order_line', where: 'sales_order_id={[id]}', orderBy: 'line_number'>
+            >,
+            rows: 200
+        )
+    )
+
+    page.render(page.get('./packView'))
+end-function
+
+protected resource packView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Pack station'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            header: <@page/html
+                resolveTemplate(`<div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Pack order <code>{{bo.attr([so], 'order_number')}}</code></h4>
+                    <p class="text-muted small mb-0">All picked lines will be packed into one package + linked to a new shipment.</p>
+                </div></div>`)
+            >,
+            lines_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            form: <@page/html
+                resolveTemplate(`
+                <form method="GET" action="pack" class="card mt-3"><div class="card-body">
+                    <input type="hidden" name="id" value="{{[id]}}">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group">
+                        <label>Total package weight (kg)</label>
+                        <input type="number" min="0" step="0.001" name="weight" value="{{[weight]}}" class="form-control" required>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Pack &amp; create shipment</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postPack(so_id, weight_str)
+    set('so', bo.quickLoad('wms/sales_order', [so_id], group: '*'))
+    if isNull([so])
+        set('//act_err', 'Order not found')
+        exit-function
+    end-if
+    set('weight', _onError(dbl([weight_str]), 0))
+    if le([weight], 0)
+        set('//act_err', 'Weight must be > 0')
+        exit-function
+    end-if
+
+    set('tenant_id',    bo.attr([so], 'tenant_id'))
+    set('warehouse_id', bo.attr([so], 'warehouse_id'))
+    set('carrier_id',   _onError(bo.attr([so], 'carrier_id'), null()))
+    set('ship_to',      _onError(bo.attr([so], 'ship_to_address_id'), null()))
+
+    // ensure we have an existing shipment row for this order (or create one)
+    set('sh_id', null())
+    if bo.tryLoad('wms/shipment',
+                  where: concat('sales_order_id=', [so_id]),
+                  group: 'list',
+                  bo:    'sh_loaded')
+        set('sh_id', bo.pk([sh_loaded]))
+    end-if
+    if isNull([sh_id])
+        set('sh_count', bo.count('wms/shipment'))
+        set('sh_no', concat('SHP-', format(now(), 'yyyyMMddHHmmss'), '-', add([sh_count], 1)))
+        sql.execute(concat(
+            "INSERT INTO shipment (tenant_id, warehouse_id, shipment_number, sales_order_id, carrier_id, ship_to_address_id, planned_ship_date, package_count, status, actual_weight_kg) VALUES (",
+            [tenant_id], ", ",
+            [warehouse_id], ", '",
+            [sh_no], "', ",
+            [so_id], ", ",
+            if(isNull([carrier_id]), 'NULL', formatString('{0}', [carrier_id])), ", ",
+            if(isNull([ship_to]),    'NULL', formatString('{0}', [ship_to])),    ", ",
+            "CURRENT_DATE, 1, 'PACKED', ",
+            [weight], ")"
+        ))
+        if bo.tryLoad('wms/shipment',
+                      where: concat('shipment_number="', [sh_no], '"'),
+                      group: 'list',
+                      bo:    'sh_loaded')
+            set('sh_id', bo.pk([sh_loaded]))
+        end-if
+    else
+        sql.execute(concat(
+            "UPDATE shipment SET status='PACKED', package_count=COALESCE(package_count,0)+1, actual_weight_kg=",
+            [weight], " WHERE id=", [sh_id]
+        ))
+    end-if
+
+    if isNull([sh_id])
+        set('//act_err', 'Failed to create or load shipment')
+        exit-function
+    end-if
+
+    // package row (one per order)
+    set('pkg_seq_iter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'p', entity: 'wms/package', where: concat('shipment_id=', [sh_id]), orderBy: '-sequence'>
+            >,
+            rows: 1
+        )
+    )
+    set('pkg_seq', 1)
+    iterate [pkg_seq_iter]
+        set('pkg_seq', add(_onError(bo.attr([p], 'sequence'), 0), 1))
+    end-iterate
+    sql.execute(concat(
+        "INSERT INTO package (tenant_id, shipment_id, sequence, weight_kg) VALUES (",
+        [tenant_id], ", ",
+        [sh_id], ", ",
+        [pkg_seq], ", ",
+        [weight], ")"
+    ))
+    set('pkg_id', null())
+    if bo.tryLoad('wms/package',
+                  where: concat('shipment_id=', [sh_id], ' & sequence=', [pkg_seq]),
+                  group: 'list',
+                  bo:    'pkg_loaded')
+        set('pkg_id', bo.pk([pkg_loaded]))
+    end-if
+
+    // package_item rows for each picked line
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'sl', entity: 'wms/sales_order_line', where: concat('sales_order_id=', [so_id]), orderBy: 'line_number'>
+            >,
+            rows: 200
+        )
+    )
+    set('packed_count', 0)
+    iterate [lines]
+        set('sl_id',     bo.pk([sl]))
+        set('item_id',   bo.attr([sl], 'item_id'))
+        set('qty_pick',  _onError(bo.attr([sl], 'qty_picked'), 0))
+        set('qty_pack',  _onError(bo.attr([sl], 'qty_packed'), 0))
+        set('uom',       bo.attr([sl], 'uom_code'))
+        set('to_pack',   sub([qty_pick], [qty_pack]))
+        if and(gt([to_pack], 0), isNotNull([pkg_id]))
+            sql.execute(concat(
+                "INSERT INTO package_item (tenant_id, package_id, sales_order_line_id, item_id, qty, uom_code) VALUES (",
+                [tenant_id], ", ",
+                [pkg_id], ", ",
+                [sl_id], ", ",
+                [item_id], ", ",
+                [to_pack], ", '",
+                [uom], "')"
+            ))
+            bo.setAttr([sl], 'qty_packed', add([qty_pack], [to_pack]))
+            bo.persist([sl])
+            set('packed_count', add([packed_count], 1))
+        end-if
+    end-iterate
+
+    bo.setAttr([so], 'status', 'PACKED')
+    bo.persist([so])
+
+    set('//act_msg', concat('Packed ', [packed_count], ' line(s) into 1 package; shipment is PACKED.'))
+end-function
+
+// ============================================================================
+// MANIFEST CLOSE — bundle PACKED shipments for one carrier into a manifest
+// ============================================================================
+function closeManifest()
+    set('carrier_id', _onError(qs.getUntrusted('carrier_id'), ''))
+    set('confirm',    _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postCloseManifest', [carrier_id])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('carriers',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'c', entity: 'wms/partner', where: 'is_carrier=1', orderBy: 'code'>
+            >,
+            rows: 50
+        )
+    )
+    set('carrierOptHtml', '<option value="">— pick a carrier —</option>')
+    iterate [carriers]
+        set('cid',  bo.pk([c]))
+        set('ccode', bo.attr([c], 'code'))
+        set('cname', bo.attr([c], 'name'))
+        set('selected', if(eq(_onError([carrier_id], ''), formatString('{0}', [cid])), ' selected', ''))
+        set('carrierOptHtml',
+            buildString('',
+                [carrierOptHtml],
+                resolveTemplate(`<option value="{{[cid]}}"{{[selected]}}>{{[ccode]}} — {{[cname]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./closeManifestView'))
+end-function
+
+protected resource closeManifestView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Close manifest'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="closeManifest" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group">
+                        <label>Carrier</label>
+                        <select name="carrier_id" class="form-control" required>{{[carrierOptHtml]}}</select>
+                    </div>
+                    <button class="btn btn-success" type="submit">Close manifest for today's PACKED shipments</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postCloseManifest(carrier_id)
+    if eq(_onError([carrier_id], ''), '')
+        set('//act_err', 'Carrier required')
+        exit-function
+    end-if
+    // gather PACKED shipments for this carrier
+    set('shipIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'sh', entity: 'wms/shipment', where: concat('status="PACKED" & carrier_id=', [carrier_id]), orderBy: 'id'>
+            >,
+            rows: 500
+        )
+    )
+    set('count', 0)
+    set('total_w', 0)
+    set('tenant_id', null())
+    set('warehouse_id', null())
+    iterate [shipIter]
+        set('count', add([count], 1))
+        set('total_w', add([total_w], _onError(bo.attr([sh], 'actual_weight_kg'), 0)))
+        if isNull([tenant_id])
+            set('tenant_id',    bo.attr([sh], 'tenant_id'))
+            set('warehouse_id', bo.attr([sh], 'warehouse_id'))
+        end-if
+    end-iterate
+    if eq([count], 0)
+        set('//act_err', 'No PACKED shipments for that carrier')
+        exit-function
+    end-if
+
+    set('m_count', bo.count('wms/manifest'))
+    set('m_no', concat('MAN-', format(now(), 'yyyyMMddHHmmss'), '-', add([m_count], 1)))
+    sql.execute(concat(
+        "INSERT INTO manifest (tenant_id, warehouse_id, manifest_number, carrier_id, pickup_date, package_count, total_weight_kg, closed_at, status) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", '",
+        [m_no], "', ",
+        [carrier_id], ", CURRENT_DATE, ",
+        [count], ", ",
+        [total_w], ", NOW(), 'CLOSED')"
+    ))
+    set('m_id', null())
+    if bo.tryLoad('wms/manifest',
+                  where: concat('manifest_number="', [m_no], '"'),
+                  group: 'list',
+                  bo:    'm_loaded')
+        set('m_id', bo.pk([m_loaded]))
+    end-if
+
+    // link shipments + bump status
+    sql.execute(concat(
+        "INSERT INTO manifest_shipment (tenant_id, manifest_id, shipment_id) ",
+        "SELECT ", [tenant_id], ", ", [m_id], ", id FROM shipment WHERE status='PACKED' AND carrier_id=", [carrier_id]
+    ))
+    sql.execute(concat(
+        "UPDATE shipment SET status='MANIFESTED' WHERE status='PACKED' AND carrier_id=", [carrier_id]
+    ))
+
+    set('//act_msg', concat('Closed manifest ', [m_no], ' with ', [count], ' shipment(s).'))
+end-function
+
+function ship()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('sh', bo.quickLoad('wms/shipment', [id], group: '*'))
+        if isNull([sh])
+            set('err', 'Shipment not found')
+        else
+            bo.setAttr([sh], 'status',        'SHIPPED')
+            bo.setAttr([sh], 'actual_ship_date', today())
+            bo.persist([sh])
+
+            // mark linked sales order as SHIPPED
+            set('so_id', _onError(bo.attr([sh], 'sales_order_id'), null()))
+            if isNotNull([so_id])
+                set('so', bo.quickLoad('wms/sales_order', [so_id], group: '*'))
+                if isNotNull([so])
+                    bo.setAttr([so], 'status', 'SHIPPED')
+                    bo.persist([so])
+                end-if
+            end-if
+            set('outcome', concat('Shipment ', bo.attr([sh], 'shipment_number'), ' marked SHIPPED.'))
+        end-if
+    end-if
+
+    page.render(page.get('./shipView'))
+end-function
+
+protected resource shipView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'outbound')>,
+            crumbs: <@page/html `<p><a href="../outbound" class="btn btn-sm btn-outline-secondary">&larr; Outbound</a></p>`>,
+            title: <@page/title label: 'Ship'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`)
+                )
+            >,
+            back: <@page/html
+                resolveTemplate(`<p><a href="shipment?id={{[id]}}" class="btn btn-primary">Back to shipment</a></p>`)
+            >
+        >
+    >
+end-resource

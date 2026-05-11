@@ -1,0 +1,56 @@
+// Casemaster-WMS — webhook outbound delivery worker (Phase 5 skeleton).
+//
+// publish(event_type, payload_json)
+//     — for each active webhook_subscription whose event_types matches,
+//       insert a webhook_delivery row in PENDING.
+// drain()
+//     — for each PENDING delivery: send HTTPS POST with HMAC sig (stubbed),
+//       update status SENT/FAILED + bump attempt_count.
+
+function publish(event_type, payload_json)
+    set('subs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 's', entity: 'wms/webhook_subscription', where: 'active=1', orderBy: 'id'>
+            >,
+            rows: 200
+        )
+    )
+    iterate [subs]
+        set('sid', bo.pk([s]))
+        sql.execute(concat(
+            "INSERT INTO webhook_delivery (tenant_id, webhook_subscription_id, event_id, event_type, payload, status) VALUES (",
+            "1, ", [sid], ", gen_random_uuid(), ",
+            script.call('wms/_helpers:sqlStrAllowEmpty', [event_type]), ", ",
+            if(isNull([payload_json]), "'{}'::jsonb", concat("'", replace([payload_json], "'", "''"), "'::jsonb")), ", ",
+            "'PENDING')"
+        ))
+    end-iterate
+end-function
+
+function drain()
+    set('rows',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'd', entity: 'wms/webhook_delivery', where: 'status="PENDING"', orderBy: 'id'>
+            >,
+            rows: 100
+        )
+    )
+    set('processed', 0)
+    iterate [rows]
+        set('did', bo.pk([d]))
+        set('sid', bo.attr([d], 'webhook_subscription_id'))
+        set('s',   bo.quickLoad('wms/webhook_subscription', [sid], group: '*'))
+        set('url', _onError(bo.attr([s], 'target_url'), ''))
+
+        // STUB: real delivery would use httpRequest.create(url) with HMAC sig.
+        bo.setAttr([d], 'attempt_count', add(_onError(bo.attr([d], 'attempt_count'), 0), 1))
+        bo.setAttr([d], 'status',        'DELIVERED')
+        bo.setAttr([d], 'delivered_at',  now())
+        bo.setAttr([d], 'response_status', 200)
+        bo.persist([d])
+        set('processed', add([processed], 1))
+    end-iterate
+    return [processed]
+end-function

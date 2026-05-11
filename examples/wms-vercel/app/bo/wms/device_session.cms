@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `device_session` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Device session',
+        table: 'device_session',
+        primaryKey: 'id',
+        sequence: 'device_session',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/device'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            ended_at: <@bo/attribute label: 'Ended at', column: 'ended_at', dataType: dataType.Timestamp, optional: true()>,
+            refresh_token_hash: <@bo/attribute label: 'Refresh token hash', column: 'refresh_token_hash', dataType: dataType.String, length: 4000, optional: true()>,
+            ip_address: <@bo/attribute label: 'Ip address', column: 'ip_address', dataType: dataType.String, length: 50, optional: true()>,
+            last_activity_at: <@bo/attribute label: 'Last activity at', column: 'last_activity_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'refresh_token_hash' >,
+            list: < 'tenant_id', 'device_id', 'user_id', 'refresh_token_hash', 'ip_address' >,
+            description: < 'tenant_id', 'device_id', 'user_id', 'started_at', 'ended_at', 'refresh_token_hash', 'ip_address', 'last_activity_at' >
+        >
+    >
+end-resource

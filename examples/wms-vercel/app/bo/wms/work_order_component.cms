@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `work_order_component` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Work order component',
+        table: 'work_order_component',
+        primaryKey: 'id',
+        sequence: 'work_order_component',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            work_order_id: <@bo/attribute label: 'Work order id', column: 'work_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/work_order'>,
+            component_item_id: <@bo/attribute label: 'Component item id', column: 'component_item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            qty_required: <@bo/attribute label: 'Qty required', column: 'qty_required', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_consumed: <@bo/attribute label: 'Qty consumed', column: 'qty_consumed', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'work_order_id', 'component_item_id', 'qty_required', 'qty_consumed', 'uom_code' >,
+            description: < 'tenant_id', 'work_order_id', 'component_item_id', 'qty_required', 'qty_consumed', 'uom_code', 'sequence' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

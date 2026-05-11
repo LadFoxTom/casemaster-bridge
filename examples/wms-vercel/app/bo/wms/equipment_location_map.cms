@@ -1,0 +1,30 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `equipment_location_map` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Equipment location map',
+        table: 'equipment_location_map',
+        primaryKey: 'id',
+        sequence: 'equipment_location_map',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            equipment_id: <@bo/attribute label: 'Equipment id', column: 'equipment_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/equipment'>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            access_mode: <@bo/attribute label: 'Access mode', column: 'access_mode', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'access_mode' >,
+            list: < 'tenant_id', 'equipment_id', 'location_id', 'access_mode' >,
+            description: < 'tenant_id', 'equipment_id', 'location_id', 'access_mode' >
+        >
+    >
+end-resource

@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_affinity` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item affinity',
+        table: 'item_affinity',
+        primaryKey: 'id',
+        sequence: 'item_affinity',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            item_id_a: <@bo/attribute label: 'Item id a', column: 'item_id_a', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            item_id_b: <@bo/attribute label: 'Item id b', column: 'item_id_b', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            co_pick_count: <@bo/attribute label: 'Co pick count', column: 'co_pick_count', dataType: dataType.Long, length: 9, optional: false()>,
+            lift_score: <@bo/attribute label: 'Lift score', column: 'lift_score', dataType: dataType.Decimal, length: 8, precision: 4, optional: true()>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Date, optional: false()>,
+            period_end: <@bo/attribute label: 'Period end', column: 'period_end', dataType: dataType.Date, optional: false()>,
+            computed_at: <@bo/attribute label: 'Computed at', column: 'computed_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'warehouse_id', 'item_id_a', 'item_id_b', 'co_pick_count', 'lift_score' >,
+            description: < 'tenant_id', 'warehouse_id', 'item_id_a', 'item_id_b', 'co_pick_count', 'lift_score', 'period_start', 'period_end', 'computed_at' >
+        >
+    >
+end-resource

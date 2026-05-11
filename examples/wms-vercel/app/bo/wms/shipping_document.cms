@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `shipping_document` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Shipping document',
+        table: 'shipping_document',
+        primaryKey: 'id',
+        sequence: 'shipping_document',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            shipment_id: <@bo/attribute label: 'Shipment id', column: 'shipment_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/shipment'>,
+            document_type: <@bo/attribute label: 'Document type', column: 'document_type', dataType: dataType.String, length: 4000, optional: false()>,
+            file_url: <@bo/attribute label: 'File url', column: 'file_url', dataType: dataType.String, length: 4000, optional: true()>,
+            rendered_at: <@bo/attribute label: 'Rendered at', column: 'rendered_at', dataType: dataType.Timestamp, optional: false()>,
+            printed_at: <@bo/attribute label: 'Printed at', column: 'printed_at', dataType: dataType.Timestamp, optional: true()>,
+            printed_by_user_id: <@bo/attribute label: 'Printed by user id', column: 'printed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            reprint_count: <@bo/attribute label: 'Reprint count', column: 'reprint_count', dataType: dataType.Long, length: 9, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'document_type' >,
+            list: < 'tenant_id', 'shipment_id', 'document_type', 'file_url', 'printed_by_user_id', 'reprint_count' >,
+            description: < 'tenant_id', 'shipment_id', 'document_type', 'file_url', 'rendered_at', 'printed_at', 'printed_by_user_id', 'reprint_count' >
+        >
+    >
+end-resource

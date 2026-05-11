@@ -1,0 +1,50 @@
+// Casemaster-WMS — ERP outbound posting queue worker (Phase 6 skeleton).
+//
+// queue(source_table, source_id, posting_type, payload_json)
+//     — INSERT a row into erp_posting_queue. Called from action handlers
+//       (receive → 'GR', adjustment → 'ADJUSTMENT', shipment → 'GI', etc.).
+// drain()
+//     — select PENDING rows; for each, attempt the configured ERP connector;
+//       update status to ACKNOWLEDGED or FAILED (with retry counter).
+//
+// Real connectors (SAP S/4HANA, Dynamics 365, NetSuite, Sage, Odoo, Infor,
+// QuickBooks) plug in here. The drain function below is a no-op stub that
+// just bumps retry_count on failures; replace with httpRequest.* calls per
+// connector type.
+
+function queue(source_table, source_id, posting_type, payload_json)
+    sql.execute(concat(
+        "INSERT INTO erp_posting_queue (tenant_id, source_table, source_id, posting_type, payload, status, retry_count) VALUES (",
+        "1, ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [source_table]), ", ",
+        [source_id], ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [posting_type]), ", ",
+        if(isNull([payload_json]), "'{}'::jsonb", concat("'", replace([payload_json], "'", "''"), "'::jsonb")), ", ",
+        "'PENDING', 0)"
+    ))
+end-function
+
+function drain()
+    set('rows',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'q', entity: 'wms/erp_posting_queue', where: 'status="PENDING"', orderBy: 'id'>
+            >,
+            rows: 100
+        )
+    )
+    set('processed', 0)
+    iterate [rows]
+        set('qid', bo.pk([q]))
+        set('rt',  _onError(bo.attr([q], 'retry_count'), 0))
+        // STUB: real ERP connector lives here. Mark as ACKNOWLEDGED so we
+        // can count flow end-to-end without an actual ERP.
+        bo.setAttr([q], 'status',           'ACKNOWLEDGED')
+        bo.setAttr([q], 'sent_at',          now())
+        bo.setAttr([q], 'acknowledged_at',  now())
+        bo.setAttr([q], 'erp_document_number', concat('STUB-', [qid]))
+        bo.persist([q])
+        set('processed', add([processed], 1))
+    end-iterate
+    return [processed]
+end-function

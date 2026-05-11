@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `wave` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Wave',
+        table: 'wave',
+        primaryKey: 'id',
+        sequence: 'wave',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            wave_number: <@bo/attribute label: 'Wave number', column: 'wave_number', dataType: dataType.String, length: 4000, optional: false()>,
+            template_id: <@bo/attribute label: 'Template id', column: 'template_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/wave_template'>,
+            planned_at: <@bo/attribute label: 'Planned at', column: 'planned_at', dataType: dataType.Timestamp, optional: false()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            closed_at: <@bo/attribute label: 'Closed at', column: 'closed_at', dataType: dataType.Timestamp, optional: true()>,
+            pick_strategy: <@bo/attribute label: 'Pick strategy', column: 'pick_strategy', dataType: dataType.String, length: 4000, optional: false()>,
+            order_count: <@bo/attribute label: 'Order count', column: 'order_count', dataType: dataType.Long, length: 9, optional: false()>,
+            line_count: <@bo/attribute label: 'Line count', column: 'line_count', dataType: dataType.Long, length: 9, optional: false()>,
+            unit_count: <@bo/attribute label: 'Unit count', column: 'unit_count', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            expected_pick_minutes: <@bo/attribute label: 'Expected pick minutes', column: 'expected_pick_minutes', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'wave_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'wave_number', 'template_id', 'pick_strategy', 'order_count' >,
+            description: < 'tenant_id', 'warehouse_id', 'wave_number', 'template_id', 'planned_at', 'released_at', 'completed_at', 'closed_at', 'pick_strategy', 'order_count', 'line_count', 'unit_count' >,
+            search: < 'wave_number' >
+        >
+    >
+end-resource

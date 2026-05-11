@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `adjustment_reason` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Adjustment reason',
+        table: 'adjustment_reason',
+        primaryKey: 'id',
+        sequence: 'adjustment_reason',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            direction: <@bo/attribute label: 'Direction', column: 'direction', dataType: dataType.String, length: 4000, optional: false()>,
+            requires_approval: <@bo/attribute label: 'Requires approval', column: 'requires_approval', dataType: dataType.Boolean, optional: false()>,
+            approval_threshold: <@bo/attribute label: 'Approval threshold', column: 'approval_threshold', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            erp_gl_account: <@bo/attribute label: 'Erp gl account', column: 'erp_gl_account', dataType: dataType.String, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'code', 'name', 'direction', 'requires_approval', 'approval_threshold' >,
+            description: < 'tenant_id', 'code', 'name', 'direction', 'requires_approval', 'approval_threshold', 'erp_gl_account', 'is_active' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

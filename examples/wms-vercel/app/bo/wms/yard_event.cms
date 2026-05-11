@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `yard_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Yard event',
+        table: 'yard_event',
+        primaryKey: 'id',
+        sequence: 'yard_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            trailer_id: <@bo/attribute label: 'Trailer id', column: 'trailer_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/trailer'>,
+            appointment_id: <@bo/attribute label: 'Appointment id', column: 'appointment_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/appointment'>,
+            event_type: <@bo/attribute label: 'Event type', column: 'event_type', dataType: dataType.String, length: 4000, optional: false()>,
+            event_at: <@bo/attribute label: 'Event at', column: 'event_at', dataType: dataType.Timestamp, optional: false()>,
+            yard_slot_id: <@bo/attribute label: 'Yard slot id', column: 'yard_slot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/yard_slot'>,
+            dock_door_id: <@bo/attribute label: 'Dock door id', column: 'dock_door_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/dock_door'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            driver_name: <@bo/attribute label: 'Driver name', column: 'driver_name', dataType: dataType.String, length: 4000, optional: true()>,
+            driver_phone: <@bo/attribute label: 'Driver phone', column: 'driver_phone', dataType: dataType.String, length: 4000, optional: true()>,
+            seal_number: <@bo/attribute label: 'Seal number', column: 'seal_number', dataType: dataType.String, length: 4000, optional: true()>,
+            reefer_set_temp_c: <@bo/attribute label: 'Reefer set temp c', column: 'reefer_set_temp_c', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            reefer_actual_temp_c: <@bo/attribute label: 'Reefer actual temp c', column: 'reefer_actual_temp_c', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_attachment_ids: <@bo/attribute label: 'Photo attachment ids', column: 'photo_attachment_ids', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'event_type' >,
+            list: < 'tenant_id', 'warehouse_id', 'trailer_id', 'appointment_id', 'event_type', 'yard_slot_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'trailer_id', 'appointment_id', 'event_type', 'event_at', 'yard_slot_id', 'dock_door_id', 'user_id', 'driver_name', 'driver_phone', 'seal_number' >,
+            search: < 'driver_name', 'seal_number' >
+        >
+    >
+end-resource

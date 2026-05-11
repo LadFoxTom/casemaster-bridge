@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pick_cart` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pick cart',
+        table: 'pick_cart',
+        primaryKey: 'id',
+        sequence: 'pick_cart',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            cart_number: <@bo/attribute label: 'Cart number', column: 'cart_number', dataType: dataType.String, length: 4000, optional: false()>,
+            cart_type: <@bo/attribute label: 'Cart type', column: 'cart_type', dataType: dataType.String, length: 4000, optional: false()>,
+            bin_count: <@bo/attribute label: 'Bin count', column: 'bin_count', dataType: dataType.Long, length: 9, optional: false()>,
+            current_user_id: <@bo/attribute label: 'Current user id', column: 'current_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'cart_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'cart_number', 'cart_type', 'bin_count', 'current_user_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'cart_number', 'cart_type', 'bin_count', 'current_user_id', 'status' >,
+            search: < 'cart_number' >
+        >
+    >
+end-resource

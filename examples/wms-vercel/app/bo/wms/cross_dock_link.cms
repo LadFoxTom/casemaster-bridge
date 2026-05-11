@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `cross_dock_link` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Cross dock link',
+        table: 'cross_dock_link',
+        primaryKey: 'id',
+        sequence: 'cross_dock_link',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            receipt_line_id: <@bo/attribute label: 'Receipt line id', column: 'receipt_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/receipt_line'>,
+            asn_line_id: <@bo/attribute label: 'Asn line id', column: 'asn_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/asn_line'>,
+            sales_order_line_id: <@bo/attribute label: 'Sales order line id', column: 'sales_order_line_id', dataType: dataType.Long, length: 18, optional: true()>,
+            qty_linked: <@bo/attribute label: 'Qty linked', column: 'qty_linked', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            link_type: <@bo/attribute label: 'Link type', column: 'link_type', dataType: dataType.String, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'link_type' >,
+            list: < 'tenant_id', 'warehouse_id', 'receipt_line_id', 'asn_line_id', 'sales_order_line_id', 'qty_linked' >,
+            description: < 'tenant_id', 'warehouse_id', 'receipt_line_id', 'asn_line_id', 'sales_order_line_id', 'qty_linked', 'link_type', 'status', 'created_at' >
+        >
+    >
+end-resource

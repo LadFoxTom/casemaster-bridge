@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `allocation_strategy` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Allocation strategy',
+        table: 'allocation_strategy',
+        primaryKey: 'id',
+        sequence: 'allocation_strategy',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            rotation_method: <@bo/attribute label: 'Rotation method', column: 'rotation_method', dataType: dataType.String, length: 4000, optional: false()>,
+            prefer_pick_face: <@bo/attribute label: 'Prefer pick face', column: 'prefer_pick_face', dataType: dataType.Boolean, optional: false()>,
+            prefer_full_lpn: <@bo/attribute label: 'Prefer full lpn', column: 'prefer_full_lpn', dataType: dataType.Boolean, optional: false()>,
+            prefer_single_location: <@bo/attribute label: 'Prefer single location', column: 'prefer_single_location', dataType: dataType.Boolean, optional: false()>,
+            minimum_shelf_life_days: <@bo/attribute label: 'Minimum shelf life days', column: 'minimum_shelf_life_days', dataType: dataType.Long, length: 9, optional: true()>,
+            avoid_quality_status: <@bo/attribute label: 'Avoid quality status', column: 'avoid_quality_status', dataType: dataType.JSON, length: 4000, optional: true()>,
+            priority: <@bo/attribute label: 'Priority', column: 'priority', dataType: dataType.Long, length: 9, optional: false()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list: < 'tenant_id', 'warehouse_id', 'name', 'rotation_method', 'prefer_pick_face', 'prefer_full_lpn' >,
+            description: < 'tenant_id', 'warehouse_id', 'name', 'selector_jsonb', 'rotation_method', 'prefer_pick_face', 'prefer_full_lpn', 'prefer_single_location', 'minimum_shelf_life_days', 'avoid_quality_status', 'priority', 'is_active' >,
+            search: < 'name' >
+        >
+    >
+end-resource

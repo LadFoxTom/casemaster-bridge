@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pick_task` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pick task',
+        table: 'pick_task',
+        primaryKey: 'id',
+        sequence: 'pick_task',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            task_id: <@bo/attribute label: 'Task id', column: 'task_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/task'>,
+            sales_order_line_id: <@bo/attribute label: 'Sales order line id', column: 'sales_order_line_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order_line'>,
+            allocation_id: <@bo/attribute label: 'Allocation id', column: 'allocation_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/allocation'>,
+            cart_id: <@bo/attribute label: 'Cart id', column: 'cart_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/pick_cart'>,
+            cart_position: <@bo/attribute label: 'Cart position', column: 'cart_position', dataType: dataType.Long, length: 9, optional: true()>,
+            qty_required: <@bo/attribute label: 'Qty required', column: 'qty_required', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_picked: <@bo/attribute label: 'Qty picked', column: 'qty_picked', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_short: <@bo/attribute label: 'Qty short', column: 'qty_short', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            short_reason: <@bo/attribute label: 'Short reason', column: 'short_reason', dataType: dataType.String, length: 4000, optional: true()>,
+            pick_method: <@bo/attribute label: 'Pick method', column: 'pick_method', dataType: dataType.String, length: 4000, optional: false()>,
+            picked_lot_id: <@bo/attribute label: 'Picked lot id', column: 'picked_lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            picked_serial_numbers: <@bo/attribute label: 'Picked serial numbers', column: 'picked_serial_numbers', dataType: dataType.JSON, length: 4000, optional: true()>,
+            picked_lpn_id: <@bo/attribute label: 'Picked lpn id', column: 'picked_lpn_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            drop_lpn_id: <@bo/attribute label: 'Drop lpn id', column: 'drop_lpn_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>
+        >,
+        attributeGroups: <
+            label: < 'short_reason' >,
+            list: < 'tenant_id', 'task_id', 'sales_order_line_id', 'allocation_id', 'cart_id', 'cart_position' >,
+            description: < 'tenant_id', 'task_id', 'sales_order_line_id', 'allocation_id', 'cart_id', 'cart_position', 'qty_required', 'qty_picked', 'qty_short', 'short_reason', 'pick_method', 'picked_lot_id' >
+        >
+    >
+end-resource

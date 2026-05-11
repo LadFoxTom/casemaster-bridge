@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `tenant` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Tenant',
+        table: 'tenant',
+        primaryKey: 'id',
+        sequence: 'tenant',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            region: <@bo/attribute label: 'Region', column: 'region', dataType: dataType.String, length: 4000, optional: true()>,
+            deployment_type: <@bo/attribute label: 'Deployment type', column: 'deployment_type', dataType: dataType.String, length: 4000, optional: true()>,
+            shard_id: <@bo/attribute label: 'Shard id', column: 'shard_id', dataType: dataType.Long, length: 9, optional: true()>,
+            data_residency: <@bo/attribute label: 'Data residency', column: 'data_residency', dataType: dataType.String, length: 4000, optional: true()>,
+            plan: <@bo/attribute label: 'Plan', column: 'plan', dataType: dataType.String, length: 4000, optional: true()>,
+            default_timezone: <@bo/attribute label: 'Default timezone', column: 'default_timezone', dataType: dataType.String, length: 4000, optional: false()>,
+            default_currency: <@bo/attribute label: 'Default currency', column: 'default_currency', dataType: dataType.String, length: 3, optional: false()>,
+            default_weight_unit: <@bo/attribute label: 'Default weight unit', column: 'default_weight_unit', dataType: dataType.String, length: 4000, optional: false()>,
+            default_volume_unit: <@bo/attribute label: 'Default volume unit', column: 'default_volume_unit', dataType: dataType.String, length: 4000, optional: false()>,
+            default_language: <@bo/attribute label: 'Default language', column: 'default_language', dataType: dataType.String, length: 2, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'code', 'name', 'region', 'deployment_type', 'shard_id', 'data_residency' >,
+            description: < 'code', 'name', 'region', 'deployment_type', 'shard_id', 'data_residency', 'plan', 'default_timezone', 'default_currency', 'default_weight_unit', 'default_volume_unit', 'default_language' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

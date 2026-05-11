@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `alert_recipient` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Alert recipient',
+        table: 'alert_recipient',
+        primaryKey: 'id',
+        sequence: 'alert_recipient',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            alert_rule_id: <@bo/attribute label: 'Alert rule id', column: 'alert_rule_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/alert_rule'>,
+            recipient_type: <@bo/attribute label: 'Recipient type', column: 'recipient_type', dataType: dataType.String, length: 4000, optional: false()>,
+            recipient_value: <@bo/attribute label: 'Recipient value', column: 'recipient_value', dataType: dataType.String, length: 4000, optional: false()>,
+            channel: <@bo/attribute label: 'Channel', column: 'channel', dataType: dataType.String, length: 4000, optional: false()>,
+            escalation_level: <@bo/attribute label: 'Escalation level', column: 'escalation_level', dataType: dataType.Long, length: 9, optional: false()>,
+            escalate_after_minutes: <@bo/attribute label: 'Escalate after minutes', column: 'escalate_after_minutes', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'recipient_type' >,
+            list: < 'tenant_id', 'alert_rule_id', 'recipient_type', 'recipient_value', 'channel', 'escalation_level' >,
+            description: < 'tenant_id', 'alert_rule_id', 'recipient_type', 'recipient_value', 'channel', 'escalation_level', 'escalate_after_minutes' >
+        >
+    >
+end-resource

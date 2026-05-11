@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `serial_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Serial event',
+        table: 'serial_event',
+        primaryKey: 'id',
+        sequence: 'serial_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            serial_unit_id: <@bo/attribute label: 'Serial unit id', column: 'serial_unit_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/serial_unit'>,
+            event_type: <@bo/attribute label: 'Event type', column: 'event_type', dataType: dataType.String, length: 4000, optional: false()>,
+            event_at: <@bo/attribute label: 'Event at', column: 'event_at', dataType: dataType.Timestamp, optional: false()>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            reference_type: <@bo/attribute label: 'Reference type', column: 'reference_type', dataType: dataType.String, length: 4000, optional: true()>,
+            reference_id: <@bo/attribute label: 'Reference id', column: 'reference_id', dataType: dataType.Long, length: 18, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'event_type' >,
+            list: < 'tenant_id', 'serial_unit_id', 'event_type', 'location_id', 'user_id', 'reference_type' >,
+            description: < 'tenant_id', 'serial_unit_id', 'event_type', 'event_at', 'location_id', 'user_id', 'reference_type', 'reference_id', 'notes' >
+        >
+    >
+end-resource

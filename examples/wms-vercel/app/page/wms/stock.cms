@@ -1,0 +1,1224 @@
+// Casemaster-WMS — Stock workflow center.
+//   /page/wms/stock                       overview + universal lookup
+//   /page/wms/stock/f/item?id=N           item detail
+//   /page/wms/stock/f/location?id=N       location detail
+//   /page/wms/stock/f/lot?id=N            lot detail
+//   /page/wms/stock/f/lpn?id=N            LPN detail
+//   /page/wms/stock/f/adjust              adjustment form / POST
+//   /page/wms/stock/f/move                move form / POST
+
+inherits 'base'
+
+// ============================================================================
+// MAIN — overview + universal scan/lookup
+// ============================================================================
+function main()
+    set('q', _onError(qs.getUntrusted('q'), ''))
+
+    // Top-level rollups
+    set('top_inventory',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'i',
+                    entity:  'wms/inventory',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('low_stock',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'i',
+                    entity:  'wms/inventory',
+                    where:   'qty_on_hand <= 10',
+                    orderBy: 'qty_on_hand'
+                >
+            >,
+            rows: 25
+        )
+    )
+
+    set('items_iter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'it',
+                    entity:  'wms/item',
+                    where:   if(eq([q], ''), '', 'sku%%"{[q]}" | name%%"{[q]}"'),
+                    orderBy: 'sku'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('locations_iter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'lo',
+                    entity:  'wms/location',
+                    where:   if(eq([q], ''), '', 'code%%"{[q]}" | barcode%%"{[q]}"'),
+                    orderBy: 'pick_sequence'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '📊 Stock'>,
+
+            actions: <@page/html
+                resolveTemplate(`<p class="mb-3">
+                    <a href="stock/f/adjust" class="btn btn-sm btn-warning">Adjust inventory</a>
+                    <a href="stock/f/move" class="btn btn-sm btn-info">Move stock</a>
+                </p>`)
+            >,
+
+            search: <@page/form
+                method: 'GET',
+                content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+                    <@page/form/row
+                        content: <@page/form/col
+                            class: 'col-md-6',
+                            content: <@page/form/control
+                                label: 'Search items / locations (substring SKU, item name, location code or barcode)',
+                                input: <@page/input/text
+                                    name:        'q',
+                                    value:       [q],
+                                    placeholder: 'e.g. SKU-001 or PCK-A01'
+                                >
+                            >
+                        >
+                    >,
+                    <@page/button/submit label: 'Search'>
+                >
+            >,
+
+            items_h: <@page/html
+                resolveTemplate(`<h5 class="mt-4">Items {{ if(eq([q], ''), '(top by SKU)', concat('matching &ldquo;', [q], '&rdquo;')) }}</h5>`)
+            >,
+            items_table: <@page/data/table
+                iterator: [items_iter],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'item', qs: <id: $bo.pk([it])>>
+                >
+            >,
+
+            loc_h: <@page/html
+                resolveTemplate(`<h5 class="mt-4">Locations {{ if(eq([q], ''), '(by pick sequence)', concat('matching &ldquo;', [q], '&rdquo;')) }}</h5>`)
+            >,
+            loc_table: <@page/data/table
+                iterator: [locations_iter],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'location', qs: <id: $bo.pk([lo])>>
+                >
+            >,
+
+            inv_h: <@page/html `<h5 class="mt-4">Top inventory rows by quantity on hand</h5>`>,
+            inv_table: <@page/data/table
+                iterator: [top_inventory],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            low_h: <@page/html `<h5 class="mt-4">Low stock (≤ 10 on hand)</h5>`>,
+            low_table: <@page/data/table
+                iterator: [low_stock],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// ITEM — single SKU detail (stock by location, recent moves, on-order)
+// ============================================================================
+function item()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('it', bo.quickLoad('wms/item', [id], group: '*'))
+    if isNull([it])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('inv',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'iv',
+                    entity:  'wms/inventory',
+                    where:   'item_id={[id]}',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('journal',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'j',
+                    entity:  'wms/inventory_journal',
+                    where:   'item_id={[id]}',
+                    orderBy: '-journal_timestamp'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('lots',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'l',
+                    entity:  'wms/lot',
+                    where:   'item_id={[id]}',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('po_lines_open',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'pl',
+                    entity:  'wms/purchase_order_line',
+                    where:   'item_id={[id]} & status="OPEN"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('so_lines_open',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sl',
+                    entity:  'wms/sales_order_line',
+                    where:   'item_id={[id]} & status="OPEN"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('sku',  bo.attr([it], 'sku'))
+    set('name', bo.attr([it], 'name'))
+    set('description', _onError(bo.attr([it], 'description'), ''))
+    set('weight_kg',   _onError(bo.attr([it], 'weight_kg'), ''))
+    set('uom',         bo.attr([it], 'base_uom_code'))
+    set('lot_tracked', bo.attr([it], 'is_lot_tracked'))
+    set('ser_tracked', bo.attr([it], 'is_serial_tracked'))
+    set('exp_tracked', bo.attr([it], 'is_expiry_tracked'))
+    set('hazmat',      bo.attr([it], 'is_hazmat'))
+    set('status',      bo.attr([it], 'status'))
+
+    page.render(page.get('./itemView'))
+end-function
+
+protected resource itemView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-0">Item <code>{{[sku]}}</code></h4>
+                    <p class="lead mb-2">{{[name]}}</p>
+                    <p class="text-muted small mb-1">{{[description]}}</p>
+                    <p class="small mb-0">
+                        Status <span class="badge badge-info">{{[status]}}</span>
+                        &middot; UoM {{[uom]}}
+                        &middot; Weight {{_onError([weight_kg], '?')}} kg
+                        {{ if(eq([lot_tracked], true()), ' &middot; <span class="badge badge-light">Lot</span>', '') }}
+                        {{ if(eq([ser_tracked], true()), ' &middot; <span class="badge badge-light">Serial</span>', '') }}
+                        {{ if(eq([exp_tracked], true()), ' &middot; <span class="badge badge-light">Expiry</span>', '') }}
+                        {{ if(eq([hazmat],      true()), ' &middot; <span class="badge badge-danger">Hazmat</span>', '') }}
+                    </p>
+                </div></div>`)
+            >,
+
+            inv_h: <@page/html `<h5 class="mt-3">Stock by location</h5>`>,
+            inv_table: <@page/data/table
+                iterator: [inv],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            lots_h: <@page/html `<h5 class="mt-4">Lots</h5>`>,
+            lots_table: <@page/data/table
+                iterator: [lots],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'lot', qs: <id: $bo.pk([l])>>
+                >
+            >,
+
+            po_h: <@page/html `<h5 class="mt-4">On order (open PO lines)</h5>`>,
+            po_table: <@page/data/table
+                iterator: [po_lines_open],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            so_h: <@page/html `<h5 class="mt-4">Open sales-order lines for this item</h5>`>,
+            so_table: <@page/data/table
+                iterator: [so_lines_open],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            j_h: <@page/html `<h5 class="mt-4">Recent inventory journal (last 30)</h5>`>,
+            j_table: <@page/data/table
+                iterator: [journal],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// LOCATION — bin detail
+// ============================================================================
+function location()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lo', bo.quickLoad('wms/location', [id], group: '*'))
+    if isNull([lo])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('contents',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'iv',
+                    entity:  'wms/inventory',
+                    where:   'location_id={[id]}',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    set('moves_in',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'j',
+                    entity:  'wms/inventory_journal',
+                    where:   'to_location_id={[id]}',
+                    orderBy: '-journal_timestamp'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('moves_out',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'j',
+                    entity:  'wms/inventory_journal',
+                    where:   'from_location_id={[id]}',
+                    orderBy: '-journal_timestamp'
+                >
+            >,
+            rows: 30
+        )
+    )
+
+    set('code',     bo.attr([lo], 'code'))
+    set('barcode',  bo.attr([lo], 'barcode'))
+    set('loc_type', bo.attr([lo], 'location_type'))
+    set('loc_status', bo.attr([lo], 'status'))
+    set('mixed_sku', bo.attr([lo], 'allow_mixed_sku'))
+    set('mixed_lot', bo.attr([lo], 'allow_mixed_lot'))
+
+    page.render(page.get('./locationView'))
+end-function
+
+protected resource locationView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-0">Location <code>{{[code]}}</code></h4>
+                    <p class="text-muted small mb-0">
+                        Barcode <code>{{[barcode]}}</code>
+                        &middot; Type {{[loc_type]}}
+                        &middot; Status <span class="badge badge-info">{{[loc_status]}}</span>
+                        {{ if(eq([mixed_sku], true()), ' &middot; mixed SKU OK', ' &middot; single SKU') }}
+                        {{ if(eq([mixed_lot], true()), ' &middot; mixed lot OK', ' &middot; single lot') }}
+                    </p>
+                </div></div>`)
+            >,
+
+            cont_h: <@page/html `<h5 class="mt-3">Current contents</h5>`>,
+            cont_table: <@page/data/table
+                iterator: [contents],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            in_h: <@page/html `<h5 class="mt-4">Recent moves in (journal)</h5>`>,
+            in_table: <@page/data/table
+                iterator: [moves_in],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            out_h: <@page/html `<h5 class="mt-4">Recent moves out (journal)</h5>`>,
+            out_table: <@page/data/table
+                iterator: [moves_out],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// LOT — lot detail
+// ============================================================================
+function lot()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lt', bo.quickLoad('wms/lot', [id], group: '*'))
+    if isNull([lt])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lot_no',  bo.attr([lt], 'lot_number'))
+    set('item_id', bo.attr([lt], 'item_id'))
+    set('expiry',  _onError(bo.attr([lt], 'expiry_date'), ''))
+    set('q_status', bo.attr([lt], 'quality_status'))
+    set('recalled', bo.attr([lt], 'is_recalled'))
+
+    set('item_bo', bo.quickLoad('wms/item', [item_id], group: '*'))
+    set('sku',  _onError(bo.attr([item_bo], 'sku'), ''))
+    set('name', _onError(bo.attr([item_bo], 'name'), ''))
+
+    set('inv',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'iv',
+                    entity:  'wms/inventory',
+                    where:   'lot_id={[id]}',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 200
+        )
+    )
+
+    page.render(page.get('./lotView'))
+end-function
+
+protected resource lotView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-0">Lot <code>{{[lot_no]}}</code></h4>
+                    <p class="lead mb-2"><a href="item?id={{[item_id]}}"><code>{{[sku]}}</code> {{[name]}}</a></p>
+                    <p class="small mb-0">
+                        Quality <span class="badge badge-info">{{[q_status]}}</span>
+                        &middot; Expiry {{ if(eq([expiry], ''), '—', [expiry]) }}
+                        {{ if(eq([recalled], true()), ' &middot; <span class="badge badge-danger">Recalled</span>', '') }}
+                    </p>
+                </div></div>`)
+            >,
+            inv_h: <@page/html `<h5 class="mt-3">Stock for this lot</h5>`>,
+            inv_table: <@page/data/table
+                iterator: [inv],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// LPN — license-plate detail
+// ============================================================================
+function lpn()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lpn', bo.quickLoad('wms/license_plate', [id], group: '*'))
+    if isNull([lpn])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('contents',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'iv',
+                    entity:  'wms/inventory',
+                    where:   'license_plate_id={[id]}',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 200
+        )
+    )
+    set('events',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ev',
+                    entity:  'wms/license_plate_event',
+                    where:   'license_plate_id={[id]}',
+                    orderBy: '-event_at'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('lpn_no', bo.attr([lpn], 'lpn_number'))
+    set('lpn_type', bo.attr([lpn], 'lpn_type'))
+    set('lpn_status', bo.attr([lpn], 'status'))
+    set('cur_loc', _onError(bo.attr([lpn], 'current_location_id'), ''))
+
+    page.render(page.get('./lpnView'))
+end-function
+
+protected resource lpnView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-0">LPN <code>{{[lpn_no]}}</code></h4>
+                    <p class="text-muted small mb-0">
+                        Type {{[lpn_type]}}
+                        &middot; Status <span class="badge badge-info">{{[lpn_status]}}</span>
+                        {{ if(ne([cur_loc], ''), buildString(' &middot; Location <a href=&quot;location?id=', [cur_loc], '&quot;>id ', [cur_loc], '</a>'), '') }}
+                    </p>
+                </div></div>`)
+            >,
+            cont_h: <@page/html `<h5 class="mt-3">Contents</h5>`>,
+            cont_table: <@page/data/table
+                iterator: [contents],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            ev_h: <@page/html `<h5 class="mt-4">LPN events</h5>`>,
+            ev_table: <@page/data/table
+                iterator: [events],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// ADJUST — inventory adjustment form + action
+// Take a single inventory_id and a target qty_on_hand. Writes
+// inventory_adjustment + journal entry, updates inventory.qty_on_hand.
+// ============================================================================
+function adjust()
+    set('inv_id',  _onError(qs.getUntrusted('inv_id'), ''))
+    set('new_qty', _onError(qs.getUntrusted('new_qty'), ''))
+    set('reason',  _onError(qs.getUntrusted('reason'), ''))
+    set('notes',   _onError(qs.getUntrusted('notes'), ''))
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    set('inv_options',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'iv',
+                    entity:  'wms/inventory',
+                    orderBy: '-qty_on_hand'
+                >
+            >,
+            rows: 100
+        )
+    )
+
+    set('reasons',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'rs',
+                    entity:  'wms/adjustment_reason',
+                    orderBy: 'code'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('outcome', '')
+    set('err', '')
+
+    if eq([confirm], '1')
+        if or(eq([inv_id], ''), eq([new_qty], ''))
+            set('err', 'inv_id and new_qty required')
+        else
+            set('//act_err', '')
+            set('//act_msg', '')
+            script.call('./postAdjust', [inv_id], [new_qty], [reason], [notes])
+            set('err',     _onError([//act_err], ''))
+            set('outcome', _onError([//act_msg], ''))
+        end-if
+    end-if
+
+    // Build inventory option list HTML server-side
+    set('invOptionsHtml', '')
+    iterate [inv_options]
+        set('iv_id_v',  bo.pk([iv]))
+        set('iv_qty',   bo.attr([iv], 'qty_on_hand'))
+        set('iv_item',  bo.attr([iv], 'item_id'))
+        set('iv_loc',   bo.attr([iv], 'location_id'))
+        set('itm_bo', bo.quickLoad('wms/item', [iv_item], group: '*'))
+        set('itm_sku',  _onError(bo.attr([itm_bo], 'sku'), '?'))
+        set('lc_bo',  bo.quickLoad('wms/location', [iv_loc], group: '*'))
+        set('lc_code', _onError(bo.attr([lc_bo], 'code'), '?'))
+        set('selected', if(eq(dbl([iv_id_v]), dbl(_onError([inv_id], '0'))), ' selected', ''))
+        set('invOptionsHtml',
+            buildString('',
+                [invOptionsHtml],
+                resolveTemplate(`<option value="{{[iv_id_v]}}"{{[selected]}}>#{{[iv_id_v]}} &middot; SKU {{[itm_sku]}} @ {{[lc_code]}} (on hand {{[iv_qty]}})</option>`)
+            )
+        )
+    end-iterate
+
+    set('reasonOptionsHtml', '<option value="">(none)</option>')
+    iterate [reasons]
+        set('rcode', bo.attr([rs], 'code'))
+        set('rname', bo.attr([rs], 'name'))
+        set('selected2', if(eq([rcode], _onError([reason], '')), ' selected', ''))
+        set('reasonOptionsHtml',
+            buildString('',
+                [reasonOptionsHtml],
+                resolveTemplate(`<option value="{{[rcode]}}"{{[selected2]}}>{{[rcode]}} &mdash; {{[rname]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./adjustView'))
+end-function
+
+protected resource adjustView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            title: <@page/title label: 'Adjust inventory'>,
+
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+
+            form: <@page/html
+                resolveTemplate(`
+                <form method="GET" action="adjust" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group">
+                        <label>Inventory row</label>
+                        <select name="inv_id" class="form-control">{{[invOptionsHtml]}}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>New qty_on_hand</label>
+                        <input type="number" min="0" step="0.000001" name="new_qty" value="{{[new_qty]}}" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Reason code</label>
+                        <select name="reason" class="form-control">{{[reasonOptionsHtml]}}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea name="notes" rows="2" class="form-control">{{[notes]}}</textarea>
+                    </div>
+                    <button class="btn btn-warning" type="submit">Post adjustment</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postAdjust(inv_id, new_qty, reason_code, notes)
+    set('inv', bo.quickLoad('wms/inventory', [inv_id], group: '*'))
+    if isNull([inv])
+        set('//act_err', 'Inventory row not found')
+        exit-function
+    end-if
+
+    set('tenant_id',     bo.attr([inv], 'tenant_id'))
+    set('warehouse_id',  bo.attr([inv], 'warehouse_id'))
+    set('location_id',   bo.attr([inv], 'location_id'))
+    set('item_id',       bo.attr([inv], 'item_id'))
+    set('lot_id',        _onError(bo.attr([inv], 'lot_id'), null()))
+    set('uom',           bo.attr([inv], 'uom_code'))
+    set('qty_before',    bo.attr([inv], 'qty_on_hand'))
+    set('qty_after_n',   dbl([new_qty]))
+    set('delta',         sub([qty_after_n], [qty_before]))
+
+    // resolve reason_id (upsert with INSERT ... ON CONFLICT, then load)
+    set('reason_code_use', if(ne(_onError([reason_code], ''), ''), [reason_code], 'GENERIC'))
+    set('reason_name', if(eq([reason_code_use], 'GENERIC'), 'Generic adjustment', [reason_code_use]))
+    set('direction',   if(ge([delta], 0), 'INCREASE', 'DECREASE'))
+    sql.execute(concat(
+        "INSERT INTO adjustment_reason (tenant_id, code, name, direction, is_active) VALUES (",
+        [tenant_id], ", '",
+        [reason_code_use], "', '",
+        [reason_name], "', '",
+        [direction], "', TRUE) ON CONFLICT (tenant_id, code) DO NOTHING"
+    ))
+    set('reason_id', null())
+    if bo.tryLoad('wms/adjustment_reason',
+                  where: concat('tenant_id=', [tenant_id], ' & code="', [reason_code_use], '"'),
+                  group: 'list',
+                  bo:    'rs_loaded')
+        set('reason_id', bo.pk([rs_loaded]))
+    end-if
+
+    // adjustment number
+    set('adj_count', bo.count('wms/inventory_adjustment'))
+    set('adj_no', concat('ADJ-', format(now(), 'yyyyMMddHHmmss'), '-', add([adj_count], 1)))
+
+    // INSERT inventory_adjustment via sql.execute
+    set('notes_sql', if(eq(_onError([notes], ''), ''), 'NULL', concat("'", replace([notes], "'", "''"), "'")))
+    sql.execute(concat(
+        "INSERT INTO inventory_adjustment (tenant_id, warehouse_id, adjustment_number, inventory_id, item_id, location_id, lot_id, qty_before, qty_after, qty_delta, reason_id, notes) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", '",
+        [adj_no], "', ",
+        [inv_id], ", ",
+        [item_id], ", ",
+        [location_id], ", ",
+        if(isNull([lot_id]), 'NULL', formatString('{0}', [lot_id])), ", ",
+        [qty_before], ", ",
+        [qty_after_n], ", ",
+        [delta], ", ",
+        [reason_id], ", ",
+        [notes_sql],
+        ")"
+    ))
+
+    // recover adjustment id by unique adjustment_number
+    set('adj_id', null())
+    if bo.tryLoad('wms/inventory_adjustment',
+                  where: concat('adjustment_number="', [adj_no], '"'),
+                  group: 'list',
+                  bo:    'adj_loaded')
+        set('adj_id', bo.pk([adj_loaded]))
+    end-if
+
+    // UPDATE inventory (BO layer works for updates)
+    bo.setAttr([inv], 'qty_on_hand', [qty_after_n])
+    bo.setAttr([inv], 'last_movement_at', now())
+    bo.persist([inv])
+
+    // INSERT journal
+    sql.execute(concat(
+        "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, to_location_id, qty, uom_code) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", NOW(), '",
+        if(ge([delta], 0), 'ADJUST_PLUS', 'ADJUST_MINUS'), "', 'ADJUSTMENT', ",
+        if(isNull([adj_id]), 'NULL', formatString('{0}', [adj_id])), ", ",
+        [item_id], ", ",
+        [location_id], ", ",
+        [delta], ", '",
+        [uom], "')"
+    ))
+
+    set('//act_msg', concat('Adjustment ', [adj_no], ' posted (delta ', [delta], ').'))
+end-function
+
+// ============================================================================
+// MOVE — between two locations
+// ============================================================================
+function move()
+    set('inv_id',     _onError(qs.getUntrusted('inv_id'), ''))
+    set('to_loc_id',  _onError(qs.getUntrusted('to_loc_id'), ''))
+    set('qty_str',    _onError(qs.getUntrusted('qty'), ''))
+    set('confirm',    _onError(qs.getUntrusted('confirm'), ''))
+
+    set('inv_options',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'iv', entity: 'wms/inventory', where: 'qty_on_hand > 0', orderBy: '-qty_on_hand'>
+            >,
+            rows: 100
+        )
+    )
+    set('loc_options',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'lo', entity: 'wms/location', orderBy: 'code'>
+            >,
+            rows: 200
+        )
+    )
+
+    set('outcome', '')
+    set('err', '')
+
+    if eq([confirm], '1')
+        if or(or(eq([inv_id], ''), eq([to_loc_id], '')), eq([qty_str], ''))
+            set('err', 'All fields required')
+        else
+            set('//act_err', '')
+            set('//act_msg', '')
+            script.call('./postMove', [inv_id], [to_loc_id], [qty_str])
+            set('err',     _onError([//act_err], ''))
+            set('outcome', _onError([//act_msg], ''))
+        end-if
+    end-if
+
+    set('invOptionsHtml', '')
+    iterate [inv_options]
+        set('iv_id_v',  bo.pk([iv]))
+        set('iv_qty',   bo.attr([iv], 'qty_on_hand'))
+        set('iv_item',  bo.attr([iv], 'item_id'))
+        set('iv_loc',   bo.attr([iv], 'location_id'))
+        set('itm_bo', bo.quickLoad('wms/item', [iv_item], group: '*'))
+        set('itm_sku',  _onError(bo.attr([itm_bo], 'sku'), '?'))
+        set('lc_bo',  bo.quickLoad('wms/location', [iv_loc], group: '*'))
+        set('lc_code', _onError(bo.attr([lc_bo], 'code'), '?'))
+        set('selected', if(eq(dbl([iv_id_v]), dbl(_onError([inv_id], '0'))), ' selected', ''))
+        set('invOptionsHtml',
+            buildString('',
+                [invOptionsHtml],
+                resolveTemplate(`<option value="{{[iv_id_v]}}"{{[selected]}}>#{{[iv_id_v]}} &middot; SKU {{[itm_sku]}} @ {{[lc_code]}} (on hand {{[iv_qty]}})</option>`)
+            )
+        )
+    end-iterate
+
+    set('locOptionsHtml', '')
+    iterate [loc_options]
+        set('lcid_v', bo.pk([lo]))
+        set('lcc',    bo.attr([lo], 'code'))
+        set('selected3', if(eq(dbl([lcid_v]), dbl(_onError([to_loc_id], '0'))), ' selected', ''))
+        set('locOptionsHtml',
+            buildString('',
+                [locOptionsHtml],
+                resolveTemplate(`<option value="{{[lcid_v]}}"{{[selected3]}}>{{[lcc]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./moveView'))
+end-function
+
+protected resource moveView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            title: <@page/title label: 'Move stock between locations'>,
+
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+
+            form: <@page/html
+                resolveTemplate(`
+                <form method="GET" action="move" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group">
+                        <label>Source inventory row</label>
+                        <select name="inv_id" class="form-control" required>{{[invOptionsHtml]}}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Destination location</label>
+                        <select name="to_loc_id" class="form-control" required>{{[locOptionsHtml]}}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity to move</label>
+                        <input type="number" min="0.000001" step="0.000001" name="qty" value="{{[qty_str]}}" class="form-control" required>
+                    </div>
+                    <button class="btn btn-info" type="submit">Move</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// HOLD — place an inventory hold; bump qty_on_hold; create inventory_hold row
+// ============================================================================
+function hold()
+    set('inv_id',  _onError(qs.getUntrusted('inv_id'),  ''))
+    set('qty_str', _onError(qs.getUntrusted('qty'),     ''))
+    set('hold_type', _onError(qs.getUntrusted('hold_type'), 'QUALITY'))
+    set('reason',  _onError(qs.getUntrusted('reason'),  ''))
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postHold', [inv_id], [qty_str], [hold_type], [reason])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('inv_options',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'iv', entity: 'wms/inventory', where: 'qty_on_hand > 0', orderBy: '-qty_on_hand'>
+            >,
+            rows: 100
+        )
+    )
+    set('invOptionsHtml', '')
+    iterate [inv_options]
+        set('iv_id_v',  bo.pk([iv]))
+        set('iv_qty',   bo.attr([iv], 'qty_on_hand'))
+        set('iv_oh',    _onError(bo.attr([iv], 'qty_on_hold'), 0))
+        set('iv_item',  bo.attr([iv], 'item_id'))
+        set('iv_loc',   bo.attr([iv], 'location_id'))
+        set('itm_bo',   bo.quickLoad('wms/item', [iv_item], group: '*'))
+        set('itm_sku',  _onError(bo.attr([itm_bo], 'sku'), '?'))
+        set('lc_bo',    bo.quickLoad('wms/location', [iv_loc], group: '*'))
+        set('lc_code',  _onError(bo.attr([lc_bo], 'code'), '?'))
+        set('selected', if(eq(dbl([iv_id_v]), dbl(_onError([inv_id], '0'))), ' selected', ''))
+        set('invOptionsHtml',
+            buildString('',
+                [invOptionsHtml],
+                resolveTemplate(`<option value="{{[iv_id_v]}}"{{[selected]}}>#{{[iv_id_v]}} &middot; SKU {{[itm_sku]}} @ {{[lc_code]}} (on hand {{[iv_qty]}}, on hold {{[iv_oh]}})</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./holdView'))
+end-function
+
+protected resource holdView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            title: <@page/title label: 'Place inventory hold'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="hold" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Inventory row</label><select name="inv_id" class="form-control" required>{{[invOptionsHtml]}}</select></div>
+                    <div class="form-group"><label>Qty to hold</label><input type="number" min="0.000001" step="0.000001" name="qty" value="{{[qty_str]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Hold type</label><select name="hold_type" class="form-control"><option>QUALITY</option><option>REGULATORY</option><option>CUSTOMER_SPECIFIC</option><option>INVESTIGATION</option><option>RECALL</option></select></div>
+                    <div class="form-group"><label>Reason</label><input type="text" name="reason" value="{{[reason]}}" class="form-control"></div>
+                    <button class="btn btn-warning" type="submit">Place hold</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postHold(inv_id, qty_str, hold_type, reason)
+    set('inv', bo.quickLoad('wms/inventory', [inv_id], group: '*'))
+    if isNull([inv])
+        set('//act_err', 'Inventory row not found')
+        exit-function
+    end-if
+    set('qty', _onError(dbl([qty_str]), 0))
+    if le([qty], 0)
+        set('//act_err', 'Qty must be > 0')
+        exit-function
+    end-if
+
+    set('tenant_id',    bo.attr([inv], 'tenant_id'))
+    set('warehouse_id', bo.attr([inv], 'warehouse_id'))
+    set('iv_oh',        _onError(bo.attr([inv], 'qty_on_hold'), 0))
+
+    set('reason_sql', if(eq(_onError([reason], ''), ''), 'NULL', concat("'", replace([reason], "'", "''"), "'")))
+    sql.execute(concat(
+        "INSERT INTO inventory_hold (tenant_id, warehouse_id, inventory_id, qty, hold_type, hold_reason, status) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", ",
+        [inv_id], ", ",
+        [qty], ", '",
+        [hold_type], "', ",
+        [reason_sql], ", 'ACTIVE')"
+    ))
+
+    bo.setAttr([inv], 'qty_on_hold', add([iv_oh], [qty]))
+    bo.persist([inv])
+
+    set('//act_msg', concat('Held ', [qty], ' on inventory #', [inv_id], '.'))
+end-function
+
+function releaseHold()
+    set('hold_id', _onError(qs.getUntrusted('hold_id'), ''))
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postReleaseHold', [hold_id])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('hold_options',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'h', entity: 'wms/inventory_hold', where: 'status="ACTIVE"', orderBy: '-id'>
+            >,
+            rows: 50
+        )
+    )
+    set('holdOptHtml', '<option value="">— pick a hold —</option>')
+    iterate [hold_options]
+        set('hid',   bo.pk([h]))
+        set('hqty',  bo.attr([h], 'qty'))
+        set('htype', bo.attr([h], 'hold_type'))
+        set('selected', if(eq(_onError([hold_id], ''), formatString('{0}', [hid])), ' selected', ''))
+        set('holdOptHtml',
+            buildString('',
+                [holdOptHtml],
+                resolveTemplate(`<option value="{{[hid]}}"{{[selected]}}>#{{[hid]}} {{[htype]}} qty {{[hqty]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./releaseHoldView'))
+end-function
+
+protected resource releaseHoldView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'stock')>,
+            crumbs: <@page/html `<p><a href="../stock" class="btn btn-sm btn-outline-secondary">&larr; Stock</a></p>`>,
+            title: <@page/title label: 'Release inventory hold'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="releaseHold" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Active hold</label><select name="hold_id" class="form-control" required>{{[holdOptHtml]}}</select></div>
+                    <button class="btn btn-info" type="submit">Release hold</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postReleaseHold(hold_id)
+    set('h', bo.quickLoad('wms/inventory_hold', [hold_id], group: '*'))
+    if isNull([h])
+        set('//act_err', 'Hold not found')
+        exit-function
+    end-if
+    if eq(bo.attr([h], 'status'), 'RELEASED')
+        set('//act_err', 'Hold already released')
+        exit-function
+    end-if
+
+    set('inv_id', bo.attr([h], 'inventory_id'))
+    set('qty',    bo.attr([h], 'qty'))
+    set('inv', bo.quickLoad('wms/inventory', [inv_id], group: '*'))
+    if isNotNull([inv])
+        set('iv_oh', _onError(bo.attr([inv], 'qty_on_hold'), 0))
+        bo.setAttr([inv], 'qty_on_hold', sub([iv_oh], [qty]))
+        bo.persist([inv])
+    end-if
+    bo.setAttr([h], 'status',      'RELEASED')
+    bo.setAttr([h], 'released_at', now())
+    bo.persist([h])
+
+    set('//act_msg', concat('Released hold #', [hold_id], '.'))
+end-function
+
+protected function postMove(src_id, to_loc_id, qty_str)
+    set('src', bo.quickLoad('wms/inventory', [src_id], group: '*'))
+    if isNull([src])
+        set('//act_err', 'Source inventory row not found')
+        exit-function
+    end-if
+
+    set('qty', dbl([qty_str]))
+    if le([qty], 0)
+        set('//act_err', 'Qty must be > 0')
+        exit-function
+    end-if
+    if gt([qty], bo.attr([src], 'qty_on_hand'))
+        set('//act_err', 'Qty exceeds on-hand')
+        exit-function
+    end-if
+
+    set('tenant_id',    bo.attr([src], 'tenant_id'))
+    set('warehouse_id', bo.attr([src], 'warehouse_id'))
+    set('from_loc',     bo.attr([src], 'location_id'))
+    set('item_id',      bo.attr([src], 'item_id'))
+    set('uom',          bo.attr([src], 'uom_code'))
+    set('lot_id',       _onError(bo.attr([src], 'lot_id'), null()))
+    set('quality',      bo.attr([src], 'quality_status'))
+
+    if eq(dbl([from_loc]), dbl([to_loc_id]))
+        set('//act_err', 'Source and destination are the same location')
+        exit-function
+    end-if
+
+    // decrement source
+    bo.setAttr([src], 'qty_on_hand', sub(bo.attr([src], 'qty_on_hand'), [qty]))
+    bo.setAttr([src], 'last_movement_at', now())
+    bo.persist([src])
+
+    // upsert destination inventory: try to find an existing row; otherwise create
+    set('dst_id', null())
+    set('dstIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'd',
+                    entity:  'wms/inventory',
+                    where:   'warehouse_id={[warehouse_id]} & location_id={[to_loc_id]} & item_id={[item_id]} & quality_status="{[quality]}"',
+                    orderBy: 'id'
+                >
+            >,
+            rows: 1
+        )
+    )
+    iterate [dstIter]
+        set('dst_id', bo.pk([d]))
+    end-iterate
+
+    if isNull([dst_id])
+        // INSERT new destination inventory row via sql.execute
+        sql.execute(concat(
+            "INSERT INTO inventory (tenant_id, warehouse_id, location_id, item_id, lot_id, qty_on_hand, qty_reserved, qty_on_hold, qty_in_transit, quality_status, uom_code, last_movement_at) VALUES (",
+            [tenant_id], ", ",
+            [warehouse_id], ", ",
+            [to_loc_id], ", ",
+            [item_id], ", ",
+            if(isNull([lot_id]), 'NULL', formatString('{0}', [lot_id])), ", ",
+            [qty], ", 0, 0, 0, '",
+            [quality], "', '",
+            [uom], "', NOW())"
+        ))
+    else
+        // existing dest — UPDATE qty_on_hand via BO layer
+        set('dst', bo.quickLoad('wms/inventory', [dst_id], group: '*'))
+        bo.setAttr([dst], 'qty_on_hand', add(bo.attr([dst], 'qty_on_hand'), [qty]))
+        bo.setAttr([dst], 'last_movement_at', now())
+        bo.persist([dst])
+    end-if
+
+    // INSERT journal via sql.execute
+    sql.execute(concat(
+        "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, item_id, from_location_id, to_location_id, lot_id, qty, uom_code) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", NOW(), 'MOVE', 'MOVE', ",
+        [item_id], ", ",
+        [from_loc], ", ",
+        [to_loc_id], ", ",
+        if(isNull([lot_id]), 'NULL', formatString('{0}', [lot_id])), ", ",
+        [qty], ", '",
+        [uom], "')"
+    ))
+
+    set('//act_msg', concat('Moved ', [qty], ' ', [uom], ' to location ', [to_loc_id], '.'))
+end-function

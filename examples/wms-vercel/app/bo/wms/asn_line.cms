@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `asn_line` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Asn line',
+        table: 'asn_line',
+        primaryKey: 'id',
+        sequence: 'asn_line',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            asn_id: <@bo/attribute label: 'Asn id', column: 'asn_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/asn'>,
+            line_number: <@bo/attribute label: 'Line number', column: 'line_number', dataType: dataType.Long, length: 9, optional: false()>,
+            purchase_order_line_id: <@bo/attribute label: 'Purchase order line id', column: 'purchase_order_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/purchase_order_line'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            expected_qty: <@bo/attribute label: 'Expected qty', column: 'expected_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            received_qty: <@bo/attribute label: 'Received qty', column: 'received_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            lot_number: <@bo/attribute label: 'Lot number', column: 'lot_number', dataType: dataType.String, length: 4000, optional: true()>,
+            serial_numbers: <@bo/attribute label: 'Serial numbers', column: 'serial_numbers', dataType: dataType.JSON, length: 4000, optional: true()>,
+            expiry_date: <@bo/attribute label: 'Expiry date', column: 'expiry_date', dataType: dataType.Date, optional: true()>,
+            country_of_origin: <@bo/attribute label: 'Country of origin', column: 'country_of_origin', dataType: dataType.String, length: 2, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'lot_number' >,
+            list: < 'tenant_id', 'asn_id', 'line_number', 'purchase_order_line_id', 'item_id', 'expected_qty' >,
+            description: < 'tenant_id', 'asn_id', 'line_number', 'purchase_order_line_id', 'item_id', 'expected_qty', 'received_qty', 'uom_code', 'lot_number', 'serial_numbers', 'expiry_date', 'country_of_origin' >,
+            search: < 'uom_code', 'lot_number' >
+        >
+    >
+end-resource

@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `feature_flag` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Feature flag',
+        table: 'feature_flag',
+        primaryKey: 'id',
+        sequence: 'feature_flag',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            enabled_globally: <@bo/attribute label: 'Enabled globally', column: 'enabled_globally', dataType: dataType.Boolean, optional: false()>,
+            enabled_for_tenants: <@bo/attribute label: 'Enabled for tenants', column: 'enabled_for_tenants', dataType: dataType.Long, length: 18, optional: true()>,
+            rollout_percent: <@bo/attribute label: 'Rollout percent', column: 'rollout_percent', dataType: dataType.Long, length: 9, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'code', 'description', 'enabled_globally', 'enabled_for_tenants', 'rollout_percent' >,
+            description: < 'code', 'description', 'enabled_globally', 'enabled_for_tenants', 'rollout_percent' >,
+            search: < 'code' >
+        >
+    >
+end-resource

@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `report_definition` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Report definition',
+        table: 'report_definition',
+        primaryKey: 'id',
+        sequence: 'report_definition',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            report_code: <@bo/attribute label: 'Report code', column: 'report_code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            category: <@bo/attribute label: 'Category', column: 'category', dataType: dataType.String, length: 4000, optional: true()>,
+            sql_template: <@bo/attribute label: 'Sql template', column: 'sql_template', dataType: dataType.String, length: 4000, optional: false()>,
+            parameters: <@bo/attribute label: 'Parameters', column: 'parameters', dataType: dataType.JSON, length: 4000, optional: true()>,
+            output_formats: <@bo/attribute label: 'Output formats', column: 'output_formats', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'report_code' >,
+            list: < 'tenant_id', 'report_code', 'name', 'category', 'sql_template', 'output_formats' >,
+            description: < 'tenant_id', 'report_code', 'name', 'category', 'sql_template', 'parameters', 'output_formats' >,
+            search: < 'report_code', 'name' >
+        >
+    >
+end-resource

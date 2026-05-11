@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `labor_incentive_plan` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Labor incentive plan',
+        table: 'labor_incentive_plan',
+        primaryKey: 'id',
+        sequence: 'labor_incentive_plan',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            threshold_pct: <@bo/attribute label: 'Threshold pct', column: 'threshold_pct', dataType: dataType.Decimal, length: 8, precision: 3, optional: true()>,
+            rate_per_pct: <@bo/attribute label: 'Rate per pct', column: 'rate_per_pct', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            cap_per_shift: <@bo/attribute label: 'Cap per shift', column: 'cap_per_shift', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'threshold_pct', 'rate_per_pct' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'threshold_pct', 'rate_per_pct', 'cap_per_shift', 'is_active' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

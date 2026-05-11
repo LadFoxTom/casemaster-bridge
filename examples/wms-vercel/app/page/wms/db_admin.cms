@@ -1,0 +1,255 @@
+// Casemaster-WMS — Database admin index.
+// Raw view of every WMS table; useful for debugging and ad-hoc inspection.
+// Each link goes to /page/wms/<table> which is a generated list view.
+
+inherits 'base'
+
+function main()
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'db_admin')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '🛠 Database admin'>,
+            intro: <@page/html `<p class="text-muted">Raw list view of every WMS table (164). Useful for debugging and ad-hoc inspection. For day-to-day work use the workflow centers from the dashboard instead.</p>`>,
+
+            grid: <@page/html
+                resolveTemplate(`
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Master Data</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="tenant">Tenants</a></li>
+                            <li><a href="site">Sites</a></li>
+                            <li><a href="warehouse">Warehouses</a></li>
+                            <li><a href="zone">Zones</a></li>
+                            <li><a href="aisle">Aisles</a></li>
+                            <li><a href="location">Locations</a></li>
+                            <li><a href="item_category">Item categories</a></li>
+                            <li><a href="item">Items / SKUs</a></li>
+                            <li><a href="item_barcode">Item barcodes</a></li>
+                            <li><a href="item_uom">Item UoM</a></li>
+                            <li><a href="item_supplier">Item-supplier</a></li>
+                            <li><a href="item_kit_component">Kit components</a></li>
+                            <li><a href="partner">Partners</a></li>
+                            <li><a href="partner_address">Partner addresses</a></li>
+                            <li><a href="carrier_service">Carrier services</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Inventory &amp; tracking</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="inventory">Stock on hand</a></li>
+                            <li><a href="inventory_journal">Inventory journal</a></li>
+                            <li><a href="inventory_reservation">Reservations</a></li>
+                            <li><a href="inventory_hold">Holds</a></li>
+                            <li><a href="inventory_adjustment">Adjustments</a></li>
+                            <li><a href="adjustment_reason">Adjustment reasons</a></li>
+                            <li><a href="lot">Lots</a></li>
+                            <li><a href="lot_certificate">Lot certificates</a></li>
+                            <li><a href="serial_unit">Serial units</a></li>
+                            <li><a href="serial_event">Serial events</a></li>
+                            <li><a href="recall">Recalls</a></li>
+                            <li><a href="recall_lot">Recall lots</a></li>
+                            <li><a href="license_plate">License plates</a></li>
+                            <li><a href="license_plate_event">LPN events</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Inbound</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="purchase_order">Purchase orders</a></li>
+                            <li><a href="purchase_order_line">PO lines</a></li>
+                            <li><a href="asn">ASNs</a></li>
+                            <li><a href="asn_line">ASN lines</a></li>
+                            <li><a href="receipt">Receipts</a></li>
+                            <li><a href="receipt_line">Receipt lines</a></li>
+                            <li><a href="receipt_discrepancy">Receipt discrepancies</a></li>
+                            <li><a href="cross_dock_link">Cross-dock links</a></li>
+                            <li><a href="putaway_rule">Putaway rules</a></li>
+                            <li><a href="putaway_task">Putaway tasks</a></li>
+                            <li><a href="item_velocity">Item velocity</a></li>
+                            <li><a href="item_affinity">Item affinity</a></li>
+                            <li><a href="item_slot_assignment">Slot assignments</a></li>
+                            <li><a href="slot_recommendation">Slot recommendations</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Outbound</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="sales_order">Sales orders</a></li>
+                            <li><a href="sales_order_line">Order lines</a></li>
+                            <li><a href="order_hold">Order holds</a></li>
+                            <li><a href="order_compliance_rule">Compliance rules</a></li>
+                            <li><a href="allocation_strategy">Allocation strategies</a></li>
+                            <li><a href="allocation">Allocations</a></li>
+                            <li><a href="wave_template">Wave templates</a></li>
+                            <li><a href="wave">Waves</a></li>
+                            <li><a href="wave_order">Wave / order links</a></li>
+                            <li><a href="task">Tasks</a></li>
+                            <li><a href="pick_cart">Pick carts</a></li>
+                            <li><a href="pick_cart_bin">Pick cart bins</a></li>
+                            <li><a href="pick_task">Pick tasks</a></li>
+                            <li><a href="pick_path_segment">Pick path</a></li>
+                            <li><a href="pick_exception">Pick exceptions</a></li>
+                        </ul>
+                    </div></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Pack &amp; Ship</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="packing_station">Packing stations</a></li>
+                            <li><a href="carton_type">Carton types</a></li>
+                            <li><a href="cartonization_plan">Cartonization plans</a></li>
+                            <li><a href="shipment">Shipments</a></li>
+                            <li><a href="package">Packages</a></li>
+                            <li><a href="package_item">Package items</a></li>
+                            <li><a href="rate_quote">Carrier rate quotes</a></li>
+                            <li><a href="shipping_document">Shipping documents</a></li>
+                            <li><a href="manifest">Manifests</a></li>
+                            <li><a href="manifest_shipment">Manifest shipments</a></li>
+                            <li><a href="load_event">Load events</a></li>
+                            <li><a href="vas_template">VAS templates</a></li>
+                            <li><a href="vas_step">VAS steps</a></li>
+                            <li><a href="vas_activity">VAS activities</a></li>
+                            <li><a href="work_order">Work orders</a></li>
+                            <li><a href="work_order_component">WO components</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Reverse, Counts &amp; Replen</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="rma">RMAs</a></li>
+                            <li><a href="rma_line">RMA lines</a></li>
+                            <li><a href="return_disposition">Return dispositions</a></li>
+                            <li><a href="return_reason">Return reasons</a></li>
+                            <li><a href="count_program">Count programs</a></li>
+                            <li><a href="count_session">Count sessions</a></li>
+                            <li><a href="count_task">Count tasks</a></li>
+                            <li><a href="replenishment_rule">Replen rules</a></li>
+                            <li><a href="replenishment_task">Replen tasks</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Yard &amp; Labor</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="dock_door">Dock doors</a></li>
+                            <li><a href="yard_slot">Yard slots</a></li>
+                            <li><a href="trailer">Trailers</a></li>
+                            <li><a href="appointment">Appointments</a></li>
+                            <li><a href="yard_event">Yard events</a></li>
+                            <li><a href="labor_standard">Labor standards</a></li>
+                            <li><a href="labor_activity">Labor activity</a></li>
+                            <li><a href="labor_clock">Labor clock</a></li>
+                            <li><a href="labor_incentive_plan">Incentive plans</a></li>
+                            <li><a href="labor_forecast">Labor forecast</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">3PL Billing &amp; QC</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="client_contract">Client contracts</a></li>
+                            <li><a href="rate_card">Rate cards</a></li>
+                            <li><a href="rate_card_line">Rate card lines</a></li>
+                            <li><a href="billing_event">Billing events</a></li>
+                            <li><a href="storage_billing_snapshot">Storage snapshots</a></li>
+                            <li><a href="bill_run">Bill runs</a></li>
+                            <li><a href="bill_run_line">Bill run lines</a></li>
+                            <li><a href="qc_plan">QC plans</a></li>
+                            <li><a href="qc_characteristic">QC characteristics</a></li>
+                            <li><a href="inspection">Inspections</a></li>
+                            <li><a href="inspection_result">Inspection results</a></li>
+                            <li><a href="non_conformance">Non-conformance</a></li>
+                            <li><a href="supplier_scorecard">Supplier scorecards</a></li>
+                        </ul>
+                    </div></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Equipment &amp; reporting</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="equipment">Equipment</a></li>
+                            <li><a href="equipment_location_map">Eq.&rarr;location map</a></li>
+                            <li><a href="equipment_command">Eq. commands</a></li>
+                            <li><a href="equipment_event">Eq. events</a></li>
+                            <li><a href="kpi_definition">KPI definitions</a></li>
+                            <li><a href="kpi_snapshot">KPI snapshots</a></li>
+                            <li><a href="report_definition">Reports</a></li>
+                            <li><a href="report_schedule">Report schedules</a></li>
+                            <li><a href="forecast_run">Forecast runs</a></li>
+                            <li><a href="forecast_value">Forecast values</a></li>
+                            <li><a href="anomaly_event">Anomaly events</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Identity, devices &amp; audit</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="app_user">Users</a></li>
+                            <li><a href="role">Roles</a></li>
+                            <li><a href="permission">Permissions</a></li>
+                            <li><a href="role_permission">Role&times;perm</a></li>
+                            <li><a href="user_role">User&times;role</a></li>
+                            <li><a href="user_scope">User scopes</a></li>
+                            <li><a href="api_credential">API credentials</a></li>
+                            <li><a href="auth_session">Auth sessions</a></li>
+                            <li><a href="elevation_event">Elevation events</a></li>
+                            <li><a href="device">Devices</a></li>
+                            <li><a href="device_session">Device sessions</a></li>
+                            <li><a href="device_sync_log">Device sync</a></li>
+                            <li><a href="device_app_state">Device app state</a></li>
+                            <li><a href="idempotency_record">Idempotency</a></li>
+                            <li><a href="stuck_transaction">Stuck transactions</a></li>
+                            <li><a href="audit_log">Audit log</a></li>
+                            <li><a href="electronic_signature">E-signatures</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Integrations</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="integration_endpoint">Endpoints</a></li>
+                            <li><a href="integration_partner">Partners</a></li>
+                            <li><a href="message_log">Message log</a></li>
+                            <li><a href="edi_map">EDI maps</a></li>
+                            <li><a href="webhook_subscription">Webhooks</a></li>
+                            <li><a href="webhook_delivery">Webhook deliveries</a></li>
+                            <li><a href="erp_posting_queue">ERP queue</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-lg-3 col-md-6 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5 class="card-title">Compliance, alerts &amp; workflow</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li><a href="retention_policy">Retention policies</a></li>
+                            <li><a href="legal_hold">Legal holds</a></li>
+                            <li><a href="pii_data_subject_request">DSAR</a></li>
+                            <li><a href="compliance_attribute">Compliance attrs</a></li>
+                            <li><a href="denied_party_screening">Denied-party screen</a></li>
+                            <li><a href="encryption_key_metadata">Encryption keys</a></li>
+                            <li><a href="alert_rule">Alert rules</a></li>
+                            <li><a href="alert_recipient">Alert recipients</a></li>
+                            <li><a href="alert_event">Alert events</a></li>
+                            <li><a href="alert_delivery">Alert deliveries</a></li>
+                            <li><a href="workflow_definition">Workflow defs</a></li>
+                            <li><a href="workflow_instance">Workflow instances</a></li>
+                            <li><a href="workflow_task">Workflow tasks</a></li>
+                            <li><a href="configuration_setting">Config settings</a></li>
+                            <li><a href="feature_flag">Feature flags</a></li>
+                            <li><a href="schema_migration">Schema migrations</a></li>
+                            <li><a href="table_metadata">Table metadata</a></li>
+                            <li><a href="deployment">Deployments</a></li>
+                            <li><a href="service_release">Service releases</a></li>
+                            <li><a href="tenant_quota">Tenant quotas</a></li>
+                            <li><a href="mobile_app_release">Mobile releases</a></li>
+                            <li><a href="mobile_screen_config">Mobile screens</a></li>
+                            <li><a href="mobile_keybinding">Mobile keys</a></li>
+                        </ul>
+                    </div></div></div>
+                </div>
+                `)
+            >
+        >
+    >
+end-resource

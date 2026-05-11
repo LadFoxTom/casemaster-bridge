@@ -1,0 +1,213 @@
+// Casemaster-WMS — Replenishment center.
+//   /page/wms/replen                 overview
+
+inherits 'base'
+
+function main()
+    set('open_tasks',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'rt', entity: 'wms/replenishment_task', orderBy: '-id'>
+            >,
+            rows: 100
+        )
+    )
+    set('rules',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'rr', entity: 'wms/replenishment_rule', orderBy: 'priority'>
+            >,
+            rows: 50
+        )
+    )
+    set('low_pick_face',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'sa',
+                    entity:  'wms/item_slot_assignment',
+                    where:   'slot_role="PRIMARY_PICK" & is_active=1',
+                    orderBy: 'item_id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+function execute()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('qty_str', _onError(qs.getUntrusted('qty'), ''))
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postExecute', [id], [qty_str])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('rt', bo.quickLoad('wms/replenishment_task', [id], group: '*'))
+
+    page.render(page.get('./executeView'))
+end-function
+
+protected resource executeView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'replen')>,
+            crumbs: <@page/html `<p><a href="../replen" class="btn btn-sm btn-outline-secondary">&larr; Replen</a></p>`>,
+            title: <@page/title label: 'Execute replenishment'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            header: <@page/html
+                if(isNull([rt]), '',
+                    resolveTemplate(`<div class="card mb-3"><div class="card-body">
+                        <h5>Replen task #{{[id]}}</h5>
+                        <p class="small mb-0">Item id: {{bo.attr([rt], 'item_id')}} &middot; Source loc: {{bo.attr([rt], 'source_location_id')}} &middot; Target loc: {{bo.attr([rt], 'target_location_id')}} &middot; Required qty: {{bo.attr([rt], 'qty_required')}}</p>
+                    </div></div>`)
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="execute" class="card"><div class="card-body">
+                    <input type="hidden" name="id" value="{{[id]}}">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Qty actually moved</label><input type="number" min="0" step="0.000001" name="qty" value="{{[qty_str]}}" class="form-control" required></div>
+                    <button class="btn btn-success" type="submit">Confirm replen</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postExecute(task_id, qty_str)
+    set('rt', bo.quickLoad('wms/replenishment_task', [task_id], group: '*'))
+    if isNull([rt])
+        set('//act_err', 'Replenishment task not found')
+        exit-function
+    end-if
+    set('qty', _onError(dbl([qty_str]), 0))
+    if le([qty], 0)
+        set('//act_err', 'Qty must be > 0')
+        exit-function
+    end-if
+
+    set('tenant_id', bo.attr([rt], 'tenant_id'))
+    set('item_id',   bo.attr([rt], 'item_id'))
+    set('src_loc',   bo.attr([rt], 'source_location_id'))
+    set('tgt_loc',   bo.attr([rt], 'target_location_id'))
+    set('uom',       bo.attr([rt], 'uom_code'))
+
+    // decrement source inventory (find a row at source for this item)
+    set('srcIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'iv', entity: 'wms/inventory',
+                    where: 'location_id={[src_loc]} & item_id={[item_id]} & qty_on_hand > 0',
+                    orderBy: 'id'>
+            >,
+            rows: 1
+        )
+    )
+    set('warehouse_id', null())
+    iterate [srcIter]
+        set('warehouse_id', bo.attr([iv], 'warehouse_id'))
+        bo.setAttr([iv], 'qty_on_hand', sub(bo.attr([iv], 'qty_on_hand'), [qty]))
+        bo.setAttr([iv], 'last_movement_at', now())
+        bo.persist([iv])
+    end-iterate
+    if isNull([warehouse_id])
+        set('warehouse_id', _onError(bo.attr([rt], 'warehouse_id'), 1))
+    end-if
+
+    // increment target inventory (or insert)
+    set('dst_id', null())
+    set('dstIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'iv', entity: 'wms/inventory',
+                    where: 'location_id={[tgt_loc]} & item_id={[item_id]} & quality_status="AVAILABLE"',
+                    orderBy: 'id'>
+            >,
+            rows: 1
+        )
+    )
+    iterate [dstIter]
+        set('dst_id', bo.pk([iv]))
+        bo.setAttr([iv], 'qty_on_hand', add(bo.attr([iv], 'qty_on_hand'), [qty]))
+        bo.setAttr([iv], 'last_movement_at', now())
+        bo.persist([iv])
+    end-iterate
+    if isNull([dst_id])
+        sql.execute(concat(
+            "INSERT INTO inventory (tenant_id, warehouse_id, location_id, item_id, qty_on_hand, qty_reserved, qty_on_hold, qty_in_transit, quality_status, uom_code, last_movement_at) VALUES (",
+            [tenant_id], ", ",
+            [warehouse_id], ", ",
+            [tgt_loc], ", ",
+            [item_id], ", ",
+            [qty], ", 0, 0, 0, 'AVAILABLE', '",
+            [uom], "', NOW())"
+        ))
+    end-if
+
+    // journal
+    sql.execute(concat(
+        "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, from_location_id, to_location_id, qty, uom_code) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", NOW(), 'MOVE', 'REPLEN_TASK', ",
+        [task_id], ", ",
+        [item_id], ", ",
+        [src_loc], ", ",
+        [tgt_loc], ", ",
+        [qty], ", '",
+        [uom], "')"
+    ))
+
+    bo.setAttr([rt], 'qty_moved', _onError(add(bo.attr([rt], 'qty_moved'), [qty]), [qty]))
+    bo.persist([rt])
+
+    set('//act_msg', concat('Replenished ', [qty], ' from loc ', [src_loc], ' to loc ', [tgt_loc], '.'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'replen')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '🔁 Replenishment'>,
+            t_h: <@page/html `<h5 class="mt-3">Open replenishment tasks</h5>`>,
+            t_table: <@page/data/table
+                iterator: [open_tasks],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            r_h: <@page/html `<h5 class="mt-4">Replenishment rules (by priority)</h5>`>,
+            r_table: <@page/data/table
+                iterator: [rules],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            s_h: <@page/html `<h5 class="mt-4">Pick-face slot assignments</h5>`>,
+            s_table: <@page/data/table
+                iterator: [low_pick_face],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

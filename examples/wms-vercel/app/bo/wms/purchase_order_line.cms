@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `purchase_order_line` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Purchase order line',
+        table: 'purchase_order_line',
+        primaryKey: 'id',
+        sequence: 'purchase_order_line',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            purchase_order_id: <@bo/attribute label: 'Purchase order id', column: 'purchase_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/purchase_order'>,
+            line_number: <@bo/attribute label: 'Line number', column: 'line_number', dataType: dataType.Long, length: 9, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            expected_qty: <@bo/attribute label: 'Expected qty', column: 'expected_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            received_qty: <@bo/attribute label: 'Received qty', column: 'received_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            unit_cost: <@bo/attribute label: 'Unit cost', column: 'unit_cost', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            requested_lot: <@bo/attribute label: 'Requested lot', column: 'requested_lot', dataType: dataType.String, length: 4000, optional: true()>,
+            requested_expiry: <@bo/attribute label: 'Requested expiry', column: 'requested_expiry', dataType: dataType.Date, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'purchase_order_id', 'line_number', 'item_id', 'expected_qty', 'received_qty' >,
+            description: < 'tenant_id', 'purchase_order_id', 'line_number', 'item_id', 'expected_qty', 'received_qty', 'uom_code', 'unit_cost', 'requested_lot', 'requested_expiry', 'status' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

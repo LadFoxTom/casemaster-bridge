@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_barcode` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item barcode',
+        table: 'item_barcode',
+        primaryKey: 'id',
+        sequence: 'item_barcode',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            barcode: <@bo/attribute label: 'Barcode', column: 'barcode', dataType: dataType.String, length: 4000, optional: false()>,
+            barcode_type: <@bo/attribute label: 'Barcode type', column: 'barcode_type', dataType: dataType.String, length: 4000, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            is_primary: <@bo/attribute label: 'Is primary', column: 'is_primary', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'barcode' >,
+            list: < 'tenant_id', 'item_id', 'barcode', 'barcode_type', 'uom_code', 'is_primary' >,
+            description: < 'tenant_id', 'item_id', 'barcode', 'barcode_type', 'uom_code', 'is_primary' >,
+            search: < 'barcode', 'uom_code' >
+        >
+    >
+end-resource

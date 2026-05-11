@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `mobile_app_release` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Mobile app release',
+        table: 'mobile_app_release',
+        primaryKey: 'id',
+        sequence: 'mobile_app_release',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            version_code: <@bo/attribute label: 'Version code', column: 'version_code', dataType: dataType.Long, length: 9, optional: false()>,
+            version_name: <@bo/attribute label: 'Version name', column: 'version_name', dataType: dataType.String, length: 4000, optional: false()>,
+            apk_url: <@bo/attribute label: 'Apk url', column: 'apk_url', dataType: dataType.String, length: 4000, optional: false()>,
+            sha256: <@bo/attribute label: 'Sha256', column: 'sha256', dataType: dataType.String, length: 4000, optional: false()>,
+            minimum_supported_version: <@bo/attribute label: 'Minimum supported version', column: 'minimum_supported_version', dataType: dataType.Long, length: 9, optional: true()>,
+            rollout_percent: <@bo/attribute label: 'Rollout percent', column: 'rollout_percent', dataType: dataType.Long, length: 9, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'version_name' >,
+            list: < 'version_code', 'version_name', 'apk_url', 'sha256', 'minimum_supported_version', 'rollout_percent' >,
+            description: < 'version_code', 'version_name', 'apk_url', 'sha256', 'minimum_supported_version', 'rollout_percent', 'notes', 'released_at' >,
+            search: < 'version_name' >
+        >
+    >
+end-resource

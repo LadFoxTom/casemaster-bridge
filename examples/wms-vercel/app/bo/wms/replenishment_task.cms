@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `replenishment_task` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Replenishment task',
+        table: 'replenishment_task',
+        primaryKey: 'id',
+        sequence: 'replenishment_task',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            task_id: <@bo/attribute label: 'Task id', column: 'task_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/task'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            source_location_id: <@bo/attribute label: 'Source location id', column: 'source_location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            target_location_id: <@bo/attribute label: 'Target location id', column: 'target_location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            qty_required: <@bo/attribute label: 'Qty required', column: 'qty_required', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_moved: <@bo/attribute label: 'Qty moved', column: 'qty_moved', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            rule_id: <@bo/attribute label: 'Rule id', column: 'rule_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/replenishment_rule'>,
+            triggered_by: <@bo/attribute label: 'Triggered by', column: 'triggered_by', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'task_id', 'item_id', 'source_location_id', 'target_location_id', 'qty_required' >,
+            description: < 'tenant_id', 'task_id', 'item_id', 'source_location_id', 'target_location_id', 'qty_required', 'qty_moved', 'uom_code', 'rule_id', 'triggered_by' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `webhook_subscription` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Webhook subscription',
+        table: 'webhook_subscription',
+        primaryKey: 'id',
+        sequence: 'webhook_subscription',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            target_url: <@bo/attribute label: 'Target url', column: 'target_url', dataType: dataType.String, length: 4000, optional: false()>,
+            secret: <@bo/attribute label: 'Secret', column: 'secret', dataType: dataType.String, length: 4000, optional: false()>,
+            event_types: <@bo/attribute label: 'Event types', column: 'event_types', dataType: dataType.String, length: 4000, optional: false()>,
+            filter: <@bo/attribute label: 'Filter', column: 'filter', dataType: dataType.JSON, length: 4000, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>,
+            last_delivery_at: <@bo/attribute label: 'Last delivery at', column: 'last_delivery_at', dataType: dataType.Timestamp, optional: true()>,
+            last_failure_at: <@bo/attribute label: 'Last failure at', column: 'last_failure_at', dataType: dataType.Timestamp, optional: true()>,
+            consecutive_failures: <@bo/attribute label: 'Consecutive failures', column: 'consecutive_failures', dataType: dataType.Long, length: 9, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list: < 'tenant_id', 'name', 'target_url', 'secret', 'event_types', 'active' >,
+            description: < 'tenant_id', 'name', 'target_url', 'secret', 'event_types', 'filter', 'active', 'last_delivery_at', 'last_failure_at', 'consecutive_failures' >,
+            search: < 'name' >
+        >
+    >
+end-resource

@@ -1,0 +1,273 @@
+// Casemaster-WMS — Returns / Reverse logistics center.
+//   /page/wms/reverse                overview (open RMAs, recent dispositions)
+//   /page/wms/reverse/f/rma?id=N     RMA detail + lines + dispositions
+
+inherits 'base'
+
+function main()
+    set('open_rmas',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/rma',
+                    where:   'status="ISSUED" | status="IN_TRANSIT" | status="RECEIVED" | status="INSPECTED"',
+                    orderBy: '-issued_at'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('closed_rmas',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/rma',
+                    where:   'status="RESOLVED" | status="CLOSED"',
+                    orderBy: '-issued_at'
+                >
+            >,
+            rows: 25
+        )
+    )
+    set('recent_dispositions',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'd', entity: 'wms/return_disposition', orderBy: '-id'>
+            >,
+            rows: 25
+        )
+    )
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'reverse')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '↩ Returns'>,
+            o_h: <@page/html `<h5 class="mt-3">Open RMAs</h5>`>,
+            o_table: <@page/data/table
+                iterator: [open_rmas],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'rma', qs: <id: $bo.pk([r])>>
+                >
+            >,
+            c_h: <@page/html `<h5 class="mt-4">Closed RMAs (recent 25)</h5>`>,
+            c_table: <@page/data/table
+                iterator: [closed_rmas],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'rma', qs: <id: $bo.pk([r])>>
+                >
+            >,
+            d_h: <@page/html `<h5 class="mt-4">Recent dispositions</h5>`>,
+            d_table: <@page/data/table
+                iterator: [recent_dispositions],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+function rma()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('rma', bo.quickLoad('wms/rma', [id], group: '*'))
+    if isNull([rma])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'ln', entity: 'wms/rma_line', where: 'rma_id={[id]}', orderBy: 'line_number'>
+            >,
+            rows: 200
+        )
+    )
+    set('dispositions',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'd', entity: 'wms/return_disposition', where: '#exists[wms/rma_line, rma_id={[id]}]', orderBy: '-id'>
+            >,
+            rows: 200
+        )
+    )
+
+    set('rma_no',     bo.attr([rma], 'rma_number'))
+    set('rma_status', bo.attr([rma], 'status'))
+
+    page.render(page.get('./rmaView'))
+end-function
+
+function dispose()
+    set('rl_id',     _onError(qs.getUntrusted('rma_line_id'), ''))
+    set('qty_str',   _onError(qs.getUntrusted('qty'), ''))
+    set('disposition', _onError(qs.getUntrusted('disposition'), 'RESTOCK'))
+    set('target_loc', _onError(qs.getUntrusted('target_loc_id'), ''))
+    set('confirm',   _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postDispose', [rl_id], [qty_str], [disposition], [target_loc])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('locs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'l', entity: 'wms/location', where: 'status="AVAILABLE"', orderBy: 'pick_sequence'>
+            >,
+            rows: 200
+        )
+    )
+    set('locOptHtml', '<option value="">— pick a location (RESTOCK only) —</option>')
+    iterate [locs]
+        set('lid',  bo.pk([l]))
+        set('lcd',  bo.attr([l], 'code'))
+        set('locOptHtml',
+            buildString('', [locOptHtml],
+                resolveTemplate(`<option value="{{[lid]}}">{{[lcd]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./disposeView'))
+end-function
+
+protected resource disposeView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'reverse')>,
+            crumbs: <@page/html `<p><a href="../reverse" class="btn btn-sm btn-outline-secondary">&larr; Returns</a></p>`>,
+            title: <@page/title label: 'Disposition return'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="dispose" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>RMA line ID</label><input type="number" name="rma_line_id" value="{{[rl_id]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Qty</label><input type="number" min="0.000001" step="0.000001" name="qty" value="{{[qty_str]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Disposition</label><select name="disposition" class="form-control"><option>RESTOCK</option><option>INSPECT</option><option>REPACK</option><option>REWORK</option><option>LIQUIDATE</option><option>DESTROY</option><option>RETURN_TO_VENDOR</option><option>WARRANTY_CLAIM</option><option>CHARITY</option></select></div>
+                    <div class="form-group"><label>Target location</label><select name="target_loc_id" class="form-control">{{[locOptHtml]}}</select></div>
+                    <button class="btn btn-warning" type="submit">Disposition</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postDispose(rl_id, qty_str, disposition, target_loc)
+    if or(eq(_onError([rl_id], ''), ''), eq(_onError([qty_str], ''), ''))
+        set('//act_err', 'rma_line_id and qty required')
+        exit-function
+    end-if
+    set('rl', bo.quickLoad('wms/rma_line', [rl_id], group: '*'))
+    if isNull([rl])
+        set('//act_err', 'RMA line not found')
+        exit-function
+    end-if
+    set('qty', _onError(dbl([qty_str]), 0))
+    if le([qty], 0)
+        set('//act_err', 'Qty must be > 0')
+        exit-function
+    end-if
+
+    set('tenant_id', bo.attr([rl], 'tenant_id'))
+    set('item_id',   bo.attr([rl], 'item_id'))
+
+    set('target_sql', if(eq(_onError([target_loc], ''), ''), 'NULL', formatString('{0}', [target_loc])))
+    sql.execute(concat(
+        "INSERT INTO return_disposition (tenant_id, rma_line_id, qty, disposition, target_location_id, target_quality_status, inspected_at) VALUES (",
+        [tenant_id], ", ",
+        [rl_id], ", ",
+        [qty], ", '",
+        [disposition], "', ",
+        [target_sql], ", ",
+        if(eq([disposition], 'RESTOCK'), "'AVAILABLE'", "'INSPECTION'"), ", NOW())"
+    ))
+
+    // RESTOCK: increment inventory at target_loc
+    if and(eq([disposition], 'RESTOCK'), ne(_onError([target_loc], ''), ''))
+        set('rma_id', bo.attr([rl], 'rma_id'))
+        set('rma',    bo.quickLoad('wms/rma', [rma_id], group: '*'))
+        set('warehouse_id', _onError(bo.attr([rma], 'warehouse_id'), 1))
+        sql.execute(concat(
+            "INSERT INTO inventory (tenant_id, warehouse_id, location_id, item_id, qty_on_hand, qty_reserved, qty_on_hold, qty_in_transit, quality_status, uom_code, last_movement_at) VALUES (",
+            [tenant_id], ", ",
+            [warehouse_id], ", ",
+            [target_loc], ", ",
+            [item_id], ", ",
+            [qty], ", 0, 0, 0, 'AVAILABLE', 'EA', NOW())"
+        ))
+        sql.execute(concat(
+            "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, to_location_id, qty, uom_code) VALUES (",
+            [tenant_id], ", ",
+            [warehouse_id], ", NOW(), 'RETURN_IN', 'RMA_LINE', ",
+            [rl_id], ", ",
+            [item_id], ", ",
+            [target_loc], ", ",
+            [qty], ", 'EA')"
+        ))
+    end-if
+
+    // bump rma_line.qty_received
+    set('rcv_so_far', _onError(bo.attr([rl], 'qty_received'), 0))
+    bo.setAttr([rl], 'qty_received', add([rcv_so_far], [qty]))
+    bo.persist([rl])
+
+    set('//act_msg', concat('Dispositioned ', [qty], ' as ', [disposition], '.'))
+end-function
+
+protected resource rmaView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'reverse')>,
+            crumbs: <@page/html `<p><a href="../reverse" class="btn btn-sm btn-outline-secondary">&larr; Returns</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">RMA <code>{{[rma_no]}}</code></h4>
+                    <p class="text-muted small mb-0">Status <span class="badge badge-info">{{[rma_status]}}</span></p>
+                </div></div>`)
+            >,
+            l_h: <@page/html `<h5 class="mt-3">RMA lines</h5>`>,
+            l_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            d_h: <@page/html `<h5 class="mt-4">Dispositions</h5>`>,
+            d_table: <@page/data/table
+                iterator: [dispositions],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

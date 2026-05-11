@@ -1,0 +1,31 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `mobile_keybinding` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Mobile keybinding',
+        table: 'mobile_keybinding',
+        primaryKey: 'id',
+        sequence: 'mobile_keybinding',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            device_profile: <@bo/attribute label: 'Device profile', column: 'device_profile', dataType: dataType.String, length: 4000, optional: false()>,
+            function_code: <@bo/attribute label: 'Function code', column: 'function_code', dataType: dataType.String, length: 4000, optional: false()>,
+            physical_key: <@bo/attribute label: 'Physical key', column: 'physical_key', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'function_code' >,
+            list: < 'tenant_id', 'device_profile', 'function_code', 'physical_key' >,
+            description: < 'tenant_id', 'device_profile', 'function_code', 'physical_key' >,
+            search: < 'function_code' >
+        >
+    >
+end-resource

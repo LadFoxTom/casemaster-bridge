@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `elevation_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Elevation event',
+        table: 'elevation_event',
+        primaryKey: 'id',
+        sequence: 'elevation_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            operation: <@bo/attribute label: 'Operation', column: 'operation', dataType: dataType.String, length: 4000, optional: false()>,
+            target_entity_type: <@bo/attribute label: 'Target entity type', column: 'target_entity_type', dataType: dataType.String, length: 4000, optional: true()>,
+            target_entity_id: <@bo/attribute label: 'Target entity id', column: 'target_entity_id', dataType: dataType.Long, length: 18, optional: true()>,
+            reason: <@bo/attribute label: 'Reason', column: 'reason', dataType: dataType.String, length: 4000, optional: false()>,
+            mfa_method: <@bo/attribute label: 'Mfa method', column: 'mfa_method', dataType: dataType.String, length: 4000, optional: true()>,
+            occurred_at: <@bo/attribute label: 'Occurred at', column: 'occurred_at', dataType: dataType.Timestamp, optional: false()>,
+            expires_at: <@bo/attribute label: 'Expires at', column: 'expires_at', dataType: dataType.Timestamp, optional: false()>,
+            consumed: <@bo/attribute label: 'Consumed', column: 'consumed', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'operation' >,
+            list: < 'tenant_id', 'user_id', 'operation', 'target_entity_type', 'target_entity_id', 'reason' >,
+            description: < 'tenant_id', 'user_id', 'operation', 'target_entity_type', 'target_entity_id', 'reason', 'mfa_method', 'occurred_at', 'expires_at', 'consumed' >
+        >
+    >
+end-resource

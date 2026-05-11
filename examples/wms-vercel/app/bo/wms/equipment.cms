@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `equipment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Equipment',
+        table: 'equipment',
+        primaryKey: 'id',
+        sequence: 'equipment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            equipment_code: <@bo/attribute label: 'Equipment code', column: 'equipment_code', dataType: dataType.String, length: 4000, optional: false()>,
+            equipment_type: <@bo/attribute label: 'Equipment type', column: 'equipment_type', dataType: dataType.String, length: 4000, optional: false()>,
+            vendor: <@bo/attribute label: 'Vendor', column: 'vendor', dataType: dataType.String, length: 4000, optional: true()>,
+            model: <@bo/attribute label: 'Model', column: 'model', dataType: dataType.String, length: 4000, optional: true()>,
+            adapter_protocol: <@bo/attribute label: 'Adapter protocol', column: 'adapter_protocol', dataType: dataType.String, length: 4000, optional: true()>,
+            endpoint_url: <@bo/attribute label: 'Endpoint url', column: 'endpoint_url', dataType: dataType.String, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            last_heartbeat_at: <@bo/attribute label: 'Last heartbeat at', column: 'last_heartbeat_at', dataType: dataType.Timestamp, optional: true()>,
+            config: <@bo/attribute label: 'Config', column: 'config', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'equipment_code' >,
+            list: < 'tenant_id', 'warehouse_id', 'equipment_code', 'equipment_type', 'vendor', 'model' >,
+            description: < 'tenant_id', 'warehouse_id', 'equipment_code', 'equipment_type', 'vendor', 'model', 'adapter_protocol', 'endpoint_url', 'status', 'last_heartbeat_at', 'config' >,
+            search: < 'equipment_code' >
+        >
+    >
+end-resource

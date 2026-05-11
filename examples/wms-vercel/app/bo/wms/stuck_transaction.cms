@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `stuck_transaction` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Stuck transaction',
+        table: 'stuck_transaction',
+        primaryKey: 'id',
+        sequence: 'stuck_transaction',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/device'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            client_id: <@bo/attribute label: 'Client id', column: 'client_id', dataType: dataType.String, length: 4000, optional: false()>,
+            idempotency_key: <@bo/attribute label: 'Idempotency key', column: 'idempotency_key', dataType: dataType.String, length: 4000, optional: false()>,
+            operation: <@bo/attribute label: 'Operation', column: 'operation', dataType: dataType.String, length: 4000, optional: false()>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: false()>,
+            last_error: <@bo/attribute label: 'Last error', column: 'last_error', dataType: dataType.String, length: 4000, optional: true()>,
+            attempt_count: <@bo/attribute label: 'Attempt count', column: 'attempt_count', dataType: dataType.Long, length: 9, optional: false()>,
+            parked_at: <@bo/attribute label: 'Parked at', column: 'parked_at', dataType: dataType.Timestamp, optional: false()>,
+            resolved_by_user_id: <@bo/attribute label: 'Resolved by user id', column: 'resolved_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            resolution: <@bo/attribute label: 'Resolution', column: 'resolution', dataType: dataType.String, length: 4000, optional: true()>,
+            resolved_at: <@bo/attribute label: 'Resolved at', column: 'resolved_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'client_id' >,
+            list: < 'tenant_id', 'device_id', 'user_id', 'client_id', 'idempotency_key', 'operation' >,
+            description: < 'tenant_id', 'device_id', 'user_id', 'client_id', 'idempotency_key', 'operation', 'payload', 'last_error', 'attempt_count', 'parked_at', 'resolved_by_user_id', 'resolution' >
+        >
+    >
+end-resource

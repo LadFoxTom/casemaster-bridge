@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `kpi_definition` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Kpi definition',
+        table: 'kpi_definition',
+        primaryKey: 'id',
+        sequence: 'kpi_definition',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            kpi_code: <@bo/attribute label: 'Kpi code', column: 'kpi_code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            unit: <@bo/attribute label: 'Unit', column: 'unit', dataType: dataType.String, length: 4000, optional: true()>,
+            aggregation: <@bo/attribute label: 'Aggregation', column: 'aggregation', dataType: dataType.String, length: 4000, optional: false()>,
+            source_query: <@bo/attribute label: 'Source query', column: 'source_query', dataType: dataType.String, length: 4000, optional: true()>,
+            target_value: <@bo/attribute label: 'Target value', column: 'target_value', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            warning_threshold: <@bo/attribute label: 'Warning threshold', column: 'warning_threshold', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            critical_threshold: <@bo/attribute label: 'Critical threshold', column: 'critical_threshold', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            direction: <@bo/attribute label: 'Direction', column: 'direction', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'kpi_code' >,
+            list: < 'tenant_id', 'kpi_code', 'name', 'description', 'unit', 'aggregation' >,
+            description: < 'tenant_id', 'kpi_code', 'name', 'description', 'unit', 'aggregation', 'source_query', 'target_value', 'warning_threshold', 'critical_threshold', 'direction' >,
+            search: < 'kpi_code', 'name' >
+        >
+    >
+end-resource

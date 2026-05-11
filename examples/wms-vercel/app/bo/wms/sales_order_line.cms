@@ -1,0 +1,46 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `sales_order_line` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Sales order line',
+        table: 'sales_order_line',
+        primaryKey: 'id',
+        sequence: 'sales_order_line',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order'>,
+            line_number: <@bo/attribute label: 'Line number', column: 'line_number', dataType: dataType.Long, length: 9, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            qty_ordered: <@bo/attribute label: 'Qty ordered', column: 'qty_ordered', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_allocated: <@bo/attribute label: 'Qty allocated', column: 'qty_allocated', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_picked: <@bo/attribute label: 'Qty picked', column: 'qty_picked', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_packed: <@bo/attribute label: 'Qty packed', column: 'qty_packed', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_shipped: <@bo/attribute label: 'Qty shipped', column: 'qty_shipped', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_cancelled: <@bo/attribute label: 'Qty cancelled', column: 'qty_cancelled', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_backordered: <@bo/attribute label: 'Qty backordered', column: 'qty_backordered', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            unit_price: <@bo/attribute label: 'Unit price', column: 'unit_price', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            requested_lot: <@bo/attribute label: 'Requested lot', column: 'requested_lot', dataType: dataType.String, length: 4000, optional: true()>,
+            requested_serial: <@bo/attribute label: 'Requested serial', column: 'requested_serial', dataType: dataType.String, length: 4000, optional: true()>,
+            requires_serial: <@bo/attribute label: 'Requires serial', column: 'requires_serial', dataType: dataType.Boolean, optional: false()>,
+            customer_sku: <@bo/attribute label: 'Customer sku', column: 'customer_sku', dataType: dataType.String, length: 4000, optional: true()>,
+            line_notes: <@bo/attribute label: 'Line notes', column: 'line_notes', dataType: dataType.String, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'sales_order_id', 'line_number', 'item_id', 'qty_ordered', 'qty_allocated' >,
+            description: < 'tenant_id', 'sales_order_id', 'line_number', 'item_id', 'qty_ordered', 'qty_allocated', 'qty_picked', 'qty_packed', 'qty_shipped', 'qty_cancelled', 'qty_backordered', 'uom_code' >,
+            search: < 'uom_code', 'customer_sku' >
+        >
+    >
+end-resource

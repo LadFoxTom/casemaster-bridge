@@ -1,0 +1,75 @@
+// Casemaster-WMS — 3PL Billing center.
+//   /page/wms/billing                overview
+
+inherits 'base'
+
+function main()
+    set('contracts',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'c', entity: 'wms/client_contract', where: 'is_active=1', orderBy: 'contract_number'>
+            >,
+            rows: 50
+        )
+    )
+    set('rate_cards',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'rc', entity: 'wms/rate_card', orderBy: 'code'>
+            >,
+            rows: 50
+        )
+    )
+    set('unbilled_events',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'be', entity: 'wms/billing_event', where: 'is_billed=0', orderBy: '-event_at'>
+            >,
+            rows: 100
+        )
+    )
+    set('bill_runs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'br', entity: 'wms/bill_run', orderBy: '-period_end'>
+            >,
+            rows: 25
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'billing')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '💰 3PL Billing'>,
+            c_h: <@page/html `<h5 class="mt-3">Active client contracts</h5>`>,
+            c_table: <@page/data/table
+                iterator: [contracts],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            rc_h: <@page/html `<h5 class="mt-4">Rate cards</h5>`>,
+            rc_table: <@page/data/table
+                iterator: [rate_cards],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            ub_h: <@page/html `<h5 class="mt-4">Unbilled events</h5>`>,
+            ub_table: <@page/data/table
+                iterator: [unbilled_events],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            br_h: <@page/html `<h5 class="mt-4">Bill runs</h5>`>,
+            br_table: <@page/data/table
+                iterator: [bill_runs],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

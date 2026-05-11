@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_slot_assignment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item slot assignment',
+        table: 'item_slot_assignment',
+        primaryKey: 'id',
+        sequence: 'item_slot_assignment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            slot_role: <@bo/attribute label: 'Slot role', column: 'slot_role', dataType: dataType.String, length: 4000, optional: false()>,
+            min_qty: <@bo/attribute label: 'Min qty', column: 'min_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            max_qty: <@bo/attribute label: 'Max qty', column: 'max_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            reorder_point: <@bo/attribute label: 'Reorder point', column: 'reorder_point', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>,
+            assigned_at: <@bo/attribute label: 'Assigned at', column: 'assigned_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'slot_role' >,
+            list: < 'tenant_id', 'warehouse_id', 'item_id', 'location_id', 'slot_role', 'min_qty' >,
+            description: < 'tenant_id', 'warehouse_id', 'item_id', 'location_id', 'slot_role', 'min_qty', 'max_qty', 'reorder_point', 'is_active', 'assigned_at' >
+        >
+    >
+end-resource

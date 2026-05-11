@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `serial_unit` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Serial unit',
+        table: 'serial_unit',
+        primaryKey: 'id',
+        sequence: 'serial_unit',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            serial_number: <@bo/attribute label: 'Serial number', column: 'serial_number', dataType: dataType.String, length: 4000, optional: false()>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            current_location_id: <@bo/attribute label: 'Current location id', column: 'current_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            current_license_plate_id: <@bo/attribute label: 'Current license plate id', column: 'current_license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            current_owner_id: <@bo/attribute label: 'Current owner id', column: 'current_owner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            quality_status: <@bo/attribute label: 'Quality status', column: 'quality_status', dataType: dataType.String, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            received_at: <@bo/attribute label: 'Received at', column: 'received_at', dataType: dataType.Timestamp, optional: true()>,
+            last_event_at: <@bo/attribute label: 'Last event at', column: 'last_event_at', dataType: dataType.Timestamp, optional: true()>,
+            customer_id: <@bo/attribute label: 'Customer id', column: 'customer_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            shipped_at: <@bo/attribute label: 'Shipped at', column: 'shipped_at', dataType: dataType.Timestamp, optional: true()>,
+            warranty_start_date: <@bo/attribute label: 'Warranty start date', column: 'warranty_start_date', dataType: dataType.Date, optional: true()>,
+            warranty_end_date: <@bo/attribute label: 'Warranty end date', column: 'warranty_end_date', dataType: dataType.Date, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'serial_number' >,
+            list: < 'tenant_id', 'item_id', 'serial_number', 'lot_id', 'current_location_id', 'current_license_plate_id' >,
+            description: < 'tenant_id', 'item_id', 'serial_number', 'lot_id', 'current_location_id', 'current_license_plate_id', 'current_owner_id', 'quality_status', 'status', 'received_at', 'last_event_at', 'customer_id' >,
+            search: < 'serial_number' >
+        >
+    >
+end-resource

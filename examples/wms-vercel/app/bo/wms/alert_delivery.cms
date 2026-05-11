@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `alert_delivery` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Alert delivery',
+        table: 'alert_delivery',
+        primaryKey: 'id',
+        sequence: 'alert_delivery',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            alert_event_id: <@bo/attribute label: 'Alert event id', column: 'alert_event_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/alert_event'>,
+            channel: <@bo/attribute label: 'Channel', column: 'channel', dataType: dataType.String, length: 4000, optional: false()>,
+            target: <@bo/attribute label: 'Target', column: 'target', dataType: dataType.String, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            attempted_at: <@bo/attribute label: 'Attempted at', column: 'attempted_at', dataType: dataType.Timestamp, optional: true()>,
+            delivered_at: <@bo/attribute label: 'Delivered at', column: 'delivered_at', dataType: dataType.Timestamp, optional: true()>,
+            error: <@bo/attribute label: 'Error', column: 'error', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'channel' >,
+            list: < 'tenant_id', 'alert_event_id', 'channel', 'target', 'status', 'error' >,
+            description: < 'tenant_id', 'alert_event_id', 'channel', 'target', 'status', 'attempted_at', 'delivered_at', 'error' >
+        >
+    >
+end-resource

@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `denied_party_screening` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Denied party screening',
+        table: 'denied_party_screening',
+        primaryKey: 'id',
+        sequence: 'denied_party_screening',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            partner_id: <@bo/attribute label: 'Partner id', column: 'partner_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            list_source: <@bo/attribute label: 'List source', column: 'list_source', dataType: dataType.String, length: 4000, optional: false()>,
+            screened_at: <@bo/attribute label: 'Screened at', column: 'screened_at', dataType: dataType.Timestamp, optional: false()>,
+            match_score: <@bo/attribute label: 'Match score', column: 'match_score', dataType: dataType.Decimal, length: 5, precision: 2, optional: true()>,
+            match_status: <@bo/attribute label: 'Match status', column: 'match_status', dataType: dataType.String, length: 4000, optional: false()>,
+            reviewed_by_user_id: <@bo/attribute label: 'Reviewed by user id', column: 'reviewed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            review_notes: <@bo/attribute label: 'Review notes', column: 'review_notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'list_source' >,
+            list: < 'tenant_id', 'partner_id', 'list_source', 'match_score', 'match_status', 'reviewed_by_user_id' >,
+            description: < 'tenant_id', 'partner_id', 'list_source', 'screened_at', 'match_score', 'match_status', 'reviewed_by_user_id', 'review_notes' >
+        >
+    >
+end-resource

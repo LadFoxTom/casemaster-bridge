@@ -1,0 +1,46 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `receipt_line` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Receipt line',
+        table: 'receipt_line',
+        primaryKey: 'id',
+        sequence: 'receipt_line',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            receipt_id: <@bo/attribute label: 'Receipt id', column: 'receipt_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/receipt'>,
+            line_number: <@bo/attribute label: 'Line number', column: 'line_number', dataType: dataType.Long, length: 9, optional: false()>,
+            asn_line_id: <@bo/attribute label: 'Asn line id', column: 'asn_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/asn_line'>,
+            purchase_order_line_id: <@bo/attribute label: 'Purchase order line id', column: 'purchase_order_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/purchase_order_line'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            qty_received: <@bo/attribute label: 'Qty received', column: 'qty_received', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            lot_number: <@bo/attribute label: 'Lot number', column: 'lot_number', dataType: dataType.String, length: 4000, optional: true()>,
+            serial_number: <@bo/attribute label: 'Serial number', column: 'serial_number', dataType: dataType.String, length: 4000, optional: true()>,
+            expiry_date: <@bo/attribute label: 'Expiry date', column: 'expiry_date', dataType: dataType.Date, optional: true()>,
+            catch_weight_kg: <@bo/attribute label: 'Catch weight kg', column: 'catch_weight_kg', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            quality_status: <@bo/attribute label: 'Quality status', column: 'quality_status', dataType: dataType.String, length: 4000, optional: false()>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            receiving_location_id: <@bo/attribute label: 'Receiving location id', column: 'receiving_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            received_by_user_id: <@bo/attribute label: 'Received by user id', column: 'received_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            received_at: <@bo/attribute label: 'Received at', column: 'received_at', dataType: dataType.Timestamp, optional: false()>,
+            discrepancy_qty: <@bo/attribute label: 'Discrepancy qty', column: 'discrepancy_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            discrepancy_reason: <@bo/attribute label: 'Discrepancy reason', column: 'discrepancy_reason', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'lot_number' >,
+            list: < 'tenant_id', 'receipt_id', 'line_number', 'asn_line_id', 'purchase_order_line_id', 'item_id' >,
+            description: < 'tenant_id', 'receipt_id', 'line_number', 'asn_line_id', 'purchase_order_line_id', 'item_id', 'qty_received', 'uom_code', 'lot_number', 'serial_number', 'expiry_date', 'catch_weight_kg' >,
+            search: < 'uom_code', 'lot_number', 'serial_number' >
+        >
+    >
+end-resource

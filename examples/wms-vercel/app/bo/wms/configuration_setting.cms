@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `configuration_setting` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Configuration setting',
+        table: 'configuration_setting',
+        primaryKey: 'id',
+        sequence: 'configuration_setting',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: true()>,
+            scope: <@bo/attribute label: 'Scope', column: 'scope', dataType: dataType.String, length: 4000, optional: false()>,
+            scope_id: <@bo/attribute label: 'Scope id', column: 'scope_id', dataType: dataType.Long, length: 18, optional: true()>,
+            key: <@bo/attribute label: 'Key', column: 'key', dataType: dataType.String, length: 4000, optional: false()>,
+            value: <@bo/attribute label: 'Value', column: 'value', dataType: dataType.String, length: 4000, optional: true()>,
+            value_type: <@bo/attribute label: 'Value type', column: 'value_type', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            overridable: <@bo/attribute label: 'Overridable', column: 'overridable', dataType: dataType.Boolean, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Timestamp, optional: true()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'scope', 'scope_id', 'key', 'value', 'value_type' >,
+            description: < 'tenant_id', 'scope', 'scope_id', 'key', 'value', 'value_type', 'description', 'overridable', 'effective_from', 'effective_to' >
+        >
+    >
+end-resource

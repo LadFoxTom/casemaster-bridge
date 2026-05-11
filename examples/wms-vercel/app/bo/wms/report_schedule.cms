@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `report_schedule` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Report schedule',
+        table: 'report_schedule',
+        primaryKey: 'id',
+        sequence: 'report_schedule',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            report_definition_id: <@bo/attribute label: 'Report definition id', column: 'report_definition_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/report_definition'>,
+            cron_expression: <@bo/attribute label: 'Cron expression', column: 'cron_expression', dataType: dataType.String, length: 4000, optional: false()>,
+            timezone: <@bo/attribute label: 'Timezone', column: 'timezone', dataType: dataType.String, length: 4000, optional: false()>,
+            parameters: <@bo/attribute label: 'Parameters', column: 'parameters', dataType: dataType.JSON, length: 4000, optional: true()>,
+            distribution: <@bo/attribute label: 'Distribution', column: 'distribution', dataType: dataType.JSON, length: 4000, optional: false()>,
+            last_run_at: <@bo/attribute label: 'Last run at', column: 'last_run_at', dataType: dataType.Timestamp, optional: true()>,
+            next_run_at: <@bo/attribute label: 'Next run at', column: 'next_run_at', dataType: dataType.Timestamp, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'cron_expression' >,
+            list: < 'tenant_id', 'report_definition_id', 'cron_expression', 'timezone', 'active' >,
+            description: < 'tenant_id', 'report_definition_id', 'cron_expression', 'timezone', 'parameters', 'distribution', 'last_run_at', 'next_run_at', 'active' >
+        >
+    >
+end-resource

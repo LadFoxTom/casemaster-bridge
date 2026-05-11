@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `carrier_service` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Carrier service',
+        table: 'carrier_service',
+        primaryKey: 'id',
+        sequence: 'carrier_service',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            service_code: <@bo/attribute label: 'Service code', column: 'service_code', dataType: dataType.String, length: 4000, optional: false()>,
+            service_name: <@bo/attribute label: 'Service name', column: 'service_name', dataType: dataType.String, length: 4000, optional: false()>,
+            transit_days: <@bo/attribute label: 'Transit days', column: 'transit_days', dataType: dataType.Long, length: 9, optional: true()>,
+            cutoff_time: <@bo/attribute label: 'Cutoff time', column: 'cutoff_time', dataType: dataType.Time, optional: true()>,
+            supports_cod: <@bo/attribute label: 'Supports cod', column: 'supports_cod', dataType: dataType.Boolean, optional: false()>,
+            supports_dangerous_goods: <@bo/attribute label: 'Supports dangerous goods', column: 'supports_dangerous_goods', dataType: dataType.Boolean, optional: false()>,
+            label_format: <@bo/attribute label: 'Label format', column: 'label_format', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'service_code' >,
+            list: < 'tenant_id', 'carrier_id', 'service_code', 'service_name', 'transit_days', 'supports_cod' >,
+            description: < 'tenant_id', 'carrier_id', 'service_code', 'service_name', 'transit_days', 'cutoff_time', 'supports_cod', 'supports_dangerous_goods', 'label_format' >,
+            search: < 'service_code', 'service_name' >
+        >
+    >
+end-resource

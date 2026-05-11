@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `carton_type` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Carton type',
+        table: 'carton_type',
+        primaryKey: 'id',
+        sequence: 'carton_type',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            inner_length_cm: <@bo/attribute label: 'Inner length cm', column: 'inner_length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: false()>,
+            inner_width_cm: <@bo/attribute label: 'Inner width cm', column: 'inner_width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: false()>,
+            inner_height_cm: <@bo/attribute label: 'Inner height cm', column: 'inner_height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: false()>,
+            outer_length_cm: <@bo/attribute label: 'Outer length cm', column: 'outer_length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            outer_width_cm: <@bo/attribute label: 'Outer width cm', column: 'outer_width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            outer_height_cm: <@bo/attribute label: 'Outer height cm', column: 'outer_height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            tare_weight_kg: <@bo/attribute label: 'Tare weight kg', column: 'tare_weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: false()>,
+            max_payload_kg: <@bo/attribute label: 'Max payload kg', column: 'max_payload_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: false()>,
+            cost: <@bo/attribute label: 'Cost', column: 'cost', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            is_corrugated: <@bo/attribute label: 'Is corrugated', column: 'is_corrugated', dataType: dataType.Boolean, optional: true()>,
+            is_padded: <@bo/attribute label: 'Is padded', column: 'is_padded', dataType: dataType.Boolean, optional: true()>,
+            on_hand_qty: <@bo/attribute label: 'On hand qty', column: 'on_hand_qty', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'inner_length_cm', 'inner_width_cm' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'inner_length_cm', 'inner_width_cm', 'inner_height_cm', 'outer_length_cm', 'outer_width_cm', 'outer_height_cm', 'tare_weight_kg', 'max_payload_kg' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

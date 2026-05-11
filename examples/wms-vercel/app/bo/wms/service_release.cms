@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `service_release` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Service release',
+        table: 'service_release',
+        primaryKey: 'id',
+        sequence: 'service_release',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            service_name: <@bo/attribute label: 'Service name', column: 'service_name', dataType: dataType.String, length: 4000, optional: false()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.String, length: 4000, optional: false()>,
+            image_digest: <@bo/attribute label: 'Image digest', column: 'image_digest', dataType: dataType.String, length: 4000, optional: false()>,
+            git_sha: <@bo/attribute label: 'Git sha', column: 'git_sha', dataType: dataType.String, length: 4000, optional: true()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: false()>,
+            rollout_status: <@bo/attribute label: 'Rollout status', column: 'rollout_status', dataType: dataType.String, length: 4000, optional: false()>,
+            canary_percent: <@bo/attribute label: 'Canary percent', column: 'canary_percent', dataType: dataType.Long, length: 9, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'service_name' >,
+            list: < 'service_name', 'version', 'image_digest', 'git_sha', 'rollout_status', 'canary_percent' >,
+            description: < 'service_name', 'version', 'image_digest', 'git_sha', 'released_at', 'rollout_status', 'canary_percent', 'notes' >,
+            search: < 'service_name' >
+        >
+    >
+end-resource

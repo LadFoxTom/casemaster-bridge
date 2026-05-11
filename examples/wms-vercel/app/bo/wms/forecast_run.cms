@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `forecast_run` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Forecast run',
+        table: 'forecast_run',
+        primaryKey: 'id',
+        sequence: 'forecast_run',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            model_name: <@bo/attribute label: 'Model name', column: 'model_name', dataType: dataType.String, length: 4000, optional: false()>,
+            model_version: <@bo/attribute label: 'Model version', column: 'model_version', dataType: dataType.String, length: 4000, optional: false()>,
+            horizon_days: <@bo/attribute label: 'Horizon days', column: 'horizon_days', dataType: dataType.Long, length: 9, optional: false()>,
+            granularity: <@bo/attribute label: 'Granularity', column: 'granularity', dataType: dataType.String, length: 4000, optional: false()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            error_metrics: <@bo/attribute label: 'Error metrics', column: 'error_metrics', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'model_name' >,
+            list: < 'tenant_id', 'model_name', 'model_version', 'horizon_days', 'granularity', 'status' >,
+            description: < 'tenant_id', 'model_name', 'model_version', 'horizon_days', 'granularity', 'started_at', 'completed_at', 'status', 'error_metrics' >,
+            search: < 'model_name' >
+        >
+    >
+end-resource

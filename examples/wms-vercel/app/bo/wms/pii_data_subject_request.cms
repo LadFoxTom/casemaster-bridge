@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pii_data_subject_request` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pii data subject request',
+        table: 'pii_data_subject_request',
+        primaryKey: 'id',
+        sequence: 'pii_data_subject_request',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            request_type: <@bo/attribute label: 'Request type', column: 'request_type', dataType: dataType.String, length: 4000, optional: false()>,
+            subject_email: <@bo/attribute label: 'Subject email', column: 'subject_email', dataType: dataType.String, length: 4000, optional: true()>,
+            subject_external_id: <@bo/attribute label: 'Subject external id', column: 'subject_external_id', dataType: dataType.String, length: 4000, optional: true()>,
+            received_at: <@bo/attribute label: 'Received at', column: 'received_at', dataType: dataType.Timestamp, optional: false()>,
+            deadline_at: <@bo/attribute label: 'Deadline at', column: 'deadline_at', dataType: dataType.Timestamp, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            fulfilled_at: <@bo/attribute label: 'Fulfilled at', column: 'fulfilled_at', dataType: dataType.Timestamp, optional: true()>,
+            rejection_reason: <@bo/attribute label: 'Rejection reason', column: 'rejection_reason', dataType: dataType.String, length: 4000, optional: true()>,
+            actions_log: <@bo/attribute label: 'Actions log', column: 'actions_log', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'request_type' >,
+            list: < 'tenant_id', 'request_type', 'subject_email', 'subject_external_id', 'status', 'rejection_reason' >,
+            description: < 'tenant_id', 'request_type', 'subject_email', 'subject_external_id', 'received_at', 'deadline_at', 'status', 'fulfilled_at', 'rejection_reason', 'actions_log' >
+        >
+    >
+end-resource

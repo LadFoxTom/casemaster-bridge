@@ -1,0 +1,77 @@
+// SQL helpers for WMS action handlers.
+//
+// Casemaster `bo.create + bo.persist` silently no-ops on inserts in this
+// build (it relies on the framework `sequence` + admin-schema scaffolding
+// which we have not bootstrapped). We therefore go around it via
+// `sql.execute` for every INSERT, then `bo.tryLoad` by the row's natural
+// unique key to recover the auto-assigned id where the next step needs it.
+// UPDATEs still go through the BO layer fine (bo.setAttr + bo.persist).
+//
+// Pattern lifted from Axylog's script/axylog/sync.cms.
+
+// Quote a string for a SQL literal, doubling embedded apostrophes. Returns
+// the literal NULL when the value is missing or empty.
+function sqlStr(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    set('s', formatString('{0}', [v]))
+    if eq([s], '')
+        return 'NULL'
+    end-if
+    return concat("'", replace([s], "'", "''"), "'")
+end-function
+
+// Same as sqlStr but never empty-coerces — empty string stays as ''.
+function sqlStrAllowEmpty(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    return concat("'", replace(formatString('{0}', [v]), "'", "''"), "'")
+end-function
+
+// Inline a numeric or NULL.
+function sqlNum(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    set('s', formatString('{0}', [v]))
+    if eq([s], '')
+        return 'NULL'
+    end-if
+    return [s]
+end-function
+
+// SQL literal for a timestamp. Emits unambiguous ISO 8601 so Postgres parses
+// it as UTC regardless of the server's datestyle.
+function sqlDt(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    return _onError(
+        concat("'", format([v], 'yyyy-MM-dd HH:mm:ss', 'EN'), "'"),
+        script.call('./sqlStr', [v])
+    )
+end-function
+
+// SQL literal for a date. yyyy-MM-dd.
+function sqlDate(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    return _onError(
+        concat("'", format([v], 'yyyy-MM-dd', 'EN'), "'"),
+        script.call('./sqlStr', [v])
+    )
+end-function
+
+// Boolean → SQL 'TRUE' / 'FALSE'.
+function sqlBool(v)
+    if isNull([v])
+        return 'NULL'
+    end-if
+    if eq([v], true())
+        return 'TRUE'
+    end-if
+    return 'FALSE'
+end-function

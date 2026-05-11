@@ -1,0 +1,694 @@
+// Casemaster-WMS — master-data create forms.
+//
+// Entry points (from /page/wms/setup or any list page):
+//   /page/wms/crud/f/newItem
+//   /page/wms/crud/f/newLocation
+//   /page/wms/crud/f/newPartner
+//   /page/wms/crud/f/newAdjustmentReason
+//   /page/wms/crud/f/newReturnReason
+//   /page/wms/crud/f/newCarton
+//   /page/wms/crud/f/newCarrierService
+//   /page/wms/crud/f/newCountProgram
+//   /page/wms/crud/f/newWaveTemplate
+//   /page/wms/crud/f/newPutawayRule
+//   /page/wms/crud/f/newReplenRule
+//   /page/wms/crud/f/newAllocationStrategy
+//
+// All actions go through sql.execute (bo.persist no-ops on insert in this build).
+
+inherits 'base'
+
+// Common helper: SQL-escape a string value (NULL on empty).
+protected function _qs(s)
+    if isNull([s])
+        return 'NULL'
+    end-if
+    if eq([s], '')
+        return 'NULL'
+    end-if
+    return concat("'", replace([s], "'", "''"), "'")
+end-function
+
+protected function _qn(s)
+    if isNull([s])
+        return 'NULL'
+    end-if
+    if eq([s], '')
+        return 'NULL'
+    end-if
+    return formatString('{0}', [s])
+end-function
+
+// ============================================================================
+// Item — sku, name, description, base_uom_code, weight, dimensions, flags
+// ============================================================================
+function newItem()
+    set('sku',          _onError(qs.getUntrusted('sku'), ''))
+    set('name',         _onError(qs.getUntrusted('name'), ''))
+    set('description',  _onError(qs.getUntrusted('description'), ''))
+    set('base_uom',     _onError(qs.getUntrusted('base_uom'), 'EA'))
+    set('weight_kg',    _onError(qs.getUntrusted('weight_kg'), ''))
+    set('is_lot',       _onError(qs.getUntrusted('is_lot'), ''))
+    set('is_serial',    _onError(qs.getUntrusted('is_serial'), ''))
+    set('is_expiry',    _onError(qs.getUntrusted('is_expiry'), ''))
+    set('is_hazmat',    _onError(qs.getUntrusted('is_hazmat'), ''))
+    set('confirm',      _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        if or(eq([sku], ''), eq([name], ''))
+            set('err', 'sku and name are required')
+        else
+            sql.execute(concat(
+                "INSERT INTO item (tenant_id, sku, name, description, base_uom_code, weight_kg, is_lot_tracked, is_serial_tracked, is_expiry_tracked, is_hazmat, status) VALUES (",
+                "1, ",
+                script.call('./_qs', [sku]), ", ",
+                script.call('./_qs', [name]), ", ",
+                script.call('./_qs', [description]), ", ",
+                script.call('./_qs', [base_uom]), ", ",
+                script.call('./_qn', [weight_kg]), ", ",
+                if(eq([is_lot],    '1'), 'TRUE', 'FALSE'), ", ",
+                if(eq([is_serial], '1'), 'TRUE', 'FALSE'), ", ",
+                if(eq([is_expiry], '1'), 'TRUE', 'FALSE'), ", ",
+                if(eq([is_hazmat], '1'), 'TRUE', 'FALSE'), ", 'ACTIVE') ",
+                "ON CONFLICT (tenant_id, sku) DO NOTHING"
+            ))
+            set('outcome', concat('Item ', [sku], ' created.'))
+        end-if
+    end-if
+
+    page.render(page.get('./newItemView'))
+end-function
+
+protected resource newItemView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a> <a href="item" class="btn btn-sm btn-outline-secondary">&larr; Items list</a></p>`>,
+            title: <@page/title label: 'New item'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}} <a href="item">View item list</a></div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newItem" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>SKU *</label><input type="text" name="sku" value="{{[sku]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name *</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Description</label><input type="text" name="description" value="{{[description]}}" class="form-control"></div>
+                    <div class="form-group"><label>Base UoM</label><input type="text" name="base_uom" value="{{[base_uom]}}" class="form-control"></div>
+                    <div class="form-group"><label>Weight (kg)</label><input type="number" step="0.0001" name="weight_kg" value="{{[weight_kg]}}" class="form-control"></div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3 form-check"><input type="checkbox" name="is_lot" value="1" class="form-check-input" {{ if(eq([is_lot], '1'), 'checked', '') }}><label class="form-check-label">Lot tracked</label></div>
+                        <div class="form-group col-md-3 form-check"><input type="checkbox" name="is_serial" value="1" class="form-check-input" {{ if(eq([is_serial], '1'), 'checked', '') }}><label class="form-check-label">Serial tracked</label></div>
+                        <div class="form-group col-md-3 form-check"><input type="checkbox" name="is_expiry" value="1" class="form-check-input" {{ if(eq([is_expiry], '1'), 'checked', '') }}><label class="form-check-label">Expiry tracked</label></div>
+                        <div class="form-group col-md-3 form-check"><input type="checkbox" name="is_hazmat" value="1" class="form-check-input" {{ if(eq([is_hazmat], '1'), 'checked', '') }}><label class="form-check-label">Hazmat</label></div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Create item</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Location
+// ============================================================================
+function newLocation()
+    set('warehouse_id', _onError(qs.getUntrusted('warehouse_id'), '1'))
+    set('zone_id',      _onError(qs.getUntrusted('zone_id'), ''))
+    set('code',         _onError(qs.getUntrusted('code'), ''))
+    set('barcode',      _onError(qs.getUntrusted('barcode'), ''))
+    set('loc_type',     _onError(qs.getUntrusted('loc_type'), 'PICK_FACE'))
+    set('confirm',      _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        if or(or(eq([code], ''), eq([warehouse_id], '')), eq([zone_id], ''))
+            set('err', 'code, warehouse_id and zone_id required')
+        else
+            sql.execute(concat(
+                "INSERT INTO location (tenant_id, warehouse_id, zone_id, code, barcode, location_type, status) VALUES (",
+                "1, ",
+                [warehouse_id], ", ",
+                [zone_id], ", ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', if(eq([barcode], ''), [code], [barcode])), ", '",
+                [loc_type], "', 'AVAILABLE') ",
+                "ON CONFLICT (warehouse_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Location ', [code], ' created.'))
+        end-if
+    end-if
+
+    set('zoneOptHtml', '<option value="">— pick a zone —</option>')
+    set('zones',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'z', entity: 'wms/zone', orderBy: 'code'>
+            >,
+            rows: 50
+        )
+    )
+    iterate [zones]
+        set('zid',  bo.pk([z]))
+        set('zcd',  bo.attr([z], 'code'))
+        set('selected', if(eq(_onError([zone_id], ''), formatString('{0}', [zid])), ' selected', ''))
+        set('zoneOptHtml',
+            buildString('', [zoneOptHtml],
+                resolveTemplate(`<option value="{{[zid]}}"{{[selected]}}>{{[zcd]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./newLocationView'))
+end-function
+
+protected resource newLocationView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a> <a href="location" class="btn btn-sm btn-outline-secondary">&larr; Locations list</a></p>`>,
+            title: <@page/title label: 'New location'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}} <a href="location">View locations</a></div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newLocation" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <input type="hidden" name="warehouse_id" value="{{[warehouse_id]}}">
+                    <div class="form-group"><label>Zone *</label><select name="zone_id" class="form-control" required>{{[zoneOptHtml]}}</select></div>
+                    <div class="form-group"><label>Code *</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Barcode (defaults to code)</label><input type="text" name="barcode" value="{{[barcode]}}" class="form-control"></div>
+                    <div class="form-group"><label>Type</label><select name="loc_type" class="form-control"><option>PICK_FACE</option><option>CASE_FLOW</option><option>PALLET_RACK</option><option>BULK_FLOOR</option><option>MEZZANINE</option><option>COLD</option><option>FREEZER</option><option>CAGE</option><option>QUARANTINE</option><option>STAGE_OUT</option><option>DOCK_BUFFER</option><option>RETURNS</option><option>VAS</option></select></div>
+                    <button class="btn btn-primary" type="submit">Create location</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Partner
+// ============================================================================
+function newPartner()
+    set('code',     _onError(qs.getUntrusted('code'), ''))
+    set('name',     _onError(qs.getUntrusted('name'), ''))
+    set('roles',    _onError(qs.getUntrusted('roles'), ''))
+    set('confirm',  _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        if or(eq([code], ''), eq([name], ''))
+            set('err', 'code and name required')
+        else
+            // roles is a comma-separated list (supplier, customer, carrier, owner)
+            set('is_sup',   if(or(eq([roles], 'supplier'),  eq([roles], 'all')), 'TRUE', 'FALSE'))
+            set('is_cust',  if(or(eq([roles], 'customer'),  eq([roles], 'all')), 'TRUE', 'FALSE'))
+            set('is_carr',  if(or(eq([roles], 'carrier'),   eq([roles], 'all')), 'TRUE', 'FALSE'))
+            set('is_own',   if(or(eq([roles], 'owner'),     eq([roles], 'all')), 'TRUE', 'FALSE'))
+            sql.execute(concat(
+                "INSERT INTO partner (tenant_id, code, name, is_supplier, is_customer, is_carrier, is_3pl_owner, status) VALUES (",
+                "1, ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', [name]), ", ",
+                [is_sup], ", ",
+                [is_cust], ", ",
+                [is_carr], ", ",
+                [is_own], ", 'ACTIVE') ",
+                "ON CONFLICT (tenant_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Partner ', [code], ' created.'))
+        end-if
+    end-if
+
+    page.render(page.get('./newPartnerView'))
+end-function
+
+protected resource newPartnerView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a> <a href="partner" class="btn btn-sm btn-outline-secondary">&larr; Partners list</a></p>`>,
+            title: <@page/title label: 'New partner'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newPartner" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Code *</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name *</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Role</label><select name="roles" class="form-control"><option value="supplier">Supplier</option><option value="customer">Customer</option><option value="carrier">Carrier</option><option value="owner">3PL goods owner</option><option value="all">All roles</option></select></div>
+                    <button class="btn btn-primary" type="submit">Create partner</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Adjustment reason
+// ============================================================================
+function newAdjustmentReason()
+    set('code',     _onError(qs.getUntrusted('code'), ''))
+    set('name',     _onError(qs.getUntrusted('name'), ''))
+    set('direction',_onError(qs.getUntrusted('direction'), 'EITHER'))
+    set('confirm',  _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if or(eq([code], ''), eq([name], ''))
+            set('err', 'code and name required')
+        else
+            sql.execute(concat(
+                "INSERT INTO adjustment_reason (tenant_id, code, name, direction, is_active) VALUES (",
+                "1, ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', [name]), ", '",
+                [direction], "', TRUE) ON CONFLICT (tenant_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Reason ', [code], ' created.'))
+        end-if
+    end-if
+    page.render(page.get('./newAdjustmentReasonView'))
+end-function
+
+protected resource newAdjustmentReasonView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New adjustment reason'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newAdjustmentReason" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Code *</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name *</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Direction</label><select name="direction" class="form-control"><option>INCREASE</option><option>DECREASE</option><option>EITHER</option></select></div>
+                    <button class="btn btn-primary" type="submit">Create reason</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Return reason
+// ============================================================================
+function newReturnReason()
+    set('code',         _onError(qs.getUntrusted('code'), ''))
+    set('name',         _onError(qs.getUntrusted('name'), ''))
+    set('cust_fault',   _onError(qs.getUntrusted('cust_fault'), ''))
+    set('confirm',      _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if or(eq([code], ''), eq([name], ''))
+            set('err', 'code and name required')
+        else
+            sql.execute(concat(
+                "INSERT INTO return_reason (tenant_id, code, name, is_customer_fault, is_active) VALUES (",
+                "1, ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', [name]), ", ",
+                if(eq([cust_fault], '1'), 'TRUE', 'FALSE'), ", TRUE) ",
+                "ON CONFLICT (tenant_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Return reason ', [code], ' created.'))
+        end-if
+    end-if
+    page.render(page.get('./newReturnReasonView'))
+end-function
+
+protected resource newReturnReasonView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New return reason'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newReturnReason" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Code *</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name *</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group form-check"><input type="checkbox" name="cust_fault" value="1" class="form-check-input" {{ if(eq([cust_fault], '1'), 'checked', '') }}><label class="form-check-label">Customer fault</label></div>
+                    <button class="btn btn-primary" type="submit">Create reason</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Carton type
+// ============================================================================
+function newCarton()
+    set('code',  _onError(qs.getUntrusted('code'), ''))
+    set('name',  _onError(qs.getUntrusted('name'), ''))
+    set('il',    _onError(qs.getUntrusted('inner_l'), ''))
+    set('iw',    _onError(qs.getUntrusted('inner_w'), ''))
+    set('ih',    _onError(qs.getUntrusted('inner_h'), ''))
+    set('tare',  _onError(qs.getUntrusted('tare'), '0.05'))
+    set('maxp',  _onError(qs.getUntrusted('max_payload'), '20'))
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if or(or(eq([code], ''), eq([il], '')), or(eq([iw], ''), eq([ih], '')))
+            set('err', 'code + inner dims required')
+        else
+            sql.execute(concat(
+                "INSERT INTO carton_type (tenant_id, code, name, inner_length_cm, inner_width_cm, inner_height_cm, tare_weight_kg, max_payload_kg) VALUES (",
+                "1, ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', if(eq([name], ''), [code], [name])), ", ",
+                [il], ", ", [iw], ", ", [ih], ", ", [tare], ", ", [maxp],
+                ") ON CONFLICT (tenant_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Carton ', [code], ' created.'))
+        end-if
+    end-if
+    page.render(page.get('./newCartonView'))
+end-function
+
+protected resource newCartonView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New carton type'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newCarton" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Code *</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name</label><input type="text" name="name" value="{{[name]}}" class="form-control"></div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4"><label>Inner L (cm)</label><input type="number" step="0.1" name="inner_l" value="{{[il]}}" class="form-control" required></div>
+                        <div class="form-group col-md-4"><label>Inner W (cm)</label><input type="number" step="0.1" name="inner_w" value="{{[iw]}}" class="form-control" required></div>
+                        <div class="form-group col-md-4"><label>Inner H (cm)</label><input type="number" step="0.1" name="inner_h" value="{{[ih]}}" class="form-control" required></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6"><label>Tare weight (kg)</label><input type="number" step="0.001" name="tare" value="{{[tare]}}" class="form-control"></div>
+                        <div class="form-group col-md-6"><label>Max payload (kg)</label><input type="number" step="0.001" name="max_payload" value="{{[maxp]}}" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Create carton type</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Carrier service
+// ============================================================================
+function newCarrierService()
+    set('carrier_id',   _onError(qs.getUntrusted('carrier_id'), ''))
+    set('service_code', _onError(qs.getUntrusted('service_code'), ''))
+    set('service_name', _onError(qs.getUntrusted('service_name'), ''))
+    set('transit',      _onError(qs.getUntrusted('transit'), ''))
+    set('label',        _onError(qs.getUntrusted('label_format'), 'ZPL'))
+    set('confirm',      _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if or(or(eq([carrier_id], ''), eq([service_code], '')), eq([service_name], ''))
+            set('err', 'carrier_id, service_code, service_name required')
+        else
+            sql.execute(concat(
+                "INSERT INTO carrier_service (tenant_id, carrier_id, service_code, service_name, transit_days, label_format) VALUES (",
+                "1, ",
+                [carrier_id], ", ",
+                script.call('./_qs', [service_code]), ", ",
+                script.call('./_qs', [service_name]), ", ",
+                script.call('./_qn', [transit]), ", '",
+                [label], "') ON CONFLICT (carrier_id, service_code) DO NOTHING"
+            ))
+            set('outcome', concat('Carrier service ', [service_code], ' created.'))
+        end-if
+    end-if
+
+    set('cOptHtml', '<option value="">— pick a carrier —</option>')
+    set('cs',
+        iterator.ofEntity(
+            entities: < <@iterator/entity name: 'c', entity: 'wms/partner', where: 'is_carrier=1', orderBy: 'code'> >,
+            rows: 50
+        )
+    )
+    iterate [cs]
+        set('cid',  bo.pk([c]))
+        set('ccd',  bo.attr([c], 'code'))
+        set('cnm',  bo.attr([c], 'name'))
+        set('cOptHtml', buildString('', [cOptHtml], resolveTemplate(`<option value="{{[cid]}}">{{[ccd]}} — {{[cnm]}}</option>`)))
+    end-iterate
+
+    page.render(page.get('./newCarrierServiceView'))
+end-function
+
+protected resource newCarrierServiceView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New carrier service'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newCarrierService" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Carrier</label><select name="carrier_id" class="form-control" required>{{[cOptHtml]}}</select></div>
+                    <div class="form-group"><label>Service code</label><input type="text" name="service_code" value="{{[service_code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Service name</label><input type="text" name="service_name" value="{{[service_name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Transit days</label><input type="number" name="transit" value="{{[transit]}}" class="form-control"></div>
+                    <div class="form-group"><label>Label format</label><select name="label_format" class="form-control"><option>ZPL</option><option>EPL</option><option>PDF</option><option>PNG</option></select></div>
+                    <button class="btn btn-primary" type="submit">Create</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Putaway rule
+// ============================================================================
+function newPutawayRule()
+    set('name',      _onError(qs.getUntrusted('name'), ''))
+    set('priority',  _onError(qs.getUntrusted('priority'), '50'))
+    set('strategy',  _onError(qs.getUntrusted('strategy'), 'DIRECTED'))
+    set('zone_id',   _onError(qs.getUntrusted('zone_id'), ''))
+    set('confirm',   _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if eq([name], '')
+            set('err', 'name required')
+        else
+            sql.execute(concat(
+                "INSERT INTO putaway_rule (tenant_id, warehouse_id, name, priority, is_active, selector_jsonb, target_zone_id, strategy) VALUES (",
+                "1, 1, ",
+                script.call('./_qs', [name]), ", ",
+                [priority], ", TRUE, '{}'::jsonb, ",
+                script.call('./_qn', [zone_id]), ", '",
+                [strategy], "') ON CONFLICT (warehouse_id, name) DO NOTHING"
+            ))
+            set('outcome', concat('Putaway rule ', [name], ' created.'))
+        end-if
+    end-if
+
+    set('zoneOptHtml', '<option value="">— any zone —</option>')
+    set('zones', iterator.ofEntity(entities: < <@iterator/entity name: 'z', entity: 'wms/zone', orderBy: 'code'> >, rows: 50))
+    iterate [zones]
+        set('zid', bo.pk([z]))
+        set('zcd', bo.attr([z], 'code'))
+        set('zoneOptHtml', buildString('', [zoneOptHtml], resolveTemplate(`<option value="{{[zid]}}">{{[zcd]}}</option>`)))
+    end-iterate
+
+    page.render(page.get('./newPutawayRuleView'))
+end-function
+
+protected resource newPutawayRuleView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New putaway rule'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newPutawayRule" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Name</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Priority (lower = higher pref)</label><input type="number" name="priority" value="{{[priority]}}" class="form-control"></div>
+                    <div class="form-group"><label>Strategy</label><select name="strategy" class="form-control"><option>DIRECTED</option><option>RANDOM</option><option>FIXED</option><option>REPLENISH_FIRST</option><option>CONSOLIDATE</option></select></div>
+                    <div class="form-group"><label>Target zone</label><select name="zone_id" class="form-control">{{[zoneOptHtml]}}</select></div>
+                    <button class="btn btn-primary" type="submit">Create rule</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// Wave template
+// ============================================================================
+function newWaveTemplate()
+    set('code',     _onError(qs.getUntrusted('code'), ''))
+    set('name',     _onError(qs.getUntrusted('name'), ''))
+    set('strategy', _onError(qs.getUntrusted('pick_strategy'), 'BATCH'))
+    set('max_orders', _onError(qs.getUntrusted('max_orders'), ''))
+    set('confirm',  _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        if or(eq([code], ''), eq([name], ''))
+            set('err', 'code and name required')
+        else
+            sql.execute(concat(
+                "INSERT INTO wave_template (tenant_id, warehouse_id, code, name, pick_strategy, max_order_count, is_active) VALUES (",
+                "1, 1, ",
+                script.call('./_qs', [code]), ", ",
+                script.call('./_qs', [name]), ", '",
+                [strategy], "', ",
+                script.call('./_qn', [max_orders]), ", TRUE) ",
+                "ON CONFLICT (warehouse_id, code) DO NOTHING"
+            ))
+            set('outcome', concat('Wave template ', [code], ' created.'))
+        end-if
+    end-if
+    page.render(page.get('./newWaveTemplateView'))
+end-function
+
+protected resource newWaveTemplateView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../setup" class="btn btn-sm btn-outline-secondary">&larr; Setup</a></p>`>,
+            title: <@page/title label: 'New wave template'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="newWaveTemplate" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Code</label><input type="text" name="code" value="{{[code]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Name</label><input type="text" name="name" value="{{[name]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Pick strategy</label><select name="pick_strategy" class="form-control"><option>BATCH</option><option>ZONE</option><option>CLUSTER</option><option>DISCRETE</option><option>WAVE</option></select></div>
+                    <div class="form-group"><label>Max orders per wave</label><input type="number" name="max_orders" value="{{[max_orders]}}" class="form-control"></div>
+                    <button class="btn btn-primary" type="submit">Create template</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// CRUD index
+// ============================================================================
+function main()
+    page.render(page.get('./indexView'))
+end-function
+
+protected resource indexView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'setup')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: 'Master data — create new'>,
+            list: <@page/html
+                resolveTemplate(`<div class="row">
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5>Catalogue</h5>
+                        <ul>
+                            <li><a href="crud/f/newItem">New item</a></li>
+                            <li><a href="crud/f/newPartner">New partner</a></li>
+                            <li><a href="crud/f/newLocation">New location</a></li>
+                            <li><a href="crud/f/newCarton">New carton type</a></li>
+                            <li><a href="crud/f/newCarrierService">New carrier service</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5>Reasons</h5>
+                        <ul>
+                            <li><a href="crud/f/newAdjustmentReason">New adjustment reason</a></li>
+                            <li><a href="crud/f/newReturnReason">New return reason</a></li>
+                        </ul>
+                    </div></div></div>
+                    <div class="col-md-4 mb-3"><div class="card h-100"><div class="card-body">
+                        <h5>Rules &amp; templates</h5>
+                        <ul>
+                            <li><a href="crud/f/newPutawayRule">New putaway rule</a></li>
+                            <li><a href="crud/f/newWaveTemplate">New wave template</a></li>
+                        </ul>
+                    </div></div></div>
+                </div>`)
+            >
+        >
+    >
+end-resource

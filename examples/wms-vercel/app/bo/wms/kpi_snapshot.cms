@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `kpi_snapshot` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Kpi snapshot',
+        table: 'kpi_snapshot',
+        primaryKey: 'id',
+        sequence: 'kpi_snapshot',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            kpi_definition_id: <@bo/attribute label: 'Kpi definition id', column: 'kpi_definition_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/kpi_definition'>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>,
+            zone_id: <@bo/attribute label: 'Zone id', column: 'zone_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/zone'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Timestamp, optional: false()>,
+            period_end: <@bo/attribute label: 'Period end', column: 'period_end', dataType: dataType.Timestamp, optional: false()>,
+            value: <@bo/attribute label: 'Value', column: 'value', dataType: dataType.Decimal, length: 18, precision: 4, optional: false()>,
+            sample_count: <@bo/attribute label: 'Sample count', column: 'sample_count', dataType: dataType.Long, length: 9, optional: true()>,
+            captured_at: <@bo/attribute label: 'Captured at', column: 'captured_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'kpi_definition_id', 'warehouse_id', 'zone_id', 'user_id', 'period_start' >,
+            description: < 'tenant_id', 'kpi_definition_id', 'warehouse_id', 'zone_id', 'user_id', 'period_start', 'period_end', 'value', 'sample_count', 'captured_at' >
+        >
+    >
+end-resource

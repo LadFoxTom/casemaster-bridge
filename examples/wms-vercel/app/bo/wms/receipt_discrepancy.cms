@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `receipt_discrepancy` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Receipt discrepancy',
+        table: 'receipt_discrepancy',
+        primaryKey: 'id',
+        sequence: 'receipt_discrepancy',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            receipt_id: <@bo/attribute label: 'Receipt id', column: 'receipt_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/receipt'>,
+            receipt_line_id: <@bo/attribute label: 'Receipt line id', column: 'receipt_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/receipt_line'>,
+            discrepancy_type: <@bo/attribute label: 'Discrepancy type', column: 'discrepancy_type', dataType: dataType.String, length: 4000, optional: false()>,
+            expected_qty: <@bo/attribute label: 'Expected qty', column: 'expected_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            actual_qty: <@bo/attribute label: 'Actual qty', column: 'actual_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_attachment_ids: <@bo/attribute label: 'Photo attachment ids', column: 'photo_attachment_ids', dataType: dataType.JSON, length: 4000, optional: true()>,
+            resolution_status: <@bo/attribute label: 'Resolution status', column: 'resolution_status', dataType: dataType.String, length: 4000, optional: false()>,
+            resolved_by_user_id: <@bo/attribute label: 'Resolved by user id', column: 'resolved_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            resolved_at: <@bo/attribute label: 'Resolved at', column: 'resolved_at', dataType: dataType.Timestamp, optional: true()>,
+            resolution_notes: <@bo/attribute label: 'Resolution notes', column: 'resolution_notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'receipt_id', 'receipt_line_id', 'discrepancy_type', 'expected_qty', 'actual_qty' >,
+            description: < 'tenant_id', 'receipt_id', 'receipt_line_id', 'discrepancy_type', 'expected_qty', 'actual_qty', 'description', 'photo_attachment_ids', 'resolution_status', 'resolved_by_user_id', 'resolved_at', 'resolution_notes' >
+        >
+    >
+end-resource

@@ -1,0 +1,23 @@
+// Casemaster-WMS data source — Neon Postgres provisioned for this build
+// (see C:\Casemaster-WMS\.env). Translated to the Npgsql semicolon form:
+//   - channel_binding=require dropped (bundled Npgsql 6.x rejects it)
+//   - Trust Server Certificate=true added so SslMode=Require works without
+//     a CA bundle on Windows
+//   - Keepalive / pool tuning copied from Axylog's working profile so the
+//     pgbouncer-style pooler does not drop idle connections.
+
+function main()
+    return script.get('./main')
+
+end-function
+
+resource main
+    <
+        dataSources: <@configuration/dataSources
+            primary: <@configuration/dataSource/PostgreSQL
+                type: dataSourceType.primary,
+                connectionString: 'Host=ep-odd-pine-al01qppf-pooler.c-3.eu-central-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_0Hdnv4QWxceX;SslMode=Require;Trust Server Certificate=true;Keepalive=30;Tcp Keepalive=true;Connection Idle Lifetime=300;Connection Pruning Interval=30;No Reset On Close=true;Minimum Pool Size=2;Maximum Pool Size=20'
+            >
+        >
+    >
+end-resource

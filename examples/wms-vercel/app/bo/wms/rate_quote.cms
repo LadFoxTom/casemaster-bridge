@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `rate_quote` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Rate quote',
+        table: 'rate_quote',
+        primaryKey: 'id',
+        sequence: 'rate_quote',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            shipment_id: <@bo/attribute label: 'Shipment id', column: 'shipment_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/shipment'>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            carrier_service_id: <@bo/attribute label: 'Carrier service id', column: 'carrier_service_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/carrier_service'>,
+            transit_days: <@bo/attribute label: 'Transit days', column: 'transit_days', dataType: dataType.Long, length: 9, optional: true()>,
+            base_rate: <@bo/attribute label: 'Base rate', column: 'base_rate', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            fuel_surcharge: <@bo/attribute label: 'Fuel surcharge', column: 'fuel_surcharge', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            accessorial_total: <@bo/attribute label: 'Accessorial total', column: 'accessorial_total', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            total_rate: <@bo/attribute label: 'Total rate', column: 'total_rate', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: true()>,
+            is_selected: <@bo/attribute label: 'Is selected', column: 'is_selected', dataType: dataType.Boolean, optional: false()>,
+            quoted_at: <@bo/attribute label: 'Quoted at', column: 'quoted_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'currency' >,
+            list: < 'tenant_id', 'shipment_id', 'sales_order_id', 'carrier_id', 'carrier_service_id', 'transit_days' >,
+            description: < 'tenant_id', 'shipment_id', 'sales_order_id', 'carrier_id', 'carrier_service_id', 'transit_days', 'base_rate', 'fuel_surcharge', 'accessorial_total', 'total_rate', 'currency', 'is_selected' >
+        >
+    >
+end-resource

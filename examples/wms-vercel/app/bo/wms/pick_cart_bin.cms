@@ -1,0 +1,31 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pick_cart_bin` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pick cart bin',
+        table: 'pick_cart_bin',
+        primaryKey: 'id',
+        sequence: 'pick_cart_bin',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            cart_id: <@bo/attribute label: 'Cart id', column: 'cart_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/pick_cart'>,
+            position: <@bo/attribute label: 'Position', column: 'position', dataType: dataType.Long, length: 9, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'cart_id', 'position', 'sales_order_id', 'license_plate_id' >,
+            description: < 'tenant_id', 'cart_id', 'position', 'sales_order_id', 'license_plate_id' >
+        >
+    >
+end-resource

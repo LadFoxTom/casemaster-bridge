@@ -1,0 +1,190 @@
+// Casemaster-WMS — Quality center.
+//   /page/wms/quality                  overview
+//   /page/wms/quality/f/inspection?id=N  inspection detail
+//   /page/wms/quality/f/ncr?id=N         non-conformance detail
+
+inherits 'base'
+
+function main()
+    set('open_inspections',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'i',
+                    entity:  'wms/inspection',
+                    where:   'status="PENDING" | status="IN_PROGRESS"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('open_ncrs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'n',
+                    entity:  'wms/non_conformance',
+                    where:   'status="OPEN" | status="CONTAINED" | status="INVESTIGATING" | status="DISPOSITION"',
+                    orderBy: '-opened_at'
+                >
+            >,
+            rows: 50
+        )
+    )
+    set('plans',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'p', entity: 'wms/qc_plan', where: 'active=1', orderBy: 'plan_code'>
+            >,
+            rows: 50
+        )
+    )
+    set('scorecards',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'sc', entity: 'wms/supplier_scorecard', orderBy: '-period_end'>
+            >,
+            rows: 25
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'quality')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '✅ Quality'>,
+            i_h: <@page/html `<h5 class="mt-3">Open inspections</h5>`>,
+            i_table: <@page/data/table
+                iterator: [open_inspections],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'inspection', qs: <id: $bo.pk([i])>>
+                >
+            >,
+            n_h: <@page/html `<h5 class="mt-4">Open non-conformance</h5>`>,
+            n_table: <@page/data/table
+                iterator: [open_ncrs],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'ncr', qs: <id: $bo.pk([n])>>
+                >
+            >,
+            p_h: <@page/html `<h5 class="mt-4">Active QC plans</h5>`>,
+            p_table: <@page/data/table
+                iterator: [plans],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            sc_h: <@page/html `<h5 class="mt-4">Supplier scorecards</h5>`>,
+            sc_table: <@page/data/table
+                iterator: [scorecards],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+function inspection()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('insp', bo.quickLoad('wms/inspection', [id], group: '*'))
+    if isNull([insp])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('results',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'r', entity: 'wms/inspection_result', where: 'inspection_id={[id]}', orderBy: 'sample_index'>
+            >,
+            rows: 500
+        )
+    )
+
+    set('i_no',     bo.attr([insp], 'inspection_number'))
+    set('i_status', bo.attr([insp], 'status'))
+
+    page.render(page.get('./inspectionView'))
+end-function
+
+protected resource inspectionView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'quality')>,
+            crumbs: <@page/html `<p><a href="../quality" class="btn btn-sm btn-outline-secondary">&larr; Quality</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Inspection <code>{{[i_no]}}</code></h4>
+                    <p class="text-muted small mb-0">Status <span class="badge badge-info">{{[i_status]}}</span></p>
+                </div></div>`)
+            >,
+            r_h: <@page/html `<h5 class="mt-3">Results</h5>`>,
+            r_table: <@page/data/table
+                iterator: [results],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+function ncr()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('ncr', bo.quickLoad('wms/non_conformance', [id], group: '*'))
+    if isNull([ncr])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('n_no', bo.attr([ncr], 'ncr_number'))
+    set('n_status', bo.attr([ncr], 'status'))
+    set('n_severity', bo.attr([ncr], 'severity'))
+    set('n_disposition', _onError(bo.attr([ncr], 'disposition'), ''))
+
+    page.render(page.get('./ncrView'))
+end-function
+
+protected resource ncrView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'quality')>,
+            crumbs: <@page/html `<p><a href="../quality" class="btn btn-sm btn-outline-secondary">&larr; Quality</a></p>`>,
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Non-conformance <code>{{[n_no]}}</code></h4>
+                    <p class="text-muted small mb-0">
+                        Status <span class="badge badge-info">{{[n_status]}}</span>
+                        &middot; Severity <span class="badge badge-warning">{{[n_severity]}}</span>
+                        {{ if(ne([n_disposition], ''), buildString(' &middot; Disposition ', [n_disposition]), '') }}
+                    </p>
+                </div></div>`)
+            >
+        >
+    >
+end-resource

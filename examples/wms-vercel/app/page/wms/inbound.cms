@@ -1,0 +1,928 @@
+// Casemaster-WMS — Inbound workflow center.
+//   /page/wms/inbound                       overview (ASNs, POs, receipts, putaway)
+//   /page/wms/inbound/f/asn?id=N            ASN detail + receive button
+//   /page/wms/inbound/f/po?id=N             Purchase order detail
+//   /page/wms/inbound/f/receive?asn=N       receive form
+//   /page/wms/inbound/f/receive?asn=N&confirm=1
+//                                           POST-equivalent: writes the receipt
+//   /page/wms/inbound/f/receipt?id=N        receipt detail
+
+inherits 'base'
+
+// ============================================================================
+// MAIN — inbound overview
+// ============================================================================
+function main()
+    set('asns_pending',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'a',
+                    entity:  'wms/asn',
+                    where:   'status="DRAFT" | status="CONFIRMED" | status="IN_TRANSIT" | status="ARRIVED" | status="RECEIVING"',
+                    orderBy: '-expected_arrival'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('pos_open',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'p',
+                    entity:  'wms/purchase_order',
+                    where:   'status="OPEN" | status="PARTIAL"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('receipts_in_flight',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/receipt',
+                    where:   'status="OPEN" | status="IN_PROGRESS"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('receipts_recent',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/receipt',
+                    where:   'status="COMPLETED" | status="CLOSED"',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 25
+        )
+    )
+
+    set('putaway_queue',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'pt',
+                    entity:  'wms/putaway_task',
+                    where:   'status="OPEN" | status="ASSIGNED" | status="IN_PROGRESS"',
+                    orderBy: '-priority'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    page.render(page.get('./mainView'))
+end-function
+
+protected resource mainView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../wms" class="btn btn-sm btn-outline-secondary">&larr; Dashboard</a></p>`>,
+            title: <@page/title label: '📦 Inbound'>,
+            intro: <@page/html `<p class="text-muted">Receive against ASN/PO, build LPNs, putaway. Each section below is sorted newest-first.</p>`>,
+
+            asn_h: <@page/html `<h5 class="mt-4">Pending ASNs</h5><p class="small text-muted mb-2">DRAFT &middot; CONFIRMED &middot; IN_TRANSIT &middot; ARRIVED &middot; RECEIVING. Click a row to drill in.</p>`>,
+            asn_table: <@page/data/table
+                iterator: [asns_pending],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'asn', qs: <id: $bo.pk([a])>>
+                >
+            >,
+
+            po_h: <@page/html `<h5 class="mt-4">Open Purchase Orders</h5>`>,
+            po_table: <@page/data/table
+                iterator: [pos_open],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'po', qs: <id: $bo.pk([p])>>
+                >
+            >,
+
+            rip_h: <@page/html `<h5 class="mt-4">Receipts in flight</h5>`>,
+            rip_table: <@page/data/table
+                iterator: [receipts_in_flight],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'receipt', qs: <id: $bo.pk([r])>>
+                >
+            >,
+
+            putaway_h: <@page/html `<h5 class="mt-4">Putaway queue</h5>`>,
+            putaway_table: <@page/data/table
+                iterator: [putaway_queue],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            recent_h: <@page/html `<h5 class="mt-4">Recently received</h5>`>,
+            recent_table: <@page/data/table
+                iterator: [receipts_recent],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'receipt', qs: <id: $bo.pk([r])>>
+                >
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// ASN — single ASN detail with lines + Receive button
+// ============================================================================
+function asn()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('asn', bo.quickLoad('wms/asn', [id], group: '*'))
+    if isNull([asn])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ln',
+                    entity:  'wms/asn_line',
+                    where:   'asn_id={[id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    // related receipts
+    set('receipts',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'r',
+                    entity:  'wms/receipt',
+                    where:   'asn_id={[id]}',
+                    orderBy: '-id'
+                >
+            >,
+            rows: 50
+        )
+    )
+
+    set('asn_no',     bo.attr([asn], 'asn_number'))
+    set('asn_status', bo.attr([asn], 'status'))
+
+    page.render(page.get('./asnView'))
+end-function
+
+protected resource asnView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-1">ASN <code>{{[asn_no]}}</code></h4>
+                            <p class="text-muted small mb-0">Status <span class="badge badge-info">{{[asn_status]}}</span></p>
+                        </div>
+                        <div>
+                            <a class="btn btn-primary" href="receive?asn={{bo.pk([asn])}}">Receive against this ASN &rarr;</a>
+                        </div>
+                    </div>
+                </div></div>`)
+            >,
+
+            lines_h: <@page/html `<h5 class="mt-3">Expected lines</h5>`>,
+            lines_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+
+            r_h: <@page/html `<h5 class="mt-4">Receipts against this ASN</h5>`>,
+            r_table: <@page/data/table
+                iterator: [receipts],
+                group:    'list',
+                pagingMode: pagingMode.None,
+                rowLink: <@page/table/link
+                    url: <@url address: 'receipt', qs: <id: $bo.pk([r])>>
+                >
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// PO — purchase-order detail
+// ============================================================================
+function po()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('po', bo.quickLoad('wms/purchase_order', [id], group: '*'))
+    if isNull([po])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ln',
+                    entity:  'wms/purchase_order_line',
+                    where:   'purchase_order_id={[id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    set('po_no',     bo.attr([po], 'po_number'))
+    set('po_status', bo.attr([po], 'status'))
+
+    page.render(page.get('./poView'))
+end-function
+
+protected resource poView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Purchase Order <code>{{[po_no]}}</code></h4>
+                    <p class="text-muted small mb-0">Status <span class="badge badge-info">{{[po_status]}}</span></p>
+                </div></div>`)
+            >,
+
+            lines_h: <@page/html `<h5 class="mt-3">Order lines</h5>`>,
+            lines_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource
+
+// ============================================================================
+// RECEIVE — form (no confirm) and action (confirm=1).
+// Single submit posts a receipt with one line per ASN line whose qty input is > 0,
+// updates ASN line received_qty, creates inventory rows in the receiving location,
+// writes inventory_journal entries, sets ASN status to RECEIVING (or CLOSED if
+// fully received).
+// ============================================================================
+function receive()
+    set('asn_id', _onError(qs.get('asn'), null()))
+    if isNull([asn_id])
+        set('asn_id', qs.getUntrusted('asn'))
+    end-if
+    if isNull([asn_id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('asn', bo.quickLoad('wms/asn', [asn_id], group: '*'))
+    if isNull([asn])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('confirm', _onError(qs.getUntrusted('confirm'), ''))
+
+    // ---- ACTION branch -----------------------------------------------------
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_rcpt_id', null())
+        set('//act_lines_received', 0)
+        script.call('./postReceive', [asn_id])
+        set('rcpt_id',        [//act_rcpt_id])
+        set('lines_received', _onError([//act_lines_received], 0))
+        set('err',            _onError([//act_err], ''))
+    else
+        set('rcpt_id', null())
+        set('lines_received', 0)
+        set('err', '')
+    end-if
+
+    // Reload ASN + lines for re-render
+    set('asn', bo.quickLoad('wms/asn', [asn_id], group: '*'))
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ln',
+                    entity:  'wms/asn_line',
+                    where:   'asn_id={[asn_id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    // Build the form rows HTML server-side so we can do per-line qty inputs.
+    set('rowsHtml', '')
+    iterate [lines]
+        set('ln_id',       bo.pk([ln]))
+        set('ln_no',       bo.attr([ln], 'line_number'))
+        set('ln_item_id',  bo.attr([ln], 'item_id'))
+        set('ln_expected', bo.attr([ln], 'expected_qty'))
+        set('ln_received', bo.attr([ln], 'received_qty'))
+        set('ln_uom',      bo.attr([ln], 'uom_code'))
+        set('ln_lot',      bo.attr([ln], 'lot_number'))
+
+        set('item_bo', bo.quickLoad('wms/item', [ln_item_id], group: '*'))
+        set('sku',  bo.attr([item_bo], 'sku'))
+        set('name', bo.attr([item_bo], 'name'))
+
+        set('outstanding', sub([ln_expected], _onError([ln_received], 0)))
+        if lt([outstanding], 0)
+            set('outstanding', 0)
+        end-if
+
+        set('rowsHtml',
+            buildString('',
+                [rowsHtml],
+                resolveTemplate(`
+                <tr>
+                    <td>{{[ln_no]}}</td>
+                    <td><code>{{[sku]}}</code></td>
+                    <td>{{[name]}}</td>
+                    <td class="text-right">{{[ln_expected]}}</td>
+                    <td class="text-right">{{_onError([ln_received], 0)}}</td>
+                    <td class="text-right text-primary">{{[outstanding]}}</td>
+                    <td>{{[ln_uom]}}</td>
+                    <td><input type="number" min="0" step="0.000001" name="qty_{{[ln_id]}}" value="{{[outstanding]}}" class="form-control form-control-sm" style="width: 8rem"></td>
+                    <td><input type="text" name="lot_{{[ln_id]}}" value="{{_onError([ln_lot], '')}}" class="form-control form-control-sm" placeholder="lot/batch"></td>
+                </tr>`)
+            )
+        )
+    end-iterate
+
+    set('asn_no',     bo.attr([asn], 'asn_number'))
+    set('asn_status', bo.attr([asn], 'status'))
+
+    page.render(page.get('./receiveView'))
+end-function
+
+protected resource receiveView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html
+                resolveTemplate(`<p>
+                    <a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a>
+                    <a href="asn?id={{[asn_id]}}" class="btn btn-sm btn-outline-secondary">&larr; ASN {{[asn_no]}}</a>
+                </p>`)
+            >,
+
+            outcome: <@page/html
+                if(eq([confirm], '1'),
+                    if(ne([err], ''),
+                        resolveTemplate(`<div class="alert alert-danger">Failed: {{[err]}}</div>`),
+                        resolveTemplate(`<div class="alert alert-success">Receipt posted &mdash; <a href="receipt?id={{[rcpt_id]}}">View receipt #{{[rcpt_id]}}</a> &middot; {{[lines_received]}} line(s) received.</div>`)
+                    ),
+                    ''
+                )
+            >,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Receive against ASN <code>{{[asn_no]}}</code></h4>
+                    <p class="text-muted small mb-0">ASN status <span class="badge badge-info">{{[asn_status]}}</span> &middot; enter qty received per line, then submit.</p>
+                </div></div>`)
+            >,
+
+            form_open: <@page/html
+                resolveTemplate(`
+                <form method="GET" action="receive">
+                    <input type="hidden" name="asn" value="{{[asn_id]}}">
+                    <input type="hidden" name="confirm" value="1">
+                    <table class="table table-sm table-striped">
+                        <thead><tr>
+                            <th>#</th><th>SKU</th><th>Name</th>
+                            <th class="text-right">Expected</th>
+                            <th class="text-right">Already received</th>
+                            <th class="text-right">Outstanding</th>
+                            <th>UoM</th>
+                            <th>Qty to receive</th>
+                            <th>Lot</th>
+                        </tr></thead>
+                        <tbody>
+                            {{[rowsHtml]}}
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-primary">Post receipt</button>
+                    <a href="asn?id={{[asn_id]}}" class="btn btn-link">Cancel</a>
+                </form>`)
+            >
+        >
+    >
+end-resource
+
+// ----------------------------------------------------------------------------
+// Internal action — post receipt.
+// Writes a receipt + receipt_lines, increments asn_line.received_qty,
+// purchase_order_line.received_qty, posts inventory rows in the receiving
+// location, journal entries, and updates statuses.
+// ----------------------------------------------------------------------------
+// ============================================================================
+// PUTAWAY — confirm a putaway task: move an inventory row from receiving zone
+// to the actual storage location, mark task COMPLETED.
+// ============================================================================
+function putaway()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    set('actual_loc', _onError(qs.getUntrusted('actual_loc_id'), ''))
+    set('confirm',    _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postPutaway', [id], [actual_loc])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+
+    set('pt', bo.quickLoad('wms/putaway_task', [id], group: '*'))
+
+    set('locs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'l', entity: 'wms/location', where: 'status="AVAILABLE"', orderBy: 'pick_sequence'>
+            >,
+            rows: 200
+        )
+    )
+    set('locOptHtml', '')
+    iterate [locs]
+        set('lid',  bo.pk([l]))
+        set('lcd',  bo.attr([l], 'code'))
+        set('selected', if(eq(_onError([actual_loc], ''), formatString('{0}', [lid])), ' selected', ''))
+        set('locOptHtml',
+            buildString('', [locOptHtml],
+                resolveTemplate(`<option value="{{[lid]}}"{{[selected]}}>{{[lcd]}}</option>`)
+            )
+        )
+    end-iterate
+
+    page.render(page.get('./putawayView'))
+end-function
+
+protected resource putawayView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a></p>`>,
+            title: <@page/title label: 'Confirm putaway'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            header: <@page/html
+                if(isNull([pt]), '',
+                    resolveTemplate(`<div class="card mb-3"><div class="card-body">
+                        <h5>Putaway task #{{[id]}}</h5>
+                        <p class="small mb-0">Suggested location id: {{_onError(bo.attr([pt], 'suggested_location_id'), '—')}} &middot; LPN id: {{_onError(bo.attr([pt], 'license_plate_id'), '—')}}</p>
+                    </div></div>`)
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="putaway" class="card"><div class="card-body">
+                    <input type="hidden" name="id" value="{{[id]}}">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Actual destination location</label><select name="actual_loc_id" class="form-control" required>{{[locOptHtml]}}</select></div>
+                    <button class="btn btn-success" type="submit">Confirm putaway</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postPutaway(task_id, actual_loc)
+    set('pt', bo.quickLoad('wms/putaway_task', [task_id], group: '*'))
+    if isNull([pt])
+        set('//act_err', 'Putaway task not found')
+        exit-function
+    end-if
+    if eq(bo.attr([pt], 'status'), 'COMPLETED')
+        set('//act_err', 'Already completed')
+        exit-function
+    end-if
+
+    set('item_id', _onError(bo.attr([pt], 'item_id'), null()))
+    set('qty',     _onError(bo.attr([pt], 'qty'), 0))
+    set('uom',     _onError(bo.attr([pt], 'uom_code'), 'EA'))
+
+    bo.setAttr([pt], 'actual_location_id', [actual_loc])
+    bo.setAttr([pt], 'status',             'COMPLETED')
+    bo.setAttr([pt], 'completed_at',       now())
+    bo.persist([pt])
+
+    // we don't have the source inventory id stamped on the task; just log a
+    // journal entry to record the move at the conceptual level.
+    if and(isNotNull([item_id]), gt([qty], 0))
+        sql.execute(concat(
+            "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, to_location_id, qty, uom_code) VALUES (",
+            _onError(bo.attr([pt], 'tenant_id'), 1), ", ",
+            _onError(bo.attr([pt], 'warehouse_id'), 1), ", NOW(), 'PUTAWAY', 'PUTAWAY_TASK', ",
+            [task_id], ", ",
+            [item_id], ", ",
+            [actual_loc], ", ",
+            [qty], ", '",
+            [uom], "')"
+        ))
+    end-if
+
+    set('//act_msg', concat('Putaway task #', [task_id], ' completed.'))
+end-function
+
+// ============================================================================
+// CROSS-DOCK — link a receipt_line to an open sales_order_line
+// ============================================================================
+function crossDock()
+    set('rcpt_line', _onError(qs.getUntrusted('receipt_line_id'), ''))
+    set('sol',       _onError(qs.getUntrusted('sales_order_line_id'), ''))
+    set('qty_str',   _onError(qs.getUntrusted('qty'), ''))
+    set('confirm',   _onError(qs.getUntrusted('confirm'), ''))
+    set('err', '')
+    set('outcome', '')
+    if eq([confirm], '1')
+        set('//act_err', '')
+        set('//act_msg', '')
+        script.call('./postCrossDock', [rcpt_line], [sol], [qty_str])
+        set('err',     _onError([//act_err], ''))
+        set('outcome', _onError([//act_msg], ''))
+    end-if
+    page.render(page.get('./crossDockView'))
+end-function
+
+protected resource crossDockView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a></p>`>,
+            title: <@page/title label: 'Cross-dock link'>,
+            outcome: <@page/html
+                if(ne([err], ''),
+                    resolveTemplate(`<div class="alert alert-danger">{{[err]}}</div>`),
+                    if(ne([outcome], ''),
+                        resolveTemplate(`<div class="alert alert-success">{{[outcome]}}</div>`),
+                        ''
+                    )
+                )
+            >,
+            form: <@page/html
+                resolveTemplate(`<form method="GET" action="crossDock" class="card"><div class="card-body">
+                    <input type="hidden" name="confirm" value="1">
+                    <div class="form-group"><label>Receipt line ID</label><input type="number" name="receipt_line_id" value="{{[rcpt_line]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Sales order line ID</label><input type="number" name="sales_order_line_id" value="{{[sol]}}" class="form-control" required></div>
+                    <div class="form-group"><label>Qty linked</label><input type="number" min="0.000001" step="0.000001" name="qty" value="{{[qty_str]}}" class="form-control" required></div>
+                    <button class="btn btn-info" type="submit">Link</button>
+                </div></form>`)
+            >
+        >
+    >
+end-resource
+
+protected function postCrossDock(rl_id, sol_id, qty_str)
+    if or(or(eq(_onError([rl_id], ''), ''), eq(_onError([sol_id], ''), '')), eq(_onError([qty_str], ''), ''))
+        set('//act_err', 'All fields required')
+        exit-function
+    end-if
+    set('rl', bo.quickLoad('wms/receipt_line', [rl_id], group: '*'))
+    if isNull([rl])
+        set('//act_err', 'Receipt line not found')
+        exit-function
+    end-if
+    set('qty', dbl([qty_str]))
+    set('tenant_id', bo.attr([rl], 'tenant_id'))
+    set('rcpt_id',   bo.attr([rl], 'receipt_id'))
+    set('rcpt', bo.quickLoad('wms/receipt', [rcpt_id], group: '*'))
+    set('warehouse_id', _onError(bo.attr([rcpt], 'warehouse_id'), 1))
+
+    sql.execute(concat(
+        "INSERT INTO cross_dock_link (tenant_id, warehouse_id, receipt_line_id, sales_order_line_id, qty_linked, link_type, status) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", ",
+        [rl_id], ", ",
+        [sol_id], ", ",
+        [qty], ", 'OPPORTUNISTIC', 'PLANNED')"
+    ))
+    set('//act_msg', concat('Linked ', [qty], ' from receipt line ', [rl_id], ' to sales-order line ', [sol_id], '.'))
+end-function
+
+protected function postReceive(asn_id)
+    set('asn', bo.quickLoad('wms/asn', [asn_id], group: '*'))
+    if isNull([asn])
+        set('//act_err', 'ASN not found')
+        exit-function
+    end-if
+
+    set('tenant_id',    bo.attr([asn], 'tenant_id'))
+    set('warehouse_id', bo.attr([asn], 'warehouse_id'))
+    set('supplier_id',  bo.attr([asn], 'supplier_id'))
+
+    // pick a receiving location (zone_type = RECEIVING) for stock placement
+    set('rec_loc_id', null())
+    set('locIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'l',
+                    entity:  'wms/location',
+                    where:   'warehouse_id={[warehouse_id]} & location_type="STAGE_OUT"',
+                    orderBy: 'id'
+                >
+            >,
+            rows: 50
+        )
+    )
+    iterate [locIter]
+        set('lcode', bo.attr([l], 'code'))
+        if and(isNull([rec_loc_id]), startsWith([lcode], 'REC'))
+            set('rec_loc_id', bo.pk([l]))
+        end-if
+    end-iterate
+    if isNull([rec_loc_id])
+        // fall back to any location in the warehouse
+        set('locIter2',
+            iterator.ofEntity(
+                entities: <
+                    <@iterator/entity
+                        name:    'l',
+                        entity:  'wms/location',
+                        where:   'warehouse_id={[warehouse_id]}',
+                        orderBy: 'id'
+                    >
+                >,
+                rows: 1
+            )
+        )
+        iterate [locIter2]
+            set('rec_loc_id', bo.pk([l]))
+        end-iterate
+    end-if
+
+    if isNull([rec_loc_id])
+        set('//act_err', 'No receiving location available')
+        exit-function
+    end-if
+
+    // create receipt — INSERT via sql.execute (bo.persist no-ops on insert)
+    set('rcpt_count', bo.count('wms/receipt'))
+    set('rcpt_no', concat('RC-', format(now(), 'yyyyMMddHHmmss'), '-', add([rcpt_count], 1)))
+
+    sql.execute(concat(
+        "INSERT INTO receipt (tenant_id, warehouse_id, receipt_number, asn_id, supplier_id, receipt_type, started_at, completed_at, status) VALUES (",
+        [tenant_id], ", ",
+        [warehouse_id], ", '",
+        [rcpt_no], "', ",
+        [asn_id], ", ",
+        if(isNull([supplier_id]), 'NULL', formatString('{0}', [supplier_id])), ", ",
+        "'ASN_BASED', NOW(), NOW(), 'COMPLETED')"
+    ))
+
+    // recover the new receipt's id by unique receipt_number
+    if not(bo.tryLoad('wms/receipt',
+                      where: concat('receipt_number="', [rcpt_no], '"'),
+                      group: 'list',
+                      bo:    'rcpt_new'))
+        set('//act_err', 'Receipt inserted but could not be reloaded')
+        exit-function
+    end-if
+    set('rcpt_id', bo.pk([rcpt_new]))
+
+    // iterate ASN lines, take qty_<ln_id> + lot_<ln_id> from QS
+    set('lineIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ln',
+                    entity:  'wms/asn_line',
+                    where:   'asn_id={[asn_id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    set('lines_received', 0)
+    set('rcpt_line_no',   0)
+    set('all_complete',   true())
+
+    iterate [lineIter]
+        set('ln_id',       bo.pk([ln]))
+        set('ln_no',       bo.attr([ln], 'line_number'))
+        set('ln_item_id',  bo.attr([ln], 'item_id'))
+        set('ln_uom',      bo.attr([ln], 'uom_code'))
+        set('ln_po_line',  bo.attr([ln], 'purchase_order_line_id'))
+        set('ln_expected', bo.attr([ln], 'expected_qty'))
+        set('ln_recv_so_far', _onError(bo.attr([ln], 'received_qty'), 0))
+
+        set('qty_field', concat('qty_', [ln_id]))
+        set('lot_field', concat('lot_', [ln_id]))
+        set('qty_str',   _onError(qs.getUntrusted([qty_field]), '0'))
+        if or(isNull([qty_str]), eq([qty_str], ''))
+            set('qty', 0)
+        else
+            set('qty', _onError(dbl([qty_str]), 0))
+        end-if
+        set('lot',       _onError(qs.getUntrusted([lot_field]), ''))
+
+        if gt([qty], 0)
+            set('rcpt_line_no', add([rcpt_line_no], 1))
+
+            // INSERTs go through sql.execute. UPDATEs continue via the BO layer.
+            sql.execute(concat(
+                "INSERT INTO receipt_line (tenant_id, receipt_id, line_number, asn_line_id, purchase_order_line_id, item_id, qty_received, uom_code, lot_number, quality_status, receiving_location_id, received_at) VALUES (",
+                [tenant_id], ", ",
+                [rcpt_id], ", ",
+                [rcpt_line_no], ", ",
+                [ln_id], ", ",
+                if(isNull([ln_po_line]), 'NULL', formatString('{0}', [ln_po_line])), ", ",
+                [ln_item_id], ", ",
+                [qty], ", '",
+                [ln_uom], "', ",
+                if(eq([lot], ''), 'NULL', concat("'", replace([lot], "'", "''"), "'")), ", ",
+                "'AVAILABLE', ",
+                [rec_loc_id], ", NOW())"
+            ))
+
+            // update asn_line.received_qty (UPDATE — BO layer works)
+            bo.setAttr([ln], 'received_qty', add([ln_recv_so_far], [qty]))
+            bo.persist([ln])
+
+            // update purchase_order_line.received_qty if linked
+            if isNotNull([ln_po_line])
+                set('pol', bo.quickLoad('wms/purchase_order_line', [ln_po_line], group: '*'))
+                if isNotNull([pol])
+                    set('pol_recv', _onError(bo.attr([pol], 'received_qty'), 0))
+                    bo.setAttr([pol], 'received_qty', add([pol_recv], [qty]))
+                    bo.persist([pol])
+                end-if
+            end-if
+
+            // post inventory row at receiving location
+            sql.execute(concat(
+                "INSERT INTO inventory (tenant_id, warehouse_id, location_id, item_id, qty_on_hand, qty_reserved, qty_on_hold, qty_in_transit, quality_status, uom_code, last_movement_at) VALUES (",
+                [tenant_id], ", ",
+                [warehouse_id], ", ",
+                [rec_loc_id], ", ",
+                [ln_item_id], ", ",
+                [qty], ", 0, 0, 0, 'AVAILABLE', '",
+                [ln_uom], "', NOW())"
+            ))
+
+            // journal entry
+            sql.execute(concat(
+                "INSERT INTO inventory_journal (tenant_id, warehouse_id, journal_timestamp, transaction_type, reference_type, reference_id, item_id, to_location_id, qty, uom_code, quality_status_to) VALUES (",
+                [tenant_id], ", ",
+                [warehouse_id], ", NOW(), 'RECEIPT', 'RECEIPT', ",
+                [rcpt_id], ", ",
+                [ln_item_id], ", ",
+                [rec_loc_id], ", ",
+                [qty], ", '",
+                [ln_uom], "', 'AVAILABLE')"
+            ))
+
+            set('lines_received', add([lines_received], 1))
+        end-if
+
+        // determine if line still has outstanding qty (for ASN status decision)
+        set('ln_recv_now', add([ln_recv_so_far], _onError([qty], 0)))
+        if lt([ln_recv_now], [ln_expected])
+            set('all_complete', false())
+        end-if
+    end-iterate
+
+    // update ASN status
+    bo.setAttr([asn], 'actual_arrival', now())
+    if [all_complete]
+        bo.setAttr([asn], 'status', 'CLOSED')
+    else
+        bo.setAttr([asn], 'status', 'RECEIVING')
+    end-if
+    bo.persist([asn])
+
+    set('//act_rcpt_id',        [rcpt_id])
+    set('//act_lines_received', [lines_received])
+end-function
+
+// ============================================================================
+// RECEIPT — single receipt detail
+// ============================================================================
+function receipt()
+    set('id', _onError(qs.get('id'), null()))
+    if isNull([id])
+        set('id', qs.getUntrusted('id'))
+    end-if
+    if isNull([id])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('rcpt', bo.quickLoad('wms/receipt', [id], group: '*'))
+    if isNull([rcpt])
+        page.call('error/404')
+        exit-function
+    end-if
+
+    set('lines',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity
+                    name:    'ln',
+                    entity:  'wms/receipt_line',
+                    where:   'receipt_id={[id]}',
+                    orderBy: 'line_number'
+                >
+            >,
+            rows: 500
+        )
+    )
+
+    set('rcpt_no',     bo.attr([rcpt], 'receipt_number'))
+    set('rcpt_status', bo.attr([rcpt], 'status'))
+    set('rcpt_type',   bo.attr([rcpt], 'receipt_type'))
+    set('rcpt_asn_id', _onError(bo.attr([rcpt], 'asn_id'), null()))
+
+    page.render(page.get('./receiptView'))
+end-function
+
+protected resource receiptView
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'inbound')>,
+            crumbs: <@page/html `<p><a href="../inbound" class="btn btn-sm btn-outline-secondary">&larr; Inbound</a></p>`>,
+
+            header: <@page/html
+                resolveTemplate(`
+                <div class="card mb-3"><div class="card-body">
+                    <h4 class="mb-1">Receipt <code>{{[rcpt_no]}}</code></h4>
+                    <p class="text-muted small mb-0">
+                        Status <span class="badge badge-info">{{[rcpt_status]}}</span>
+                        &middot; Type {{[rcpt_type]}}
+                        {{ if(isNotNull([rcpt_asn_id]), buildString(' &middot; <a href="asn?id=', [rcpt_asn_id], '">ASN</a>'), '') }}
+                    </p>
+                </div></div>`)
+            >,
+
+            lines_h: <@page/html `<h5 class="mt-3">Receipt lines</h5>`>,
+            lines_table: <@page/data/table
+                iterator: [lines],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >
+        >
+    >
+end-resource

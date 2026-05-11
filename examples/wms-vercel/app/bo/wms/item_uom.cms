@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_uom` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item uom',
+        table: 'item_uom',
+        primaryKey: 'id',
+        sequence: 'item_uom',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            conversion_to_base: <@bo/attribute label: 'Conversion to base', column: 'conversion_to_base', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            weight_kg: <@bo/attribute label: 'Weight kg', column: 'weight_kg', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            length_cm: <@bo/attribute label: 'Length cm', column: 'length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            width_cm: <@bo/attribute label: 'Width cm', column: 'width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            height_cm: <@bo/attribute label: 'Height cm', column: 'height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            is_inbound_default: <@bo/attribute label: 'Is inbound default', column: 'is_inbound_default', dataType: dataType.Boolean, optional: false()>,
+            is_outbound_default: <@bo/attribute label: 'Is outbound default', column: 'is_outbound_default', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'item_id', 'uom_code', 'description', 'conversion_to_base', 'weight_kg' >,
+            description: < 'tenant_id', 'item_id', 'uom_code', 'description', 'conversion_to_base', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'is_inbound_default', 'is_outbound_default' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

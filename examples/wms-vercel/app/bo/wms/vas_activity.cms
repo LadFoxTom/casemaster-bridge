@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `vas_activity` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Vas activity',
+        table: 'vas_activity',
+        primaryKey: 'id',
+        sequence: 'vas_activity',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            template_id: <@bo/attribute label: 'Template id', column: 'template_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/vas_template'>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            billed: <@bo/attribute label: 'Billed', column: 'billed', dataType: dataType.Boolean, optional: false()>,
+            bill_run_id: <@bo/attribute label: 'Bill run id', column: 'bill_run_id', dataType: dataType.Long, length: 18, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'status' >,
+            list: < 'tenant_id', 'warehouse_id', 'template_id', 'sales_order_id', 'license_plate_id', 'qty' >,
+            description: < 'tenant_id', 'warehouse_id', 'template_id', 'sales_order_id', 'license_plate_id', 'qty', 'user_id', 'started_at', 'completed_at', 'status', 'billed', 'bill_run_id' >
+        >
+    >
+end-resource

@@ -1,0 +1,27 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `user_role` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'User role',
+        table: 'user_role',
+        primaryKey: 'user_id',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false()>,
+            role_id: <@bo/attribute label: 'Role id', column: 'role_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/role'>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>
+        >,
+        attributeGroups: <
+            label: < 'user_id' >,
+            list: < 'user_id', 'role_id', 'warehouse_id' >,
+            description: < 'role_id', 'warehouse_id' >
+        >
+    >
+end-resource

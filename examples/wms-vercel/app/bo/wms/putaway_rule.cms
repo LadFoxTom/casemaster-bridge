@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `putaway_rule` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Putaway rule',
+        table: 'putaway_rule',
+        primaryKey: 'id',
+        sequence: 'putaway_rule',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            priority: <@bo/attribute label: 'Priority', column: 'priority', dataType: dataType.Long, length: 9, optional: false()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: false()>,
+            target_zone_id: <@bo/attribute label: 'Target zone id', column: 'target_zone_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/zone'>,
+            target_location_filter: <@bo/attribute label: 'Target location filter', column: 'target_location_filter', dataType: dataType.JSON, length: 4000, optional: true()>,
+            strategy: <@bo/attribute label: 'Strategy', column: 'strategy', dataType: dataType.String, length: 4000, optional: false()>,
+            fallback_rule_id: <@bo/attribute label: 'Fallback rule id', column: 'fallback_rule_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/putaway_rule'>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list: < 'tenant_id', 'warehouse_id', 'name', 'priority', 'is_active', 'target_zone_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'name', 'priority', 'is_active', 'selector_jsonb', 'target_zone_id', 'target_location_filter', 'strategy', 'fallback_rule_id' >,
+            search: < 'name' >
+        >
+    >
+end-resource

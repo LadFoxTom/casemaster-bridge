@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `forecast_value` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Forecast value',
+        table: 'forecast_value',
+        primaryKey: 'id',
+        sequence: 'forecast_value',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            forecast_run_id: <@bo/attribute label: 'Forecast run id', column: 'forecast_run_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/forecast_run'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/warehouse'>,
+            period_start: <@bo/attribute label: 'Period start', column: 'period_start', dataType: dataType.Timestamp, optional: false()>,
+            forecast_quantity: <@bo/attribute label: 'Forecast quantity', column: 'forecast_quantity', dataType: dataType.Decimal, length: 18, precision: 4, optional: false()>,
+            lower_bound: <@bo/attribute label: 'Lower bound', column: 'lower_bound', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            upper_bound: <@bo/attribute label: 'Upper bound', column: 'upper_bound', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'forecast_run_id', 'item_id', 'warehouse_id', 'period_start', 'forecast_quantity' >,
+            description: < 'tenant_id', 'forecast_run_id', 'item_id', 'warehouse_id', 'period_start', 'forecast_quantity', 'lower_bound', 'upper_bound' >
+        >
+    >
+end-resource

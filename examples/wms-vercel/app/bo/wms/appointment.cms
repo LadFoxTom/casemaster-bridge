@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `appointment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Appointment',
+        table: 'appointment',
+        primaryKey: 'id',
+        sequence: 'appointment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            appointment_number: <@bo/attribute label: 'Appointment number', column: 'appointment_number', dataType: dataType.String, length: 4000, optional: false()>,
+            appointment_type: <@bo/attribute label: 'Appointment type', column: 'appointment_type', dataType: dataType.String, length: 4000, optional: false()>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            asn_id: <@bo/attribute label: 'Asn id', column: 'asn_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/asn'>,
+            manifest_id: <@bo/attribute label: 'Manifest id', column: 'manifest_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/manifest'>,
+            scheduled_start: <@bo/attribute label: 'Scheduled start', column: 'scheduled_start', dataType: dataType.Timestamp, optional: false()>,
+            scheduled_end: <@bo/attribute label: 'Scheduled end', column: 'scheduled_end', dataType: dataType.Timestamp, optional: false()>,
+            dock_door_id: <@bo/attribute label: 'Dock door id', column: 'dock_door_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/dock_door'>,
+            actual_start: <@bo/attribute label: 'Actual start', column: 'actual_start', dataType: dataType.Timestamp, optional: true()>,
+            actual_end: <@bo/attribute label: 'Actual end', column: 'actual_end', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'appointment_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'appointment_number', 'appointment_type', 'carrier_id', 'asn_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'appointment_number', 'appointment_type', 'carrier_id', 'asn_id', 'manifest_id', 'scheduled_start', 'scheduled_end', 'dock_door_id', 'actual_start', 'actual_end' >,
+            search: < 'appointment_number' >
+        >
+    >
+end-resource

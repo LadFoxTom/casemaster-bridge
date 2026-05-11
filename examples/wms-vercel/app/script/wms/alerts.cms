@@ -1,0 +1,88 @@
+// Casemaster-WMS — alert publisher + delivery worker.
+//
+// Two entry points:
+//   publish(rule_code, severity, title, message, context_json)
+//     — INSERT alert_event row from a domain handler
+//   deliver()
+//     — drain undelivered alert_event rows: write alert_delivery rows per
+//       recipient/channel and (skeletal) "send" them.
+//
+// Real implementation needs:
+//   - Channel adapters (SMTP / Slack / Teams / SMS / push / webhook / PagerDuty)
+//   - Throttling + dedup using rule.throttle_seconds + dedup_window_seconds
+//   - Escalation timer (escalate_after_minutes per recipient)
+
+function publish(rule_code, severity, title, message, context_json)
+    // Resolve alert_rule by code; create a stub one if missing so handlers can
+    // publish without having to pre-register.
+    sql.execute(concat(
+        "INSERT INTO alert_rule (tenant_id, rule_code, name, event_type_filter, severity, active) VALUES (",
+        "1, ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [rule_code]), ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [rule_code]), ", ",
+        "'{}', '", _onError([severity], 'INFO'), "', TRUE) ",
+        "ON CONFLICT (tenant_id, rule_code) DO NOTHING"
+    ))
+
+    set('rule_id', null())
+    if bo.tryLoad('wms/alert_rule',
+                  where: concat('rule_code="', [rule_code], '"'),
+                  group: 'list',
+                  bo:    'r')
+        set('rule_id', bo.pk([r]))
+    end-if
+    if isNull([rule_id])
+        return null()
+    end-if
+
+    sql.execute(concat(
+        "INSERT INTO alert_event (tenant_id, alert_rule_id, correlation_id, severity, title, message, context, status) VALUES (",
+        "1, ",
+        [rule_id], ", gen_random_uuid(), '",
+        _onError([severity], 'INFO'), "', ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [title]), ", ",
+        script.call('wms/_helpers:sqlStrAllowEmpty', [message]), ", ",
+        if(isNull([context_json]), 'NULL', concat("'", replace([context_json], "'", "''"), "'::jsonb")), ", ",
+        "'OPEN')"
+    ))
+end-function
+
+// Drain unacknowledged alert_event rows: for each, look up its rule's
+// recipients and write an alert_delivery row per recipient. Real channel
+// I/O is stubbed (it just marks status='SENT' immediately).
+function deliver()
+    set('events',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'e', entity: 'wms/alert_event', where: 'status="OPEN"', orderBy: 'id'>
+            >,
+            rows: 200
+        )
+    )
+    set('processed', 0)
+    iterate [events]
+        set('eid',     bo.pk([e]))
+        set('rule_id', bo.attr([e], 'alert_rule_id'))
+        set('recips',
+            iterator.ofEntity(
+                entities: <
+                    <@iterator/entity name: 'r', entity: 'wms/alert_recipient', where: 'alert_rule_id={[rule_id]}', orderBy: 'escalation_level'>
+                >,
+                rows: 50
+            )
+        )
+        iterate [recips]
+            set('chan',   bo.attr([r], 'channel'))
+            set('target', bo.attr([r], 'recipient_value'))
+            sql.execute(concat(
+                "INSERT INTO alert_delivery (tenant_id, alert_event_id, channel, target, status, attempted_at, delivered_at) VALUES (",
+                "1, ", [eid], ", '",
+                [chan], "', ",
+                script.call('wms/_helpers:sqlStrAllowEmpty', [target]), ", ",
+                "'SENT', NOW(), NOW())"
+            ))
+        end-iterate
+        set('processed', add([processed], 1))
+    end-iterate
+    return [processed]
+end-function

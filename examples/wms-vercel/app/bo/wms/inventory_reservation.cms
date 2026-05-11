@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inventory_reservation` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inventory reservation',
+        table: 'inventory_reservation',
+        primaryKey: 'id',
+        sequence: 'inventory_reservation',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            inventory_id: <@bo/attribute label: 'Inventory id', column: 'inventory_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/inventory'>,
+            sales_order_line_id: <@bo/attribute label: 'Sales order line id', column: 'sales_order_line_id', dataType: dataType.Long, length: 18, optional: true()>,
+            transfer_order_line_id: <@bo/attribute label: 'Transfer order line id', column: 'transfer_order_line_id', dataType: dataType.Long, length: 18, optional: true()>,
+            work_order_line_id: <@bo/attribute label: 'Work order line id', column: 'work_order_line_id', dataType: dataType.Long, length: 18, optional: true()>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            reservation_type: <@bo/attribute label: 'Reservation type', column: 'reservation_type', dataType: dataType.String, length: 4000, optional: false()>,
+            expires_at: <@bo/attribute label: 'Expires at', column: 'expires_at', dataType: dataType.Timestamp, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'reservation_type' >,
+            list: < 'tenant_id', 'warehouse_id', 'inventory_id', 'sales_order_line_id', 'transfer_order_line_id', 'work_order_line_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'inventory_id', 'sales_order_line_id', 'transfer_order_line_id', 'work_order_line_id', 'qty', 'reservation_type', 'expires_at', 'created_at', 'released_at', 'status' >
+        >
+    >
+end-resource

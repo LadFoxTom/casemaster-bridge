@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `asn` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Asn',
+        table: 'asn',
+        primaryKey: 'id',
+        sequence: 'asn',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            asn_number: <@bo/attribute label: 'Asn number', column: 'asn_number', dataType: dataType.String, length: 4000, optional: false()>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            trailer_number: <@bo/attribute label: 'Trailer number', column: 'trailer_number', dataType: dataType.String, length: 4000, optional: true()>,
+            seal_number: <@bo/attribute label: 'Seal number', column: 'seal_number', dataType: dataType.String, length: 4000, optional: true()>,
+            bill_of_lading: <@bo/attribute label: 'Bill of lading', column: 'bill_of_lading', dataType: dataType.String, length: 4000, optional: true()>,
+            expected_arrival: <@bo/attribute label: 'Expected arrival', column: 'expected_arrival', dataType: dataType.Timestamp, optional: true()>,
+            actual_arrival: <@bo/attribute label: 'Actual arrival', column: 'actual_arrival', dataType: dataType.Timestamp, optional: true()>,
+            dock_door_id: <@bo/attribute label: 'Dock door id', column: 'dock_door_id', dataType: dataType.Long, length: 18, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'asn_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'asn_number', 'supplier_id', 'carrier_id', 'trailer_number' >,
+            description: < 'tenant_id', 'warehouse_id', 'asn_number', 'supplier_id', 'carrier_id', 'trailer_number', 'seal_number', 'bill_of_lading', 'expected_arrival', 'actual_arrival', 'dock_door_id', 'status' >,
+            search: < 'asn_number', 'trailer_number', 'seal_number' >
+        >
+    >
+end-resource

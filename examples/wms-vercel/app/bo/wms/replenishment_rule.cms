@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `replenishment_rule` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Replenishment rule',
+        table: 'replenishment_rule',
+        primaryKey: 'id',
+        sequence: 'replenishment_rule',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            trigger_type: <@bo/attribute label: 'Trigger type', column: 'trigger_type', dataType: dataType.String, length: 4000, optional: false()>,
+            min_qty: <@bo/attribute label: 'Min qty', column: 'min_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            max_qty: <@bo/attribute label: 'Max qty', column: 'max_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            reorder_point: <@bo/attribute label: 'Reorder point', column: 'reorder_point', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            priority: <@bo/attribute label: 'Priority', column: 'priority', dataType: dataType.Long, length: 9, optional: false()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'name' >,
+            list: < 'tenant_id', 'warehouse_id', 'name', 'trigger_type', 'min_qty', 'max_qty' >,
+            description: < 'tenant_id', 'warehouse_id', 'name', 'selector_jsonb', 'trigger_type', 'min_qty', 'max_qty', 'reorder_point', 'priority', 'is_active' >,
+            search: < 'name' >
+        >
+    >
+end-resource

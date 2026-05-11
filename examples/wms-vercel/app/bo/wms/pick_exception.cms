@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pick_exception` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pick exception',
+        table: 'pick_exception',
+        primaryKey: 'id',
+        sequence: 'pick_exception',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            pick_task_id: <@bo/attribute label: 'Pick task id', column: 'pick_task_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/pick_task'>,
+            exception_type: <@bo/attribute label: 'Exception type', column: 'exception_type', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_attachment_ids: <@bo/attribute label: 'Photo attachment ids', column: 'photo_attachment_ids', dataType: dataType.JSON, length: 4000, optional: true()>,
+            resolution_status: <@bo/attribute label: 'Resolution status', column: 'resolution_status', dataType: dataType.String, length: 4000, optional: false()>,
+            resolved_by_user_id: <@bo/attribute label: 'Resolved by user id', column: 'resolved_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            resolved_at: <@bo/attribute label: 'Resolved at', column: 'resolved_at', dataType: dataType.Timestamp, optional: true()>,
+            resolution_notes: <@bo/attribute label: 'Resolution notes', column: 'resolution_notes', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'pick_task_id', 'exception_type', 'description', 'resolution_status', 'resolved_by_user_id' >,
+            description: < 'tenant_id', 'pick_task_id', 'exception_type', 'description', 'photo_attachment_ids', 'resolution_status', 'resolved_by_user_id', 'resolved_at', 'resolution_notes', 'created_at' >
+        >
+    >
+end-resource

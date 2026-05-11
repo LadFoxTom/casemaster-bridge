@@ -1,0 +1,36 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `return_disposition` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Return disposition',
+        table: 'return_disposition',
+        primaryKey: 'id',
+        sequence: 'return_disposition',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            rma_line_id: <@bo/attribute label: 'Rma line id', column: 'rma_line_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/rma_line'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            disposition: <@bo/attribute label: 'Disposition', column: 'disposition', dataType: dataType.String, length: 4000, optional: false()>,
+            target_location_id: <@bo/attribute label: 'Target location id', column: 'target_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            target_quality_status: <@bo/attribute label: 'Target quality status', column: 'target_quality_status', dataType: dataType.String, length: 4000, optional: true()>,
+            inspector_user_id: <@bo/attribute label: 'Inspector user id', column: 'inspector_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            inspected_at: <@bo/attribute label: 'Inspected at', column: 'inspected_at', dataType: dataType.Timestamp, optional: true()>,
+            inspection_notes: <@bo/attribute label: 'Inspection notes', column: 'inspection_notes', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_attachment_ids: <@bo/attribute label: 'Photo attachment ids', column: 'photo_attachment_ids', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'disposition' >,
+            list: < 'tenant_id', 'rma_line_id', 'qty', 'disposition', 'target_location_id', 'target_quality_status' >,
+            description: < 'tenant_id', 'rma_line_id', 'qty', 'disposition', 'target_location_id', 'target_quality_status', 'inspector_user_id', 'inspected_at', 'inspection_notes', 'photo_attachment_ids' >
+        >
+    >
+end-resource

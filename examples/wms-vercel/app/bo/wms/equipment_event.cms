@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `equipment_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Equipment event',
+        table: 'equipment_event',
+        primaryKey: 'id',
+        sequence: 'equipment_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            equipment_id: <@bo/attribute label: 'Equipment id', column: 'equipment_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/equipment'>,
+            event_type: <@bo/attribute label: 'Event type', column: 'event_type', dataType: dataType.String, length: 4000, optional: false()>,
+            correlation_id: <@bo/attribute label: 'Correlation id', column: 'correlation_id', dataType: dataType.String, length: 4000, optional: true()>,
+            related_task_id: <@bo/attribute label: 'Related task id', column: 'related_task_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/task'>,
+            payload: <@bo/attribute label: 'Payload', column: 'payload', dataType: dataType.JSON, length: 4000, optional: false()>,
+            occurred_at: <@bo/attribute label: 'Occurred at', column: 'occurred_at', dataType: dataType.Timestamp, optional: false()>,
+            received_at: <@bo/attribute label: 'Received at', column: 'received_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'event_type' >,
+            list: < 'tenant_id', 'equipment_id', 'event_type', 'correlation_id', 'related_task_id' >,
+            description: < 'tenant_id', 'equipment_id', 'event_type', 'correlation_id', 'related_task_id', 'payload', 'occurred_at', 'received_at' >
+        >
+    >
+end-resource

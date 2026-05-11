@@ -1,0 +1,44 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `count_task` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Count task',
+        table: 'count_task',
+        primaryKey: 'id',
+        sequence: 'count_task',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            session_id: <@bo/attribute label: 'Session id', column: 'session_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/count_session'>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item'>,
+            is_blind: <@bo/attribute label: 'Is blind', column: 'is_blind', dataType: dataType.Boolean, optional: false()>,
+            expected_qty: <@bo/attribute label: 'Expected qty', column: 'expected_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            counted_qty: <@bo/attribute label: 'Counted qty', column: 'counted_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            variance_qty: <@bo/attribute label: 'Variance qty', column: 'variance_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            counted_by_user_id: <@bo/attribute label: 'Counted by user id', column: 'counted_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            counted_at: <@bo/attribute label: 'Counted at', column: 'counted_at', dataType: dataType.Timestamp, optional: true()>,
+            recount_required: <@bo/attribute label: 'Recount required', column: 'recount_required', dataType: dataType.Boolean, optional: false()>,
+            recount_qty: <@bo/attribute label: 'Recount qty', column: 'recount_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            recounted_by_user_id: <@bo/attribute label: 'Recounted by user id', column: 'recounted_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            recounted_at: <@bo/attribute label: 'Recounted at', column: 'recounted_at', dataType: dataType.Timestamp, optional: true()>,
+            final_qty: <@bo/attribute label: 'Final qty', column: 'final_qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            adjustment_id: <@bo/attribute label: 'Adjustment id', column: 'adjustment_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/inventory_adjustment'>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'status' >,
+            list: < 'tenant_id', 'session_id', 'location_id', 'item_id', 'is_blind', 'expected_qty' >,
+            description: < 'tenant_id', 'session_id', 'location_id', 'item_id', 'is_blind', 'expected_qty', 'counted_qty', 'variance_qty', 'counted_by_user_id', 'counted_at', 'recount_required', 'recount_qty' >
+        >
+    >
+end-resource

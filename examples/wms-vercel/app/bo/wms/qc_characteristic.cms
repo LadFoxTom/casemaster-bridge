@@ -1,0 +1,41 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `qc_characteristic` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Qc characteristic',
+        table: 'qc_characteristic',
+        primaryKey: 'id',
+        sequence: 'qc_characteristic',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            qc_plan_id: <@bo/attribute label: 'Qc plan id', column: 'qc_plan_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/qc_plan'>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: false()>,
+            char_type: <@bo/attribute label: 'Char type', column: 'char_type', dataType: dataType.String, length: 4000, optional: false()>,
+            measurement_method: <@bo/attribute label: 'Measurement method', column: 'measurement_method', dataType: dataType.String, length: 4000, optional: true()>,
+            instrument_required: <@bo/attribute label: 'Instrument required', column: 'instrument_required', dataType: dataType.String, length: 4000, optional: true()>,
+            expected_value: <@bo/attribute label: 'Expected value', column: 'expected_value', dataType: dataType.String, length: 4000, optional: true()>,
+            min_value: <@bo/attribute label: 'Min value', column: 'min_value', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            max_value: <@bo/attribute label: 'Max value', column: 'max_value', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            uom: <@bo/attribute label: 'Uom', column: 'uom', dataType: dataType.String, length: 4000, optional: true()>,
+            mandatory: <@bo/attribute label: 'Mandatory', column: 'mandatory', dataType: dataType.Boolean, optional: false()>,
+            photo_required: <@bo/attribute label: 'Photo required', column: 'photo_required', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'qc_plan_id', 'sequence', 'code', 'description', 'char_type' >,
+            description: < 'tenant_id', 'qc_plan_id', 'sequence', 'code', 'description', 'char_type', 'measurement_method', 'instrument_required', 'expected_value', 'min_value', 'max_value', 'uom' >,
+            search: < 'code' >
+        >
+    >
+end-resource

@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `aisle` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Aisle',
+        table: 'aisle',
+        primaryKey: 'id',
+        sequence: 'aisle',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            zone_id: <@bo/attribute label: 'Zone id', column: 'zone_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/zone'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            sequence_number: <@bo/attribute label: 'Sequence number', column: 'sequence_number', dataType: dataType.Long, length: 9, optional: false()>,
+            travel_direction: <@bo/attribute label: 'Travel direction', column: 'travel_direction', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'zone_id', 'code', 'sequence_number', 'travel_direction' >,
+            description: < 'tenant_id', 'zone_id', 'code', 'sequence_number', 'travel_direction' >,
+            search: < 'code' >
+        >
+    >
+end-resource

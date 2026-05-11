@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `order_hold` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Order hold',
+        table: 'order_hold',
+        primaryKey: 'id',
+        sequence: 'order_hold',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order'>,
+            hold_type: <@bo/attribute label: 'Hold type', column: 'hold_type', dataType: dataType.String, length: 4000, optional: false()>,
+            hold_reason: <@bo/attribute label: 'Hold reason', column: 'hold_reason', dataType: dataType.String, length: 4000, optional: true()>,
+            placed_at: <@bo/attribute label: 'Placed at', column: 'placed_at', dataType: dataType.Timestamp, optional: false()>,
+            placed_by_user_id: <@bo/attribute label: 'Placed by user id', column: 'placed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>,
+            released_by_user_id: <@bo/attribute label: 'Released by user id', column: 'released_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'hold_type' >,
+            list: < 'tenant_id', 'sales_order_id', 'hold_type', 'hold_reason', 'placed_by_user_id', 'released_by_user_id' >,
+            description: < 'tenant_id', 'sales_order_id', 'hold_type', 'hold_reason', 'placed_at', 'placed_by_user_id', 'released_at', 'released_by_user_id', 'status' >
+        >
+    >
+end-resource

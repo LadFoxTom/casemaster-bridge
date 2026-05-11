@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `alert_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Alert event',
+        table: 'alert_event',
+        primaryKey: 'id',
+        sequence: 'alert_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            alert_rule_id: <@bo/attribute label: 'Alert rule id', column: 'alert_rule_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/alert_rule'>,
+            correlation_id: <@bo/attribute label: 'Correlation id', column: 'correlation_id', dataType: dataType.String, length: 36, optional: false()>,
+            triggered_at: <@bo/attribute label: 'Triggered at', column: 'triggered_at', dataType: dataType.Timestamp, optional: false()>,
+            severity: <@bo/attribute label: 'Severity', column: 'severity', dataType: dataType.String, length: 4000, optional: false()>,
+            title: <@bo/attribute label: 'Title', column: 'title', dataType: dataType.String, length: 4000, optional: false()>,
+            message: <@bo/attribute label: 'Message', column: 'message', dataType: dataType.String, length: 4000, optional: false()>,
+            context: <@bo/attribute label: 'Context', column: 'context', dataType: dataType.JSON, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            acknowledged_by_user_id: <@bo/attribute label: 'Acknowledged by user id', column: 'acknowledged_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            acknowledged_at: <@bo/attribute label: 'Acknowledged at', column: 'acknowledged_at', dataType: dataType.Timestamp, optional: true()>,
+            resolved_at: <@bo/attribute label: 'Resolved at', column: 'resolved_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'title' >,
+            list: < 'tenant_id', 'alert_rule_id', 'correlation_id', 'severity', 'title', 'message' >,
+            description: < 'tenant_id', 'alert_rule_id', 'correlation_id', 'triggered_at', 'severity', 'title', 'message', 'context', 'status', 'acknowledged_by_user_id', 'acknowledged_at', 'resolved_at' >
+        >
+    >
+end-resource

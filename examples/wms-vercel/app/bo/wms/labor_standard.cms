@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `labor_standard` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Labor standard',
+        table: 'labor_standard',
+        primaryKey: 'id',
+        sequence: 'labor_standard',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            activity_code: <@bo/attribute label: 'Activity code', column: 'activity_code', dataType: dataType.String, length: 4000, optional: false()>,
+            activity_name: <@bo/attribute label: 'Activity name', column: 'activity_name', dataType: dataType.String, length: 4000, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            base_seconds: <@bo/attribute label: 'Base seconds', column: 'base_seconds', dataType: dataType.Decimal, length: 10, precision: 3, optional: false()>,
+            formula_jsonb: <@bo/attribute label: 'Formula jsonb', column: 'formula_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            revision: <@bo/attribute label: 'Revision', column: 'revision', dataType: dataType.Long, length: 9, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: false()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'activity_code' >,
+            list: < 'tenant_id', 'warehouse_id', 'activity_code', 'activity_name', 'base_seconds', 'revision' >,
+            description: < 'tenant_id', 'warehouse_id', 'activity_code', 'activity_name', 'selector_jsonb', 'base_seconds', 'formula_jsonb', 'revision', 'effective_from', 'effective_to' >,
+            search: < 'activity_code', 'activity_name' >
+        >
+    >
+end-resource

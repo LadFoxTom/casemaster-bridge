@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `dock_door` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Dock door',
+        table: 'dock_door',
+        primaryKey: 'id',
+        sequence: 'dock_door',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            door_type: <@bo/attribute label: 'Door type', column: 'door_type', dataType: dataType.String, length: 4000, optional: false()>,
+            has_leveler: <@bo/attribute label: 'Has leveler', column: 'has_leveler', dataType: dataType.Boolean, optional: true()>,
+            has_seal: <@bo/attribute label: 'Has seal', column: 'has_seal', dataType: dataType.Boolean, optional: true()>,
+            has_refrigeration: <@bo/attribute label: 'Has refrigeration', column: 'has_refrigeration', dataType: dataType.Boolean, optional: true()>,
+            is_oversize: <@bo/attribute label: 'Is oversize', column: 'is_oversize', dataType: dataType.Boolean, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'door_type', 'has_leveler' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'door_type', 'has_leveler', 'has_seal', 'has_refrigeration', 'is_oversize', 'status' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

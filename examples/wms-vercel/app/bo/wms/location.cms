@@ -1,0 +1,55 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `location` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Location',
+        table: 'location',
+        primaryKey: 'id',
+        sequence: 'location',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            zone_id: <@bo/attribute label: 'Zone id', column: 'zone_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/zone'>,
+            aisle_id: <@bo/attribute label: 'Aisle id', column: 'aisle_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/aisle'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            barcode: <@bo/attribute label: 'Barcode', column: 'barcode', dataType: dataType.String, length: 4000, optional: false()>,
+            bay: <@bo/attribute label: 'Bay', column: 'bay', dataType: dataType.String, length: 4000, optional: true()>,
+            level: <@bo/attribute label: 'Level', column: 'level', dataType: dataType.String, length: 4000, optional: true()>,
+            position: <@bo/attribute label: 'Position', column: 'position', dataType: dataType.String, length: 4000, optional: true()>,
+            location_type: <@bo/attribute label: 'Location type', column: 'location_type', dataType: dataType.String, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            length_cm: <@bo/attribute label: 'Length cm', column: 'length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            width_cm: <@bo/attribute label: 'Width cm', column: 'width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            height_cm: <@bo/attribute label: 'Height cm', column: 'height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            max_weight_kg: <@bo/attribute label: 'Max weight kg', column: 'max_weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            max_volume_l: <@bo/attribute label: 'Max volume l', column: 'max_volume_l', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            allow_mixed_sku: <@bo/attribute label: 'Allow mixed sku', column: 'allow_mixed_sku', dataType: dataType.Boolean, optional: false()>,
+            allow_mixed_lot: <@bo/attribute label: 'Allow mixed lot', column: 'allow_mixed_lot', dataType: dataType.Boolean, optional: false()>,
+            pick_sequence: <@bo/attribute label: 'Pick sequence', column: 'pick_sequence', dataType: dataType.Long, length: 9, optional: true()>,
+            travel_x: <@bo/attribute label: 'Travel x', column: 'travel_x', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            travel_y: <@bo/attribute label: 'Travel y', column: 'travel_y', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            travel_z: <@bo/attribute label: 'Travel z', column: 'travel_z', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            abc_class: <@bo/attribute label: 'Abc class', column: 'abc_class', dataType: dataType.String, length: 1, optional: true()>,
+            velocity_score: <@bo/attribute label: 'Velocity score', column: 'velocity_score', dataType: dataType.Decimal, length: 8, precision: 4, optional: true()>,
+            last_count_at: <@bo/attribute label: 'Last count at', column: 'last_count_at', dataType: dataType.Timestamp, optional: true()>,
+            last_movement_at: <@bo/attribute label: 'Last movement at', column: 'last_movement_at', dataType: dataType.Timestamp, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'zone_id', 'aisle_id', 'code', 'barcode' >,
+            description: < 'tenant_id', 'warehouse_id', 'zone_id', 'aisle_id', 'code', 'barcode', 'bay', 'level', 'position', 'location_type', 'status', 'length_cm' >,
+            search: < 'code', 'barcode' >
+        >
+    >
+end-resource

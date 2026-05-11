@@ -1,0 +1,40 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `wave_template` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Wave template',
+        table: 'wave_template',
+        primaryKey: 'id',
+        sequence: 'wave_template',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            max_order_count: <@bo/attribute label: 'Max order count', column: 'max_order_count', dataType: dataType.Long, length: 9, optional: true()>,
+            max_line_count: <@bo/attribute label: 'Max line count', column: 'max_line_count', dataType: dataType.Long, length: 9, optional: true()>,
+            max_unit_count: <@bo/attribute label: 'Max unit count', column: 'max_unit_count', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            max_carton_count: <@bo/attribute label: 'Max carton count', column: 'max_carton_count', dataType: dataType.Long, length: 9, optional: true()>,
+            max_weight_kg: <@bo/attribute label: 'Max weight kg', column: 'max_weight_kg', dataType: dataType.Decimal, length: 12, precision: 2, optional: true()>,
+            pick_strategy: <@bo/attribute label: 'Pick strategy', column: 'pick_strategy', dataType: dataType.String, length: 4000, optional: false()>,
+            cutoff_offset_minutes: <@bo/attribute label: 'Cutoff offset minutes', column: 'cutoff_offset_minutes', dataType: dataType.Long, length: 9, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'max_order_count', 'max_line_count' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'selector_jsonb', 'max_order_count', 'max_line_count', 'max_unit_count', 'max_carton_count', 'max_weight_kg', 'pick_strategy', 'cutoff_offset_minutes' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

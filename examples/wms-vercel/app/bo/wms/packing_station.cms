@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `packing_station` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Packing station',
+        table: 'packing_station',
+        primaryKey: 'id',
+        sequence: 'packing_station',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            has_scale: <@bo/attribute label: 'Has scale', column: 'has_scale', dataType: dataType.Boolean, optional: false()>,
+            has_dim_scanner: <@bo/attribute label: 'Has dim scanner', column: 'has_dim_scanner', dataType: dataType.Boolean, optional: false()>,
+            label_printer_device_id: <@bo/attribute label: 'Label printer device id', column: 'label_printer_device_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/device'>,
+            document_printer_device_id: <@bo/attribute label: 'Document printer device id', column: 'document_printer_device_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/device'>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'name', 'has_scale', 'has_dim_scanner' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'name', 'has_scale', 'has_dim_scanner', 'label_printer_device_id', 'document_printer_device_id' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

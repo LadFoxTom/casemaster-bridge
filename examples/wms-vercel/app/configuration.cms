@@ -1,0 +1,32 @@
+// Casemaster-WMS application configuration.
+// Sibling files: environment.cms (chooses Development), incDevelopment.cms
+// (Neon Postgres connection). Page tree under page/wms*.cms; BOs under
+// bo/wms/*.cms; schema in sql/wms_schema.sql.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@configuration
+        name: 'Casemaster WMS'
+        version: '1.0.0'
+        languages: <
+            <value: 'EN', label: 'English'>
+        >
+
+        // VS Code editor layer for in-browser development.
+        layers: <
+            vscode: $fileSystem.buildPath(app.runtimeDir(), 'layer', 'vscode')
+            editor: $fileSystem.buildPath(app.runtimeDir(), 'layer', 'editor')
+        >,
+
+        // Loosen security settings so a future bootstrapped admin can fully
+        // self-administer without flipping flags in code.
+        security: <
+            allowManualUserCreation: true(),
+            allowUserEmailMaintenance: true(),
+            allowUserPasswordMaintenance: true()
+        >
+    >
+end-resource

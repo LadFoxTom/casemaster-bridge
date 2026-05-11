@@ -1,0 +1,31 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `table_metadata` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Table metadata',
+        table: 'table_metadata',
+        primaryKey: 'table_name',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            table_name: <@bo/attribute label: 'Table name', column: 'table_name', dataType: dataType.String, length: 4000, optional: true()>,
+            domain: <@bo/attribute label: 'Domain', column: 'domain', dataType: dataType.String, length: 4000, optional: false()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            retention_days: <@bo/attribute label: 'Retention days', column: 'retention_days', dataType: dataType.Long, length: 9, optional: true()>,
+            partition_strategy: <@bo/attribute label: 'Partition strategy', column: 'partition_strategy', dataType: dataType.String, length: 4000, optional: true()>,
+            expected_rows_per_facility_year: <@bo/attribute label: 'Expected rows per facility year', column: 'expected_rows_per_facility_year', dataType: dataType.Long, length: 18, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'table_name', 'domain', 'description', 'retention_days', 'partition_strategy', 'expected_rows_per_facility_year' >,
+            description: < 'domain', 'description', 'retention_days', 'partition_strategy', 'expected_rows_per_facility_year' >,
+            search: < 'table_name' >
+        >
+    >
+end-resource

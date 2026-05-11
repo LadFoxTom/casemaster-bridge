@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `client_contract` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Client contract',
+        table: 'client_contract',
+        primaryKey: 'id',
+        sequence: 'client_contract',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            contract_number: <@bo/attribute label: 'Contract number', column: 'contract_number', dataType: dataType.String, length: 4000, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: false()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: false()>,
+            billing_frequency: <@bo/attribute label: 'Billing frequency', column: 'billing_frequency', dataType: dataType.String, length: 4000, optional: false()>,
+            minimum_monthly: <@bo/attribute label: 'Minimum monthly', column: 'minimum_monthly', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            payment_terms: <@bo/attribute label: 'Payment terms', column: 'payment_terms', dataType: dataType.String, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'contract_number' >,
+            list: < 'tenant_id', 'owner_id', 'contract_number', 'effective_from', 'effective_to', 'currency' >,
+            description: < 'tenant_id', 'owner_id', 'contract_number', 'effective_from', 'effective_to', 'currency', 'billing_frequency', 'minimum_monthly', 'payment_terms', 'is_active' >,
+            search: < 'contract_number' >
+        >
+    >
+end-resource

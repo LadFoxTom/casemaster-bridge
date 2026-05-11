@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inventory_hold` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inventory hold',
+        table: 'inventory_hold',
+        primaryKey: 'id',
+        sequence: 'inventory_hold',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            inventory_id: <@bo/attribute label: 'Inventory id', column: 'inventory_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/inventory'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            hold_type: <@bo/attribute label: 'Hold type', column: 'hold_type', dataType: dataType.String, length: 4000, optional: false()>,
+            hold_reason: <@bo/attribute label: 'Hold reason', column: 'hold_reason', dataType: dataType.String, length: 4000, optional: true()>,
+            placed_by_user_id: <@bo/attribute label: 'Placed by user id', column: 'placed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            placed_at: <@bo/attribute label: 'Placed at', column: 'placed_at', dataType: dataType.Timestamp, optional: false()>,
+            released_by_user_id: <@bo/attribute label: 'Released by user id', column: 'released_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'hold_type' >,
+            list: < 'tenant_id', 'warehouse_id', 'inventory_id', 'qty', 'hold_type', 'hold_reason' >,
+            description: < 'tenant_id', 'warehouse_id', 'inventory_id', 'qty', 'hold_type', 'hold_reason', 'placed_by_user_id', 'placed_at', 'released_by_user_id', 'released_at', 'status' >
+        >
+    >
+end-resource

@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `edi_map` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Edi map',
+        table: 'edi_map',
+        primaryKey: 'id',
+        sequence: 'edi_map',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            integration_partner_id: <@bo/attribute label: 'Integration partner id', column: 'integration_partner_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/integration_partner'>,
+            transaction_set: <@bo/attribute label: 'Transaction set', column: 'transaction_set', dataType: dataType.String, length: 4000, optional: false()>,
+            direction: <@bo/attribute label: 'Direction', column: 'direction', dataType: dataType.String, length: 4000, optional: false()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.String, length: 4000, optional: false()>,
+            map_definition: <@bo/attribute label: 'Map definition', column: 'map_definition', dataType: dataType.JSON, length: 4000, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: true()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'transaction_set' >,
+            list: < 'tenant_id', 'integration_partner_id', 'transaction_set', 'direction', 'version', 'effective_from' >,
+            description: < 'tenant_id', 'integration_partner_id', 'transaction_set', 'direction', 'version', 'map_definition', 'effective_from', 'effective_to' >
+        >
+    >
+end-resource

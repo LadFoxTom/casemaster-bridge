@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `allocation` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Allocation',
+        table: 'allocation',
+        primaryKey: 'id',
+        sequence: 'allocation',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            sales_order_line_id: <@bo/attribute label: 'Sales order line id', column: 'sales_order_line_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order_line'>,
+            inventory_id: <@bo/attribute label: 'Inventory id', column: 'inventory_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/inventory'>,
+            qty_allocated: <@bo/attribute label: 'Qty allocated', column: 'qty_allocated', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            allocated_at: <@bo/attribute label: 'Allocated at', column: 'allocated_at', dataType: dataType.Timestamp, optional: false()>,
+            allocated_by: <@bo/attribute label: 'Allocated by', column: 'allocated_by', dataType: dataType.String, length: 4000, optional: true()>,
+            pick_task_id: <@bo/attribute label: 'Pick task id', column: 'pick_task_id', dataType: dataType.Long, length: 18, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            released_at: <@bo/attribute label: 'Released at', column: 'released_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'uom_code' >,
+            list: < 'tenant_id', 'sales_order_line_id', 'inventory_id', 'qty_allocated', 'uom_code', 'allocated_by' >,
+            description: < 'tenant_id', 'sales_order_line_id', 'inventory_id', 'qty_allocated', 'uom_code', 'allocated_at', 'allocated_by', 'pick_task_id', 'status', 'released_at' >,
+            search: < 'uom_code' >
+        >
+    >
+end-resource

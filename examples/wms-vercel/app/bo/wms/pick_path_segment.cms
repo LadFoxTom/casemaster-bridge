@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `pick_path_segment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Pick path segment',
+        table: 'pick_path_segment',
+        primaryKey: 'id',
+        sequence: 'pick_path_segment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            wave_id: <@bo/attribute label: 'Wave id', column: 'wave_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/wave'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: false()>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            expected_distance_m: <@bo/attribute label: 'Expected distance m', column: 'expected_distance_m', dataType: dataType.Decimal, length: 8, precision: 2, optional: true()>,
+            actual_distance_m: <@bo/attribute label: 'Actual distance m', column: 'actual_distance_m', dataType: dataType.Decimal, length: 8, precision: 2, optional: true()>,
+            expected_seconds: <@bo/attribute label: 'Expected seconds', column: 'expected_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            actual_seconds: <@bo/attribute label: 'Actual seconds', column: 'actual_seconds', dataType: dataType.Long, length: 9, optional: true()>,
+            arrived_at: <@bo/attribute label: 'Arrived at', column: 'arrived_at', dataType: dataType.Timestamp, optional: true()>,
+            departed_at: <@bo/attribute label: 'Departed at', column: 'departed_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'wave_id', 'user_id', 'sequence', 'location_id', 'expected_distance_m' >,
+            description: < 'tenant_id', 'wave_id', 'user_id', 'sequence', 'location_id', 'expected_distance_m', 'actual_distance_m', 'expected_seconds', 'actual_seconds', 'arrived_at', 'departed_at' >
+        >
+    >
+end-resource

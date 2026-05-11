@@ -1,0 +1,50 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inventory_adjustment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inventory adjustment',
+        table: 'inventory_adjustment',
+        primaryKey: 'id',
+        sequence: 'inventory_adjustment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            adjustment_number: <@bo/attribute label: 'Adjustment number', column: 'adjustment_number', dataType: dataType.String, length: 4000, optional: false()>,
+            inventory_id: <@bo/attribute label: 'Inventory id', column: 'inventory_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/inventory'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            location_id: <@bo/attribute label: 'Location id', column: 'location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            serial_number: <@bo/attribute label: 'Serial number', column: 'serial_number', dataType: dataType.String, length: 4000, optional: true()>,
+            qty_before: <@bo/attribute label: 'Qty before', column: 'qty_before', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_after: <@bo/attribute label: 'Qty after', column: 'qty_after', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            qty_delta: <@bo/attribute label: 'Qty delta', column: 'qty_delta', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            reason_id: <@bo/attribute label: 'Reason id', column: 'reason_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/adjustment_reason'>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            photo_attachment_ids: <@bo/attribute label: 'Photo attachment ids', column: 'photo_attachment_ids', dataType: dataType.JSON, length: 4000, optional: true()>,
+            cost_impact: <@bo/attribute label: 'Cost impact', column: 'cost_impact', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            requires_approval: <@bo/attribute label: 'Requires approval', column: 'requires_approval', dataType: dataType.Boolean, optional: false()>,
+            approval_status: <@bo/attribute label: 'Approval status', column: 'approval_status', dataType: dataType.String, length: 4000, optional: false()>,
+            approved_by_user_id: <@bo/attribute label: 'Approved by user id', column: 'approved_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            approved_at: <@bo/attribute label: 'Approved at', column: 'approved_at', dataType: dataType.Timestamp, optional: true()>,
+            erp_posting_id: <@bo/attribute label: 'Erp posting id', column: 'erp_posting_id', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_posted_at: <@bo/attribute label: 'Erp posted at', column: 'erp_posted_at', dataType: dataType.Timestamp, optional: true()>,
+            created_by_user_id: <@bo/attribute label: 'Created by user id', column: 'created_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'adjustment_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'adjustment_number', 'inventory_id', 'item_id', 'location_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'adjustment_number', 'inventory_id', 'item_id', 'location_id', 'lot_id', 'serial_number', 'qty_before', 'qty_after', 'qty_delta', 'reason_id' >,
+            search: < 'adjustment_number', 'serial_number' >
+        >
+    >
+end-resource

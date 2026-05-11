@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `deployment` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Deployment',
+        table: 'deployment',
+        primaryKey: 'id',
+        sequence: 'deployment',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            environment: <@bo/attribute label: 'Environment', column: 'environment', dataType: dataType.String, length: 4000, optional: false()>,
+            region: <@bo/attribute label: 'Region', column: 'region', dataType: dataType.String, length: 4000, optional: false()>,
+            cluster: <@bo/attribute label: 'Cluster', column: 'cluster', dataType: dataType.String, length: 4000, optional: false()>,
+            deployment_type: <@bo/attribute label: 'Deployment type', column: 'deployment_type', dataType: dataType.String, length: 4000, optional: false()>,
+            primary_database_host: <@bo/attribute label: 'Primary database host', column: 'primary_database_host', dataType: dataType.String, length: 4000, optional: true()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            decommissioned_at: <@bo/attribute label: 'Decommissioned at', column: 'decommissioned_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'environment' >,
+            list: < 'environment', 'region', 'cluster', 'deployment_type', 'primary_database_host' >,
+            description: < 'environment', 'region', 'cluster', 'deployment_type', 'primary_database_host', 'started_at', 'decommissioned_at' >
+        >
+    >
+end-resource

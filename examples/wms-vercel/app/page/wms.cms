@@ -1,0 +1,238 @@
+// Casemaster-WMS — operational dashboard.
+// Workflow-oriented landing page: KPIs, then nine "workflow centers" each
+// linking to a hand-written page for that domain. Raw 164-table admin view
+// is factored out into page/wms/db_admin.cms.
+
+inherits 'base'
+
+function main()
+    // ---------- KPIs ----------------------------------------------------
+    set('cnt_items',         bo.count('wms/item'))
+    set('cnt_locations',     bo.count('wms/location'))
+    set('cnt_partners',      bo.count('wms/partner'))
+    set('cnt_inventory',     bo.count('wms/inventory'))
+    set('cnt_lpns',          bo.count('wms/license_plate'))
+    set('cnt_lots',          bo.count('wms/lot'))
+
+    set('cnt_po_open',       bo.count('wms/purchase_order',  'status="OPEN"'))
+    set('cnt_asn_pending',   bo.count('wms/asn',             'status="CONFIRMED" | status="DRAFT" | status="IN_TRANSIT" | status="ARRIVED"'))
+    set('cnt_receipts_open', bo.count('wms/receipt',         'status="OPEN" | status="IN_PROGRESS"'))
+    set('cnt_putaway_open',  bo.count('wms/putaway_task',    'status="OPEN" | status="ASSIGNED" | status="IN_PROGRESS"'))
+
+    set('cnt_so_open',       bo.count('wms/sales_order',     'status="IMPORTED" | status="VALIDATED" | status="ALLOCATED" | status="RELEASED" | status="IN_PICKING"'))
+    set('cnt_waves_active',  bo.count('wms/wave',            'status="RELEASED" | status="IN_PROGRESS"'))
+    set('cnt_picks_open',    bo.count('wms/task',            'task_type="PICK" & (status="OPEN" | status="ASSIGNED" | status="IN_PROGRESS")'))
+    set('cnt_shipments_pl',  bo.count('wms/shipment',        'status="PLANNED" | status="IN_PACKING" | status="PACKED" | status="MANIFESTED"'))
+
+    set('cnt_rma_open',      bo.count('wms/rma',             'status="ISSUED" | status="IN_TRANSIT" | status="RECEIVED" | status="INSPECTED"'))
+    set('cnt_count_sessions',bo.count('wms/count_session',   'status="OPEN" | status="IN_PROGRESS"'))
+    set('cnt_replen_open',   bo.count('wms/replenishment_task'))
+    set('cnt_holds',         bo.count('wms/inventory_hold',  'status="ACTIVE"'))
+
+    set('cnt_alerts_open',   bo.count('wms/alert_event',     'status="OPEN"'))
+    set('cnt_workflows',     bo.count('wms/workflow_instance','status="RUNNING"'))
+    set('cnt_ncr_open',      bo.count('wms/non_conformance', 'status="OPEN" | status="CONTAINED" | status="INVESTIGATING"'))
+    set('cnt_billing_unbilled', bo.count('wms/billing_event','is_billed=0'))
+
+    // ---------- recent activity -----------------------------------------
+    set('recent_orders',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'so', entity: 'wms/sales_order', orderBy: '-id'>
+            >,
+            rows: 8
+        )
+    )
+    set('recent_receipts',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'rc', entity: 'wms/receipt', orderBy: '-id'>
+            >,
+            rows: 8
+        )
+    )
+
+    page.render(page.get('./main'))
+end-function
+
+protected resource main
+    <@page/container
+        content: <@page/content
+            sidebar: <@page/html script.call('wms/_layout:sidebar', 'dashboard')>,
+            hero: <@page/html
+                resolveTemplate(
+                    `<div class="jumbotron jumbotron-fluid bg-light p-4 mb-4 rounded">
+                        <div class="container">
+                            <h1 class="display-4">Casemaster &middot; WMS</h1>
+                            <p class="lead">Pick a workflow below — receiving, stock, outbound and reverse flows are first-class. Each center is a hand-built operations view; click through to act on the data.</p>
+                            <p class="text-muted small">Backend: PostgreSQL (Neon) &middot; runtime: Casemaster .NET &middot; Android (.apk) intentionally out-of-scope this build.</p>
+                        </div>
+                    </div>`
+                )
+            >,
+
+            // --------------- top KPI strip ----------------------
+            kpi: <@page/html
+                resolveTemplate(`
+                <div class="row mb-3">
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_items]}}</div><small class="text-muted">Items</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_locations]}}</div><small class="text-muted">Locations</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_partners]}}</div><small class="text-muted">Partners</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_inventory]}}</div><small class="text-muted">Inventory rows</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_lpns]}}</div><small class="text-muted">LPNs</small></div></div></div>
+                    <div class="col-md-2 col-sm-4 mb-2"><div class="card"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_lots]}}</div><small class="text-muted">Lots</small></div></div></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_po_open]}}</div><small class="text-muted">Open POs</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_asn_pending]}}</div><small class="text-muted">ASNs pending</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_receipts_open]}}</div><small class="text-muted">Receipts in flight</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-primary"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_putaway_open]}}</div><small class="text-muted">Putaway tasks</small></div></div></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-success"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_so_open]}}</div><small class="text-muted">Open sales orders</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-success"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_waves_active]}}</div><small class="text-muted">Active waves</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-success"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_picks_open]}}</div><small class="text-muted">Open pick tasks</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-success"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_shipments_pl]}}</div><small class="text-muted">Shipments planned/packed</small></div></div></div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-warning"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_rma_open]}}</div><small class="text-muted">Open RMAs</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-warning"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_count_sessions]}}</div><small class="text-muted">Count sessions</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-warning"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_replen_open]}}</div><small class="text-muted">Replen tasks</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-warning"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_holds]}}</div><small class="text-muted">Inventory holds</small></div></div></div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-danger"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_alerts_open]}}</div><small class="text-muted">Open alerts</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-danger"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_workflows]}}</div><small class="text-muted">Running workflows</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-danger"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_ncr_open]}}</div><small class="text-muted">Open NCRs</small></div></div></div>
+                    <div class="col-md-3 col-sm-6 mb-2"><div class="card border-danger"><div class="card-body p-2 text-center"><div class="h4 mb-0">{{[cnt_billing_unbilled]}}</div><small class="text-muted">Unbilled events</small></div></div></div>
+                </div>
+                `)
+            >,
+
+            // --------------- workflow centers grid -------------------
+            workflows: <@page/html
+                resolveTemplate(`
+                <h3 class="mt-2 mb-3">Workflow centers</h3>
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/inbound" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-primary">📦 Inbound</h5>
+                            <p class="card-text text-muted small mb-1">Receive against ASN/PO, build LPNs, putaway. Drive goods from the dock to a storage bin.</p>
+                            <p class="small mb-0">Open POs <b>{{[cnt_po_open]}}</b> &middot; ASNs pending <b>{{[cnt_asn_pending]}}</b> &middot; Receipts <b>{{[cnt_receipts_open]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/stock" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-primary">📊 Stock</h5>
+                            <p class="card-text text-muted small mb-1">Find on-hand, drill into items / locations / lots / LPNs, move and adjust quantities.</p>
+                            <p class="small mb-0">Inventory rows <b>{{[cnt_inventory]}}</b> &middot; Holds <b>{{[cnt_holds]}}</b> &middot; LPNs <b>{{[cnt_lpns]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/outbound" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-primary">🚚 Outbound</h5>
+                            <p class="card-text text-muted small mb-1">Allocate orders, build waves, confirm picks, pack and ship. The whole DC-to-customer arc.</p>
+                            <p class="small mb-0">Orders <b>{{[cnt_so_open]}}</b> &middot; Waves <b>{{[cnt_waves_active]}}</b> &middot; Picks <b>{{[cnt_picks_open]}}</b> &middot; Ship-ready <b>{{[cnt_shipments_pl]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/reverse" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-warning">↩ Returns</h5>
+                            <p class="card-text text-muted small mb-1">Process RMAs, inspect, decide disposition (restock / scrap / refurbish / RTV).</p>
+                            <p class="small mb-0">Open RMAs <b>{{[cnt_rma_open]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/counts" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-warning">🧮 Cycle counts</h5>
+                            <p class="card-text text-muted small mb-1">Run blind counts, reconcile variance, post adjustments.</p>
+                            <p class="small mb-0">Active sessions <b>{{[cnt_count_sessions]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/replen" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-warning">🔁 Replenishment</h5>
+                            <p class="card-text text-muted small mb-1">Top-off pick faces from reserve. Min/max rules drive the queue.</p>
+                            <p class="small mb-0">Open replen tasks <b>{{[cnt_replen_open]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/quality" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-danger">✅ Quality</h5>
+                            <p class="card-text text-muted small mb-1">QC plans, inspections at receipt / return / production, NCR workflow.</p>
+                            <p class="small mb-0">Open NCRs <b>{{[cnt_ncr_open]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/yard" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-secondary">🏗 Yard &amp; Dock</h5>
+                            <p class="card-text text-muted small mb-1">Appointments, gate moves, dock-door assignments, trailer dwell.</p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/billing" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-success">💰 3PL Billing</h5>
+                            <p class="card-text text-muted small mb-1">Rate cards, billing events, monthly invoice runs per client.</p>
+                            <p class="small mb-0">Unbilled events <b>{{[cnt_billing_unbilled]}}</b></p>
+                          </div></div>
+                        </a>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/setup" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-dark">⚙ Setup</h5>
+                            <p class="card-text text-muted small mb-1">Tenants, sites, warehouses, zones, users, roles, devices, alerts, workflows.</p>
+                          </div></div>
+                        </a>
+                    </div>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <a href="wms/db_admin" class="text-decoration-none text-dark">
+                          <div class="card h-100 shadow-sm"><div class="card-body">
+                            <h5 class="card-title text-dark">🛠 DB admin</h5>
+                            <p class="card-text text-muted small mb-1">Raw list view of all 164 WMS tables. Useful for debugging and ad-hoc data inspection.</p>
+                          </div></div>
+                        </a>
+                    </div>
+                </div>
+                `)
+            >,
+
+            // --------------- recent activity -------------------
+            recent_split: <@page/html `<div class="row mt-3">`>,
+            recent_orders_h: <@page/html `<div class="col-md-6 mb-3"><h5>Recent sales orders</h5>`>,
+            recent_orders: <@page/data/table
+                iterator: [recent_orders],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            recent_orders_close: <@page/html `</div>`>,
+            recent_receipts_h: <@page/html `<div class="col-md-6 mb-3"><h5>Recent receipts</h5>`>,
+            recent_receipts: <@page/data/table
+                iterator: [recent_receipts],
+                group:    'list',
+                pagingMode: pagingMode.None
+            >,
+            recent_receipts_close: <@page/html `</div></div>`>
+        >
+    >
+end-resource

@@ -1,0 +1,56 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `sales_order` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Sales order',
+        table: 'sales_order',
+        primaryKey: 'id',
+        sequence: 'sales_order',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            order_number: <@bo/attribute label: 'Order number', column: 'order_number', dataType: dataType.String, length: 4000, optional: false()>,
+            external_order_number: <@bo/attribute label: 'External order number', column: 'external_order_number', dataType: dataType.String, length: 4000, optional: true()>,
+            channel: <@bo/attribute label: 'Channel', column: 'channel', dataType: dataType.String, length: 4000, optional: true()>,
+            customer_id: <@bo/attribute label: 'Customer id', column: 'customer_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            ship_to_address_id: <@bo/attribute label: 'Ship to address id', column: 'ship_to_address_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner_address'>,
+            bill_to_address_id: <@bo/attribute label: 'Bill to address id', column: 'bill_to_address_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner_address'>,
+            order_date: <@bo/attribute label: 'Order date', column: 'order_date', dataType: dataType.Date, optional: false()>,
+            required_ship_date: <@bo/attribute label: 'Required ship date', column: 'required_ship_date', dataType: dataType.Date, optional: true()>,
+            required_delivery_date: <@bo/attribute label: 'Required delivery date', column: 'required_delivery_date', dataType: dataType.Date, optional: true()>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            carrier_service_id: <@bo/attribute label: 'Carrier service id', column: 'carrier_service_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/carrier_service'>,
+            priority: <@bo/attribute label: 'Priority', column: 'priority', dataType: dataType.Long, length: 9, optional: false()>,
+            is_hazmat: <@bo/attribute label: 'Is hazmat', column: 'is_hazmat', dataType: dataType.Boolean, optional: false()>,
+            is_signature_required: <@bo/attribute label: 'Is signature required', column: 'is_signature_required', dataType: dataType.Boolean, optional: false()>,
+            is_ship_complete: <@bo/attribute label: 'Is ship complete', column: 'is_ship_complete', dataType: dataType.Boolean, optional: false()>,
+            is_partial_allowed: <@bo/attribute label: 'Is partial allowed', column: 'is_partial_allowed', dataType: dataType.Boolean, optional: false()>,
+            insured_value: <@bo/attribute label: 'Insured value', column: 'insured_value', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            cod_amount: <@bo/attribute label: 'Cod amount', column: 'cod_amount', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            hold_reason: <@bo/attribute label: 'Hold reason', column: 'hold_reason', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_order_id: <@bo/attribute label: 'Erp order id', column: 'erp_order_id', dataType: dataType.String, length: 4000, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            customer_po: <@bo/attribute label: 'Customer po', column: 'customer_po', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'order_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'owner_id', 'order_number', 'external_order_number', 'channel' >,
+            description: < 'tenant_id', 'warehouse_id', 'owner_id', 'order_number', 'external_order_number', 'channel', 'customer_id', 'ship_to_address_id', 'bill_to_address_id', 'order_date', 'required_ship_date', 'required_delivery_date' >,
+            search: < 'order_number', 'external_order_number' >
+        >
+    >
+end-resource

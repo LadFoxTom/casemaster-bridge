@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `workflow_instance` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Workflow instance',
+        table: 'workflow_instance',
+        primaryKey: 'id',
+        sequence: 'workflow_instance',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            workflow_definition_id: <@bo/attribute label: 'Workflow definition id', column: 'workflow_definition_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/workflow_definition'>,
+            business_key: <@bo/attribute label: 'Business key', column: 'business_key', dataType: dataType.String, length: 4000, optional: true()>,
+            initiated_by_user_id: <@bo/attribute label: 'Initiated by user id', column: 'initiated_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            current_step: <@bo/attribute label: 'Current step', column: 'current_step', dataType: dataType.String, length: 4000, optional: true()>,
+            state: <@bo/attribute label: 'State', column: 'state', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'business_key' >,
+            list: < 'tenant_id', 'workflow_definition_id', 'business_key', 'initiated_by_user_id', 'status', 'current_step' >,
+            description: < 'tenant_id', 'workflow_definition_id', 'business_key', 'initiated_by_user_id', 'started_at', 'completed_at', 'status', 'current_step', 'state' >
+        >
+    >
+end-resource

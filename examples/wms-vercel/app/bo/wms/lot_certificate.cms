@@ -1,0 +1,35 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `lot_certificate` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Lot certificate',
+        table: 'lot_certificate',
+        primaryKey: 'id',
+        sequence: 'lot_certificate',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/lot'>,
+            certificate_type: <@bo/attribute label: 'Certificate type', column: 'certificate_type', dataType: dataType.String, length: 4000, optional: false()>,
+            certificate_number: <@bo/attribute label: 'Certificate number', column: 'certificate_number', dataType: dataType.String, length: 4000, optional: true()>,
+            issued_by: <@bo/attribute label: 'Issued by', column: 'issued_by', dataType: dataType.String, length: 4000, optional: true()>,
+            issued_date: <@bo/attribute label: 'Issued date', column: 'issued_date', dataType: dataType.Date, optional: true()>,
+            valid_until: <@bo/attribute label: 'Valid until', column: 'valid_until', dataType: dataType.Date, optional: true()>,
+            file_attachment_id: <@bo/attribute label: 'File attachment id', column: 'file_attachment_id', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'certificate_type' >,
+            list: < 'tenant_id', 'lot_id', 'certificate_type', 'certificate_number', 'issued_by', 'issued_date' >,
+            description: < 'tenant_id', 'lot_id', 'certificate_type', 'certificate_number', 'issued_by', 'issued_date', 'valid_until', 'file_attachment_id' >,
+            search: < 'certificate_number' >
+        >
+    >
+end-resource

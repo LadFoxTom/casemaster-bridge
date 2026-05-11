@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `trailer` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Trailer',
+        table: 'trailer',
+        primaryKey: 'id',
+        sequence: 'trailer',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            trailer_number: <@bo/attribute label: 'Trailer number', column: 'trailer_number', dataType: dataType.String, length: 4000, optional: false()>,
+            license_plate: <@bo/attribute label: 'License plate', column: 'license_plate', dataType: dataType.String, length: 4000, optional: true()>,
+            carrier_id: <@bo/attribute label: 'Carrier id', column: 'carrier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            trailer_type: <@bo/attribute label: 'Trailer type', column: 'trailer_type', dataType: dataType.String, length: 4000, optional: true()>,
+            length_ft: <@bo/attribute label: 'Length ft', column: 'length_ft', dataType: dataType.Long, length: 9, optional: true()>,
+            is_refrigerated: <@bo/attribute label: 'Is refrigerated', column: 'is_refrigerated', dataType: dataType.Boolean, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'trailer_number' >,
+            list: < 'tenant_id', 'trailer_number', 'license_plate', 'carrier_id', 'trailer_type', 'length_ft' >,
+            description: < 'tenant_id', 'trailer_number', 'license_plate', 'carrier_id', 'trailer_type', 'length_ft', 'is_refrigerated' >,
+            search: < 'trailer_number' >
+        >
+    >
+end-resource

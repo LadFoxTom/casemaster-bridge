@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `slot_recommendation` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Slot recommendation',
+        table: 'slot_recommendation',
+        primaryKey: 'id',
+        sequence: 'slot_recommendation',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            current_location_id: <@bo/attribute label: 'Current location id', column: 'current_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            suggested_location_id: <@bo/attribute label: 'Suggested location id', column: 'suggested_location_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/location'>,
+            expected_travel_savings_seconds: <@bo/attribute label: 'Expected travel savings seconds', column: 'expected_travel_savings_seconds', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            expected_pick_count_per_day: <@bo/attribute label: 'Expected pick count per day', column: 'expected_pick_count_per_day', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            rationale: <@bo/attribute label: 'Rationale', column: 'rationale', dataType: dataType.JSON, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            reviewed_by_user_id: <@bo/attribute label: 'Reviewed by user id', column: 'reviewed_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            reviewed_at: <@bo/attribute label: 'Reviewed at', column: 'reviewed_at', dataType: dataType.Timestamp, optional: true()>,
+            executed_move_task_id: <@bo/attribute label: 'Executed move task id', column: 'executed_move_task_id', dataType: dataType.Long, length: 18, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'status' >,
+            list: < 'tenant_id', 'warehouse_id', 'item_id', 'current_location_id', 'suggested_location_id', 'expected_travel_savings_seconds' >,
+            description: < 'tenant_id', 'warehouse_id', 'item_id', 'current_location_id', 'suggested_location_id', 'expected_travel_savings_seconds', 'expected_pick_count_per_day', 'rationale', 'status', 'reviewed_by_user_id', 'reviewed_at', 'executed_move_task_id' >
+        >
+    >
+end-resource

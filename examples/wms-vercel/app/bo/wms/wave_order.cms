@@ -1,0 +1,30 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `wave_order` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Wave order',
+        table: 'wave_order',
+        primaryKey: 'id',
+        sequence: 'wave_order',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            wave_id: <@bo/attribute label: 'Wave id', column: 'wave_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/wave'>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/sales_order'>,
+            sequence: <@bo/attribute label: 'Sequence', column: 'sequence', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'id' >,
+            list: < 'tenant_id', 'wave_id', 'sales_order_id', 'sequence' >,
+            description: < 'tenant_id', 'wave_id', 'sales_order_id', 'sequence' >
+        >
+    >
+end-resource

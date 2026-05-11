@@ -1,0 +1,42 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `labor_activity` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Labor activity',
+        table: 'labor_activity',
+        primaryKey: 'id',
+        sequence: 'labor_activity',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            task_id: <@bo/attribute label: 'Task id', column: 'task_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/task'>,
+            standard_id: <@bo/attribute label: 'Standard id', column: 'standard_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/labor_standard'>,
+            activity_code: <@bo/attribute label: 'Activity code', column: 'activity_code', dataType: dataType.String, length: 4000, optional: false()>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: false()>,
+            ended_at: <@bo/attribute label: 'Ended at', column: 'ended_at', dataType: dataType.Timestamp, optional: true()>,
+            expected_seconds: <@bo/attribute label: 'Expected seconds', column: 'expected_seconds', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            actual_seconds: <@bo/attribute label: 'Actual seconds', column: 'actual_seconds', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            performance_pct: <@bo/attribute label: 'Performance pct', column: 'performance_pct', dataType: dataType.Decimal, length: 8, precision: 3, optional: true()>,
+            units_processed: <@bo/attribute label: 'Units processed', column: 'units_processed', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            distance_m: <@bo/attribute label: 'Distance m', column: 'distance_m', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            is_indirect: <@bo/attribute label: 'Is indirect', column: 'is_indirect', dataType: dataType.Boolean, optional: false()>,
+            indirect_reason: <@bo/attribute label: 'Indirect reason', column: 'indirect_reason', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'activity_code' >,
+            list: < 'tenant_id', 'warehouse_id', 'user_id', 'task_id', 'standard_id', 'activity_code' >,
+            description: < 'tenant_id', 'warehouse_id', 'user_id', 'task_id', 'standard_id', 'activity_code', 'started_at', 'ended_at', 'expected_seconds', 'actual_seconds', 'performance_pct', 'units_processed' >,
+            search: < 'activity_code' >
+        >
+    >
+end-resource

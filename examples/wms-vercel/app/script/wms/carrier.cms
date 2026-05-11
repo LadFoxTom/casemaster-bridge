@@ -1,0 +1,74 @@
+// Casemaster-WMS — carrier rate-shop + label stubs (Phase 8).
+//
+// rateShop(shipment_id) — query enabled carrier_service rows, write
+//   rate_quote rows (stub uses weight-based heuristic per service).
+// generateLabel(shipment_id) — pick the cheapest rate_quote, set
+//   shipment.carrier_service_id + tracking_number + carrier_label_url to a
+//   placeholder. A real implementation calls the carrier's REST/SOAP API.
+
+function rateShop(shipment_id)
+    set('sh', bo.quickLoad('wms/shipment', [shipment_id], group: '*'))
+    if isNull([sh])
+        return 0
+    end-if
+    set('weight', _onError(bo.attr([sh], 'declared_weight_kg'), 1))
+    if le([weight], 0)
+        set('weight', 1)
+    end-if
+
+    // Load every carrier service we have configured and emit a stub quote.
+    set('svcs',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 's', entity: 'wms/carrier_service', orderBy: 'id'>
+            >,
+            rows: 100
+        )
+    )
+    set('count', 0)
+    iterate [svcs]
+        set('cid',  bo.attr([s], 'carrier_id'))
+        set('sid',  bo.pk([s]))
+        set('td',   _onError(bo.attr([s], 'transit_days'), 3))
+        // Stub formula: 5 EUR base + 0.4 EUR/kg + 1 EUR/transit-day saved.
+        set('rate', add(5.00, add(mul([weight], 0.40), mul(sub(7, [td]), 1.0))))
+        sql.execute(concat(
+            "INSERT INTO rate_quote (tenant_id, shipment_id, sales_order_id, carrier_id, carrier_service_id, transit_days, base_rate, total_rate, currency) VALUES (",
+            "1, ", [shipment_id], ", ",
+            if(isNull(bo.attr([sh], 'sales_order_id')), 'NULL', formatString('{0}', bo.attr([sh], 'sales_order_id'))), ", ",
+            [cid], ", ", [sid], ", ", [td], ", ", [rate], ", ", [rate], ", 'EUR')"
+        ))
+        set('count', add([count], 1))
+    end-iterate
+    return [count]
+end-function
+
+function generateLabel(shipment_id)
+    // Pick the cheapest non-selected quote and mark it selected; copy carrier
+    // service + a stub tracking number + label URL onto the shipment.
+    set('quoteIter',
+        iterator.ofEntity(
+            entities: <
+                <@iterator/entity name: 'q', entity: 'wms/rate_quote', where: 'shipment_id={[shipment_id]}', orderBy: 'total_rate'>
+            >,
+            rows: 1
+        )
+    )
+    set('chosen', null())
+    iterate [quoteIter]
+        set('chosen', bo.pk([q]))
+        bo.setAttr([q], 'is_selected', true())
+        bo.persist([q])
+        set('chosen_carrier_svc', bo.attr([q], 'carrier_service_id'))
+    end-iterate
+    if isNull([chosen])
+        return null()
+    end-if
+
+    set('sh', bo.quickLoad('wms/shipment', [shipment_id], group: '*'))
+    bo.setAttr([sh], 'carrier_service_id', [chosen_carrier_svc])
+    bo.setAttr([sh], 'tracking_number',    concat('STUB', [shipment_id], format(now(), 'yyMMddHHmm')))
+    bo.setAttr([sh], 'carrier_label_url',  concat('/static/wms/labels/stub-', [shipment_id], '.zpl'))
+    bo.persist([sh])
+    return [chosen]
+end-function

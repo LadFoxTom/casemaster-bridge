@@ -1,0 +1,31 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `item_category` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Item category',
+        table: 'item_category',
+        primaryKey: 'id',
+        sequence: 'item_category',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            parent_category_id: <@bo/attribute label: 'Parent category id', column: 'parent_category_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item_category'>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'code', 'name', 'parent_category_id' >,
+            description: < 'tenant_id', 'code', 'name', 'parent_category_id' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

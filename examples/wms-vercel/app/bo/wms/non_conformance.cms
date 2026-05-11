@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `non_conformance` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Non conformance',
+        table: 'non_conformance',
+        primaryKey: 'id',
+        sequence: 'non_conformance',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            ncr_number: <@bo/attribute label: 'Ncr number', column: 'ncr_number', dataType: dataType.String, length: 4000, optional: false()>,
+            inspection_id: <@bo/attribute label: 'Inspection id', column: 'inspection_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/inspection'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            supplier_id: <@bo/attribute label: 'Supplier id', column: 'supplier_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            quantity_affected: <@bo/attribute label: 'Quantity affected', column: 'quantity_affected', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            severity: <@bo/attribute label: 'Severity', column: 'severity', dataType: dataType.String, length: 4000, optional: false()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            disposition: <@bo/attribute label: 'Disposition', column: 'disposition', dataType: dataType.String, length: 4000, optional: true()>,
+            root_cause: <@bo/attribute label: 'Root cause', column: 'root_cause', dataType: dataType.String, length: 4000, optional: true()>,
+            corrective_action: <@bo/attribute label: 'Corrective action', column: 'corrective_action', dataType: dataType.String, length: 4000, optional: true()>,
+            cost_impact: <@bo/attribute label: 'Cost impact', column: 'cost_impact', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            chargeback_amount: <@bo/attribute label: 'Chargeback amount', column: 'chargeback_amount', dataType: dataType.Decimal, length: 18, precision: 2, optional: true()>,
+            opened_at: <@bo/attribute label: 'Opened at', column: 'opened_at', dataType: dataType.Timestamp, optional: false()>,
+            closed_at: <@bo/attribute label: 'Closed at', column: 'closed_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'ncr_number' >,
+            list: < 'tenant_id', 'ncr_number', 'inspection_id', 'item_id', 'lot_id', 'supplier_id' >,
+            description: < 'tenant_id', 'ncr_number', 'inspection_id', 'item_id', 'lot_id', 'supplier_id', 'quantity_affected', 'severity', 'status', 'disposition', 'root_cause', 'corrective_action' >,
+            search: < 'ncr_number' >
+        >
+    >
+end-resource

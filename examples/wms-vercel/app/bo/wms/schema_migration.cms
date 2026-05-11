@@ -1,0 +1,30 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `schema_migration` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Schema migration',
+        table: 'schema_migration',
+        primaryKey: 'id',
+        sequence: 'schema_migration',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            version: <@bo/attribute label: 'Version', column: 'version', dataType: dataType.String, length: 4000, optional: false()>,
+            applied_at: <@bo/attribute label: 'Applied at', column: 'applied_at', dataType: dataType.Timestamp, optional: false()>,
+            applied_by: <@bo/attribute label: 'Applied by', column: 'applied_by', dataType: dataType.String, length: 4000, optional: true()>,
+            duration_ms: <@bo/attribute label: 'Duration ms', column: 'duration_ms', dataType: dataType.Long, length: 9, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'version' >,
+            list: < 'version', 'applied_by', 'duration_ms' >,
+            description: < 'version', 'applied_at', 'applied_by', 'duration_ms' >
+        >
+    >
+end-resource

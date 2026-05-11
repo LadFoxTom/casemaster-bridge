@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `warehouse` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Warehouse',
+        table: 'warehouse',
+        primaryKey: 'id',
+        sequence: 'warehouse',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/tenant'>,
+            site_id: <@bo/attribute label: 'Site id', column: 'site_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/site'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            warehouse_type: <@bo/attribute label: 'Warehouse type', column: 'warehouse_type', dataType: dataType.String, length: 4000, optional: false()>,
+            valuation_method: <@bo/attribute label: 'Valuation method', column: 'valuation_method', dataType: dataType.String, length: 4000, optional: false()>,
+            operating_hours: <@bo/attribute label: 'Operating hours', column: 'operating_hours', dataType: dataType.JSON, length: 4000, optional: true()>,
+            is_active: <@bo/attribute label: 'Is active', column: 'is_active', dataType: dataType.Boolean, optional: false()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'site_id', 'code', 'name', 'warehouse_type', 'valuation_method' >,
+            description: < 'tenant_id', 'site_id', 'code', 'name', 'warehouse_type', 'valuation_method', 'operating_hours', 'is_active', 'created_at', 'updated_at' >,
+            search: < 'code', 'name' >
+        >
+    >
+end-resource

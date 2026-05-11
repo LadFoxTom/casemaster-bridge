@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `compliance_attribute` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Compliance attribute',
+        table: 'compliance_attribute',
+        primaryKey: 'id',
+        sequence: 'compliance_attribute',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            attribute_type: <@bo/attribute label: 'Attribute type', column: 'attribute_type', dataType: dataType.String, length: 4000, optional: false()>,
+            attribute_value: <@bo/attribute label: 'Attribute value', column: 'attribute_value', dataType: dataType.String, length: 4000, optional: false()>,
+            effective_from: <@bo/attribute label: 'Effective from', column: 'effective_from', dataType: dataType.Date, optional: true()>,
+            effective_to: <@bo/attribute label: 'Effective to', column: 'effective_to', dataType: dataType.Date, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'attribute_type' >,
+            list: < 'tenant_id', 'item_id', 'attribute_type', 'attribute_value', 'effective_from', 'effective_to' >,
+            description: < 'tenant_id', 'item_id', 'attribute_type', 'attribute_value', 'effective_from', 'effective_to' >
+        >
+    >
+end-resource

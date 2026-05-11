@@ -1,0 +1,49 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `billing_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Billing event',
+        table: 'billing_event',
+        primaryKey: 'id',
+        sequence: 'billing_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            event_at: <@bo/attribute label: 'Event at', column: 'event_at', dataType: dataType.Timestamp, optional: false()>,
+            activity_type: <@bo/attribute label: 'Activity type', column: 'activity_type', dataType: dataType.String, length: 4000, optional: false()>,
+            reference_type: <@bo/attribute label: 'Reference type', column: 'reference_type', dataType: dataType.String, length: 4000, optional: true()>,
+            reference_id: <@bo/attribute label: 'Reference id', column: 'reference_id', dataType: dataType.Long, length: 18, optional: true()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/item'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            uom: <@bo/attribute label: 'Uom', column: 'uom', dataType: dataType.String, length: 4000, optional: true()>,
+            weight_kg: <@bo/attribute label: 'Weight kg', column: 'weight_kg', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            volume_l: <@bo/attribute label: 'Volume l', column: 'volume_l', dataType: dataType.Decimal, length: 10, precision: 3, optional: true()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            rate_card_line_id: <@bo/attribute label: 'Rate card line id', column: 'rate_card_line_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/rate_card_line'>,
+            charge_code: <@bo/attribute label: 'Charge code', column: 'charge_code', dataType: dataType.String, length: 4000, optional: true()>,
+            rate: <@bo/attribute label: 'Rate', column: 'rate', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            quantity_billed: <@bo/attribute label: 'Quantity billed', column: 'quantity_billed', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            amount: <@bo/attribute label: 'Amount', column: 'amount', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            currency: <@bo/attribute label: 'Currency', column: 'currency', dataType: dataType.String, length: 3, optional: true()>,
+            bill_run_id: <@bo/attribute label: 'Bill run id', column: 'bill_run_id', dataType: dataType.Long, length: 18, optional: true()>,
+            is_billed: <@bo/attribute label: 'Is billed', column: 'is_billed', dataType: dataType.Boolean, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'charge_code' >,
+            list: < 'tenant_id', 'warehouse_id', 'owner_id', 'activity_type', 'reference_type', 'reference_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'owner_id', 'event_at', 'activity_type', 'reference_type', 'reference_id', 'item_id', 'qty', 'uom', 'weight_kg', 'volume_l' >,
+            search: < 'charge_code' >
+        >
+    >
+end-resource

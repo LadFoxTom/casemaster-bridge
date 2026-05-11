@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `anomaly_event` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Anomaly event',
+        table: 'anomaly_event',
+        primaryKey: 'id',
+        sequence: 'anomaly_event',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            detector: <@bo/attribute label: 'Detector', column: 'detector', dataType: dataType.String, length: 4000, optional: false()>,
+            entity_type: <@bo/attribute label: 'Entity type', column: 'entity_type', dataType: dataType.String, length: 4000, optional: false()>,
+            entity_id: <@bo/attribute label: 'Entity id', column: 'entity_id', dataType: dataType.Long, length: 18, optional: false()>,
+            severity: <@bo/attribute label: 'Severity', column: 'severity', dataType: dataType.String, length: 4000, optional: false()>,
+            score: <@bo/attribute label: 'Score', column: 'score', dataType: dataType.Decimal, length: 8, precision: 4, optional: true()>,
+            expected_value: <@bo/attribute label: 'Expected value', column: 'expected_value', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            observed_value: <@bo/attribute label: 'Observed value', column: 'observed_value', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            description: <@bo/attribute label: 'Description', column: 'description', dataType: dataType.String, length: 4000, optional: true()>,
+            detected_at: <@bo/attribute label: 'Detected at', column: 'detected_at', dataType: dataType.Timestamp, optional: false()>,
+            acknowledged_by_user_id: <@bo/attribute label: 'Acknowledged by user id', column: 'acknowledged_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            acknowledged_at: <@bo/attribute label: 'Acknowledged at', column: 'acknowledged_at', dataType: dataType.Timestamp, optional: true()>,
+            resolved_at: <@bo/attribute label: 'Resolved at', column: 'resolved_at', dataType: dataType.Timestamp, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'description' >,
+            list: < 'tenant_id', 'detector', 'entity_type', 'entity_id', 'severity', 'score' >,
+            description: < 'tenant_id', 'detector', 'entity_type', 'entity_id', 'severity', 'score', 'expected_value', 'observed_value', 'description', 'detected_at', 'acknowledged_by_user_id', 'acknowledged_at' >
+        >
+    >
+end-resource

@@ -1,0 +1,37 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `rate_card_line` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Rate card line',
+        table: 'rate_card_line',
+        primaryKey: 'id',
+        sequence: 'rate_card_line',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            rate_card_id: <@bo/attribute label: 'Rate card id', column: 'rate_card_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/rate_card'>,
+            charge_code: <@bo/attribute label: 'Charge code', column: 'charge_code', dataType: dataType.String, length: 4000, optional: false()>,
+            charge_name: <@bo/attribute label: 'Charge name', column: 'charge_name', dataType: dataType.String, length: 4000, optional: false()>,
+            activity_type: <@bo/attribute label: 'Activity type', column: 'activity_type', dataType: dataType.String, length: 4000, optional: false()>,
+            uom: <@bo/attribute label: 'Uom', column: 'uom', dataType: dataType.String, length: 4000, optional: false()>,
+            rate: <@bo/attribute label: 'Rate', column: 'rate', dataType: dataType.Decimal, length: 18, precision: 4, optional: false()>,
+            minimum_charge: <@bo/attribute label: 'Minimum charge', column: 'minimum_charge', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            tier_jsonb: <@bo/attribute label: 'Tier jsonb', column: 'tier_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>,
+            selector_jsonb: <@bo/attribute label: 'Selector jsonb', column: 'selector_jsonb', dataType: dataType.JSON, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'charge_code' >,
+            list: < 'tenant_id', 'rate_card_id', 'charge_code', 'charge_name', 'activity_type', 'uom' >,
+            description: < 'tenant_id', 'rate_card_id', 'charge_code', 'charge_name', 'activity_type', 'uom', 'rate', 'minimum_charge', 'tier_jsonb', 'selector_jsonb' >,
+            search: < 'charge_code', 'charge_name' >
+        >
+    >
+end-resource

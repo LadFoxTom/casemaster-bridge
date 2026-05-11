@@ -1,0 +1,38 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `labor_forecast` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Labor forecast',
+        table: 'labor_forecast',
+        primaryKey: 'id',
+        sequence: 'labor_forecast',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            forecast_date: <@bo/attribute label: 'Forecast date', column: 'forecast_date', dataType: dataType.Date, optional: false()>,
+            shift_code: <@bo/attribute label: 'Shift code', column: 'shift_code', dataType: dataType.String, length: 4000, optional: false()>,
+            zone_id: <@bo/attribute label: 'Zone id', column: 'zone_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/zone'>,
+            activity_code: <@bo/attribute label: 'Activity code', column: 'activity_code', dataType: dataType.String, length: 4000, optional: true()>,
+            forecast_units: <@bo/attribute label: 'Forecast units', column: 'forecast_units', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            forecast_hours: <@bo/attribute label: 'Forecast hours', column: 'forecast_hours', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            forecast_ftes: <@bo/attribute label: 'Forecast ftes', column: 'forecast_ftes', dataType: dataType.Decimal, length: 8, precision: 2, optional: true()>,
+            confidence_pct: <@bo/attribute label: 'Confidence pct', column: 'confidence_pct', dataType: dataType.Decimal, length: 6, precision: 2, optional: true()>,
+            generated_at: <@bo/attribute label: 'Generated at', column: 'generated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'activity_code' >,
+            list: < 'tenant_id', 'warehouse_id', 'forecast_date', 'shift_code', 'zone_id', 'activity_code' >,
+            description: < 'tenant_id', 'warehouse_id', 'forecast_date', 'shift_code', 'zone_id', 'activity_code', 'forecast_units', 'forecast_hours', 'forecast_ftes', 'confidence_pct', 'generated_at' >,
+            search: < 'shift_code', 'activity_code' >
+        >
+    >
+end-resource

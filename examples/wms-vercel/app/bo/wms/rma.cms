@@ -1,0 +1,39 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `rma` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Rma',
+        table: 'rma',
+        primaryKey: 'id',
+        sequence: 'rma',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            rma_number: <@bo/attribute label: 'Rma number', column: 'rma_number', dataType: dataType.String, length: 4000, optional: false()>,
+            sales_order_id: <@bo/attribute label: 'Sales order id', column: 'sales_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/sales_order'>,
+            customer_id: <@bo/attribute label: 'Customer id', column: 'customer_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/partner'>,
+            issued_at: <@bo/attribute label: 'Issued at', column: 'issued_at', dataType: dataType.Timestamp, optional: false()>,
+            expected_arrival: <@bo/attribute label: 'Expected arrival', column: 'expected_arrival', dataType: dataType.Date, optional: true()>,
+            actual_arrival: <@bo/attribute label: 'Actual arrival', column: 'actual_arrival', dataType: dataType.Timestamp, optional: true()>,
+            return_reason_category: <@bo/attribute label: 'Return reason category', column: 'return_reason_category', dataType: dataType.String, length: 4000, optional: true()>,
+            requested_resolution: <@bo/attribute label: 'Requested resolution', column: 'requested_resolution', dataType: dataType.String, length: 4000, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'rma_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'rma_number', 'sales_order_id', 'customer_id', 'expected_arrival' >,
+            description: < 'tenant_id', 'warehouse_id', 'rma_number', 'sales_order_id', 'customer_id', 'issued_at', 'expected_arrival', 'actual_arrival', 'return_reason_category', 'requested_resolution', 'status', 'notes' >,
+            search: < 'rma_number' >
+        >
+    >
+end-resource

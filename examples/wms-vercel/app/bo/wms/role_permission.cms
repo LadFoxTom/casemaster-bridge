@@ -1,0 +1,26 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `role_permission` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Role permission',
+        table: 'role_permission',
+        primaryKey: 'role_id',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            role_id: <@bo/attribute label: 'Role id', column: 'role_id', dataType: dataType.Long, length: 18, optional: false()>,
+            permission_id: <@bo/attribute label: 'Permission id', column: 'permission_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/permission'>
+        >,
+        attributeGroups: <
+            label: < 'role_id' >,
+            list: < 'role_id', 'permission_id' >,
+            description: < 'permission_id' >
+        >
+    >
+end-resource

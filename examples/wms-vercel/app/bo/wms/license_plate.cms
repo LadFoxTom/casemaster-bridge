@@ -1,0 +1,47 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `license_plate` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'License plate',
+        table: 'license_plate',
+        primaryKey: 'id',
+        sequence: 'license_plate',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            lpn_number: <@bo/attribute label: 'Lpn number', column: 'lpn_number', dataType: dataType.String, length: 4000, optional: false()>,
+            lpn_type: <@bo/attribute label: 'Lpn type', column: 'lpn_type', dataType: dataType.String, length: 4000, optional: false()>,
+            parent_lpn_id: <@bo/attribute label: 'Parent lpn id', column: 'parent_lpn_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            current_location_id: <@bo/attribute label: 'Current location id', column: 'current_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            weight_kg: <@bo/attribute label: 'Weight kg', column: 'weight_kg', dataType: dataType.Decimal, length: 10, precision: 4, optional: true()>,
+            length_cm: <@bo/attribute label: 'Length cm', column: 'length_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            width_cm: <@bo/attribute label: 'Width cm', column: 'width_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            height_cm: <@bo/attribute label: 'Height cm', column: 'height_cm', dataType: dataType.Decimal, length: 10, precision: 2, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            is_mixed_sku: <@bo/attribute label: 'Is mixed sku', column: 'is_mixed_sku', dataType: dataType.Boolean, optional: false()>,
+            is_mixed_lot: <@bo/attribute label: 'Is mixed lot', column: 'is_mixed_lot', dataType: dataType.Boolean, optional: false()>,
+            sealed: <@bo/attribute label: 'Sealed', column: 'sealed', dataType: dataType.Boolean, optional: false()>,
+            seal_number: <@bo/attribute label: 'Seal number', column: 'seal_number', dataType: dataType.String, length: 4000, optional: true()>,
+            receipt_id: <@bo/attribute label: 'Receipt id', column: 'receipt_id', dataType: dataType.Long, length: 18, optional: true()>,
+            shipment_id: <@bo/attribute label: 'Shipment id', column: 'shipment_id', dataType: dataType.Long, length: 18, optional: true()>,
+            created_by_user_id: <@bo/attribute label: 'Created by user id', column: 'created_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'lpn_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'lpn_number', 'lpn_type', 'parent_lpn_id', 'current_location_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'lpn_number', 'lpn_type', 'parent_lpn_id', 'current_location_id', 'weight_kg', 'length_cm', 'width_cm', 'height_cm', 'status', 'is_mixed_sku' >,
+            search: < 'lpn_number', 'seal_number' >
+        >
+    >
+end-resource

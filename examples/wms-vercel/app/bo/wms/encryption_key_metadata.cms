@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `encryption_key_metadata` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Encryption key metadata',
+        table: 'encryption_key_metadata',
+        primaryKey: 'id',
+        sequence: 'encryption_key_metadata',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: true()>,
+            key_purpose: <@bo/attribute label: 'Key purpose', column: 'key_purpose', dataType: dataType.String, length: 4000, optional: false()>,
+            key_id: <@bo/attribute label: 'Key id', column: 'key_id', dataType: dataType.String, length: 4000, optional: false()>,
+            kms_provider: <@bo/attribute label: 'Kms provider', column: 'kms_provider', dataType: dataType.String, length: 4000, optional: false()>,
+            rotation_period_days: <@bo/attribute label: 'Rotation period days', column: 'rotation_period_days', dataType: dataType.Long, length: 9, optional: true()>,
+            last_rotated_at: <@bo/attribute label: 'Last rotated at', column: 'last_rotated_at', dataType: dataType.Timestamp, optional: true()>,
+            next_rotation_at: <@bo/attribute label: 'Next rotation at', column: 'next_rotation_at', dataType: dataType.Timestamp, optional: true()>,
+            active: <@bo/attribute label: 'Active', column: 'active', dataType: dataType.Boolean, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'key_purpose' >,
+            list: < 'tenant_id', 'key_purpose', 'key_id', 'kms_provider', 'rotation_period_days', 'active' >,
+            description: < 'tenant_id', 'key_purpose', 'key_id', 'kms_provider', 'rotation_period_days', 'last_rotated_at', 'next_rotation_at', 'active' >
+        >
+    >
+end-resource

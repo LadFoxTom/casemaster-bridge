@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `site` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Site',
+        table: 'site',
+        primaryKey: 'id',
+        sequence: 'site',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/tenant'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            name: <@bo/attribute label: 'Name', column: 'name', dataType: dataType.String, length: 4000, optional: false()>,
+            address_line1: <@bo/attribute label: 'Address line1', column: 'address_line1', dataType: dataType.String, length: 4000, optional: true()>,
+            address_line2: <@bo/attribute label: 'Address line2', column: 'address_line2', dataType: dataType.String, length: 4000, optional: true()>,
+            city: <@bo/attribute label: 'City', column: 'city', dataType: dataType.String, length: 4000, optional: true()>,
+            region: <@bo/attribute label: 'Region', column: 'region', dataType: dataType.String, length: 4000, optional: true()>,
+            postal_code: <@bo/attribute label: 'Postal code', column: 'postal_code', dataType: dataType.String, length: 4000, optional: true()>,
+            country_code: <@bo/attribute label: 'Country code', column: 'country_code', dataType: dataType.String, length: 2, optional: true()>,
+            latitude: <@bo/attribute label: 'Latitude', column: 'latitude', dataType: dataType.Decimal, length: 9, precision: 6, optional: true()>,
+            longitude: <@bo/attribute label: 'Longitude', column: 'longitude', dataType: dataType.Decimal, length: 9, precision: 6, optional: true()>,
+            timezone: <@bo/attribute label: 'Timezone', column: 'timezone', dataType: dataType.String, length: 4000, optional: false()>,
+            contact_phone: <@bo/attribute label: 'Contact phone', column: 'contact_phone', dataType: dataType.String, length: 4000, optional: true()>,
+            contact_email: <@bo/attribute label: 'Contact email', column: 'contact_email', dataType: dataType.String, length: 4000, optional: true()>,
+            created_at: <@bo/attribute label: 'Created at', column: 'created_at', dataType: dataType.Timestamp, optional: false()>,
+            updated_at: <@bo/attribute label: 'Updated at', column: 'updated_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'code', 'name', 'address_line1', 'address_line2', 'city' >,
+            description: < 'tenant_id', 'code', 'name', 'address_line1', 'address_line2', 'city', 'region', 'postal_code', 'country_code', 'latitude', 'longitude', 'timezone' >,
+            search: < 'code', 'name', 'postal_code', 'country_code' >
+        >
+    >
+end-resource

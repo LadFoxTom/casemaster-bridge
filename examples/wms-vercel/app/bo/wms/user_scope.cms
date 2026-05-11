@@ -1,0 +1,32 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `user_scope` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'User scope',
+        table: 'user_scope',
+        primaryKey: 'id',
+        sequence: 'user_scope',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/app_user'>,
+            dimension: <@bo/attribute label: 'Dimension', column: 'dimension', dataType: dataType.String, length: 4000, optional: false()>,
+            dimension_value: <@bo/attribute label: 'Dimension value', column: 'dimension_value', dataType: dataType.Long, length: 18, optional: false()>,
+            granted_by_user_id: <@bo/attribute label: 'Granted by user id', column: 'granted_by_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            granted_at: <@bo/attribute label: 'Granted at', column: 'granted_at', dataType: dataType.Timestamp, optional: false()>
+        >,
+        attributeGroups: <
+            label: < 'dimension' >,
+            list: < 'tenant_id', 'user_id', 'dimension', 'dimension_value', 'granted_by_user_id' >,
+            description: < 'tenant_id', 'user_id', 'dimension', 'dimension_value', 'granted_by_user_id', 'granted_at' >
+        >
+    >
+end-resource

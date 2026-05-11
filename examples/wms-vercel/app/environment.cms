@@ -1,0 +1,8 @@
+// Active environment — controls which incXxx.cms is loaded by the runtime.
+// Development reads incDevelopment.cms in this folder.
+
+function main()
+
+    return environment.Development
+
+end-function

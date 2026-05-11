@@ -1,0 +1,51 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inventory_journal` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inventory journal',
+        table: 'inventory_journal',
+        primaryKey: 'id',
+        sequence: 'inventory_journal',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            journal_timestamp: <@bo/attribute label: 'Journal timestamp', column: 'journal_timestamp', dataType: dataType.Timestamp, optional: false()>,
+            transaction_type: <@bo/attribute label: 'Transaction type', column: 'transaction_type', dataType: dataType.String, length: 4000, optional: false()>,
+            reference_type: <@bo/attribute label: 'Reference type', column: 'reference_type', dataType: dataType.String, length: 4000, optional: true()>,
+            reference_id: <@bo/attribute label: 'Reference id', column: 'reference_id', dataType: dataType.Long, length: 18, optional: true()>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            from_location_id: <@bo/attribute label: 'From location id', column: 'from_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            to_location_id: <@bo/attribute label: 'To location id', column: 'to_location_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/location'>,
+            license_plate_id: <@bo/attribute label: 'License plate id', column: 'license_plate_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/license_plate'>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            serial_number: <@bo/attribute label: 'Serial number', column: 'serial_number', dataType: dataType.String, length: 4000, optional: true()>,
+            owner_id: <@bo/attribute label: 'Owner id', column: 'owner_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/partner'>,
+            qty: <@bo/attribute label: 'Qty', column: 'qty', dataType: dataType.Decimal, length: 18, precision: 6, optional: false()>,
+            uom_code: <@bo/attribute label: 'Uom code', column: 'uom_code', dataType: dataType.String, length: 4000, optional: false()>,
+            quality_status_from: <@bo/attribute label: 'Quality status from', column: 'quality_status_from', dataType: dataType.String, length: 4000, optional: true()>,
+            quality_status_to: <@bo/attribute label: 'Quality status to', column: 'quality_status_to', dataType: dataType.String, length: 4000, optional: true()>,
+            cost: <@bo/attribute label: 'Cost', column: 'cost', dataType: dataType.Decimal, length: 18, precision: 4, optional: true()>,
+            user_id: <@bo/attribute label: 'User id', column: 'user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            device_id: <@bo/attribute label: 'Device id', column: 'device_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/device'>,
+            erp_posting_id: <@bo/attribute label: 'Erp posting id', column: 'erp_posting_id', dataType: dataType.String, length: 4000, optional: true()>,
+            erp_posted_at: <@bo/attribute label: 'Erp posted at', column: 'erp_posted_at', dataType: dataType.Timestamp, optional: true()>,
+            notes: <@bo/attribute label: 'Notes', column: 'notes', dataType: dataType.String, length: 4000, optional: true()>,
+            idempotency_key: <@bo/attribute label: 'Idempotency key', column: 'idempotency_key', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'serial_number' >,
+            list: < 'tenant_id', 'warehouse_id', 'journal_timestamp', 'transaction_type', 'reference_type', 'reference_id' >,
+            description: < 'tenant_id', 'warehouse_id', 'journal_timestamp', 'transaction_type', 'reference_type', 'reference_id', 'item_id', 'from_location_id', 'to_location_id', 'license_plate_id', 'lot_id', 'serial_number' >,
+            search: < 'serial_number', 'uom_code' >
+        >
+    >
+end-resource

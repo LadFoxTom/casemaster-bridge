@@ -1,0 +1,34 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `yard_slot` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Yard slot',
+        table: 'yard_slot',
+        primaryKey: 'id',
+        sequence: 'yard_slot',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            warehouse_id: <@bo/attribute label: 'Warehouse id', column: 'warehouse_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/warehouse'>,
+            code: <@bo/attribute label: 'Code', column: 'code', dataType: dataType.String, length: 4000, optional: false()>,
+            yard_zone: <@bo/attribute label: 'Yard zone', column: 'yard_zone', dataType: dataType.String, length: 4000, optional: true()>,
+            has_power: <@bo/attribute label: 'Has power', column: 'has_power', dataType: dataType.Boolean, optional: true()>,
+            has_reefer_power: <@bo/attribute label: 'Has reefer power', column: 'has_reefer_power', dataType: dataType.Boolean, optional: true()>,
+            is_drop_lot: <@bo/attribute label: 'Is drop lot', column: 'is_drop_lot', dataType: dataType.Boolean, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'code' >,
+            list: < 'tenant_id', 'warehouse_id', 'code', 'yard_zone', 'has_power', 'has_reefer_power' >,
+            description: < 'tenant_id', 'warehouse_id', 'code', 'yard_zone', 'has_power', 'has_reefer_power', 'is_drop_lot' >,
+            search: < 'code' >
+        >
+    >
+end-resource

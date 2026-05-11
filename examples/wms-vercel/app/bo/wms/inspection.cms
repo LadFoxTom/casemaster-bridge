@@ -1,0 +1,43 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `inspection` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Inspection',
+        table: 'inspection',
+        primaryKey: 'id',
+        sequence: 'inspection',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            inspection_number: <@bo/attribute label: 'Inspection number', column: 'inspection_number', dataType: dataType.String, length: 4000, optional: false()>,
+            qc_plan_id: <@bo/attribute label: 'Qc plan id', column: 'qc_plan_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/qc_plan'>,
+            trigger_type: <@bo/attribute label: 'Trigger type', column: 'trigger_type', dataType: dataType.String, length: 4000, optional: false()>,
+            receipt_id: <@bo/attribute label: 'Receipt id', column: 'receipt_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/receipt'>,
+            rma_id: <@bo/attribute label: 'Rma id', column: 'rma_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/rma'>,
+            work_order_id: <@bo/attribute label: 'Work order id', column: 'work_order_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/work_order'>,
+            item_id: <@bo/attribute label: 'Item id', column: 'item_id', dataType: dataType.Long, length: 18, optional: false(), foreignKey: 'wms/item'>,
+            lot_id: <@bo/attribute label: 'Lot id', column: 'lot_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/lot'>,
+            quantity_inspected: <@bo/attribute label: 'Quantity inspected', column: 'quantity_inspected', dataType: dataType.Decimal, length: 18, precision: 6, optional: true()>,
+            sample_size: <@bo/attribute label: 'Sample size', column: 'sample_size', dataType: dataType.Long, length: 9, optional: true()>,
+            status: <@bo/attribute label: 'Status', column: 'status', dataType: dataType.String, length: 4000, optional: false()>,
+            inspector_user_id: <@bo/attribute label: 'Inspector user id', column: 'inspector_user_id', dataType: dataType.Long, length: 18, optional: true(), foreignKey: 'wms/app_user'>,
+            started_at: <@bo/attribute label: 'Started at', column: 'started_at', dataType: dataType.Timestamp, optional: true()>,
+            completed_at: <@bo/attribute label: 'Completed at', column: 'completed_at', dataType: dataType.Timestamp, optional: true()>,
+            outcome_summary: <@bo/attribute label: 'Outcome summary', column: 'outcome_summary', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'inspection_number' >,
+            list: < 'tenant_id', 'inspection_number', 'qc_plan_id', 'trigger_type', 'receipt_id', 'rma_id' >,
+            description: < 'tenant_id', 'inspection_number', 'qc_plan_id', 'trigger_type', 'receipt_id', 'rma_id', 'work_order_id', 'item_id', 'lot_id', 'quantity_inspected', 'sample_size', 'status' >,
+            search: < 'inspection_number' >
+        >
+    >
+end-resource

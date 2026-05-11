@@ -1,0 +1,33 @@
+// Generated from sql/wms_schema.sql by codegen_bos.py.
+// Maps the `retention_policy` table to a Casemaster Business Object so pages can
+// iterator.ofEntity / bo.quickLoad against it.
+
+function main()
+    return script.get('./main')
+end-function
+
+resource main
+    <@bo
+        label: 'Retention policy',
+        table: 'retention_policy',
+        primaryKey: 'id',
+        sequence: 'retention_policy',
+        deleteRule: deleteRule.Allowed,
+        auditable: auditing.None,
+        attributes: <
+            id: <@bo/attribute label: 'Id', column: 'id', dataType: dataType.Long, length: 18, locked: true(), optional: false()>,
+            tenant_id: <@bo/attribute label: 'Tenant id', column: 'tenant_id', dataType: dataType.Long, length: 18, optional: false()>,
+            table_name: <@bo/attribute label: 'Table name', column: 'table_name', dataType: dataType.String, length: 4000, optional: false()>,
+            retention_period_days: <@bo/attribute label: 'Retention period days', column: 'retention_period_days', dataType: dataType.Long, length: 9, optional: false()>,
+            archival_target: <@bo/attribute label: 'Archival target', column: 'archival_target', dataType: dataType.String, length: 4000, optional: true()>,
+            deletion_strategy: <@bo/attribute label: 'Deletion strategy', column: 'deletion_strategy', dataType: dataType.String, length: 4000, optional: false()>,
+            legal_basis: <@bo/attribute label: 'Legal basis', column: 'legal_basis', dataType: dataType.String, length: 4000, optional: true()>
+        >,
+        attributeGroups: <
+            label: < 'table_name' >,
+            list: < 'tenant_id', 'table_name', 'retention_period_days', 'archival_target', 'deletion_strategy', 'legal_basis' >,
+            description: < 'tenant_id', 'table_name', 'retention_period_days', 'archival_target', 'deletion_strategy', 'legal_basis' >,
+            search: < 'table_name' >
+        >
+    >
+end-resource
