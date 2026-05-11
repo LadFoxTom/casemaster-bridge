@@ -36,6 +36,9 @@ html[data-theme='light'] {
 }
 
 html, body, #root { height: 100%; }
+/* Lock the viewport — sidebar + main pane scroll independently instead of
+   the whole page scrolling when the nav is taller than the viewport. */
+html, body { overflow: hidden; }
 body { -webkit-font-smoothing: antialiased; }
 
 /* Density-aware row height — used by the data table. */

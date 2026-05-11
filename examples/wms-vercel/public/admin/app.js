@@ -366,8 +366,8 @@ function Shell({ schema, route, navigate, openCmd, children }) {
   }, []);
 
   return html`
-    <div class="h-full grid" style="grid-template-columns: ${collapsed ? '64px' : '240px'} 1fr;">
-      <aside class="border-r border-border bg-surface flex flex-col min-w-0">
+    <div class="h-full grid overflow-hidden" style="grid-template-columns: ${collapsed ? '64px' : '240px'} 1fr;">
+      <aside class="border-r border-border bg-surface flex flex-col min-w-0 min-h-0 overflow-hidden">
         <div class="h-14 ${collapsed ? 'px-0 justify-center' : 'px-3'} flex items-center gap-2 border-b border-border">
           ${collapsed
             ? html`<button
@@ -430,7 +430,7 @@ function SidebarNav({ schema, route, navigate, collapsed }) {
   if (!schema) return html`<div class="p-3 space-y-2">${[1,2,3,4,5].map((i) => html`<div key=${i} class="skel h-7" />`)}</div>`;
   const isActive = (path) => path && path.replace(/^\/admin/, '').replace(/^\//,'') === route.replace(/^\//,'');
   return html`
-    <nav class="flex-1 overflow-y-auto p-2 text-sm">
+    <nav class="flex-1 min-h-0 overflow-y-auto p-2 text-sm">
       ${schema.navigation.map((n) => {
         if (n.children) {
           const open = openGroups.has(n.label);
