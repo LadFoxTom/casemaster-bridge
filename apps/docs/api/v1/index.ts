@@ -1,15 +1,14 @@
 /**
- * Self-contained Vercel function for /api/v1/*.
+ * /api/v1/* JSON handler. Self-contained: imports only files within the
+ * Vercel Root Directory so Vercel can bundle the function.
  *
- * Why self-contained: this file is the deploy root's only API entry. It
- * can't import from `packages/api-vercel/*` because that's above the
- * Root Directory when Vercel builds from `examples/wms-vercel/`. The
- * demo provider is already vendored at `_runtime/api-vercel.mjs`; we
- * just inline the route matching here.
+ * Routing shape: vercel.json rewrites `/api/v1/(.*) → /api/v1/index.ts?_p=/api/v1/$1`
+ * (same `?_p` trick cms-vercel uses for /page/* rewrites). The function
+ * reads the original path from `_p` and falls back to req.url.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-// @ts-ignore — .mjs without types, intentional
+// @ts-ignore — .mjs without types
 import { createDemoProvider, writeSseStream } from '../../_runtime/api-vercel.mjs';
 // @ts-ignore — .js without types
 import { wmsSeed } from '../../_runtime/wms-seed.js';
@@ -18,12 +17,21 @@ import { wmsSeed } from '../../_runtime/wms-seed.js';
 const provider = createDemoProvider(wmsSeed());
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const url = new URL(req.url ?? '/', 'http://x');
-  const path = url.pathname;
-  const method = (req.method ?? 'GET').toUpperCase();
-  const sendJson = (status: number, body: unknown) => res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
+  const sendJson = (status: number, body: unknown) =>
+    res.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
 
   try {
+    // Recover the ORIGINAL URL after vercel.json's rewrite. Same _p trick
+    // cms-vercel uses. Falls back to req.url if no rewrite was used.
+    const rawUrl = req.url ?? '/';
+    const tmp = new URL(rawUrl, 'http://x');
+    const proxied = tmp.searchParams.get('_p') ?? rawUrl;
+    tmp.searchParams.delete('_p');
+    const remainingQs = tmp.searchParams.toString();
+    const url = new URL(proxied + (remainingQs ? `?${remainingQs}` : ''), 'http://x');
+    const path = url.pathname;
+    const method = (req.method ?? 'GET').toUpperCase();
+
     let m: RegExpExecArray | null;
 
     if (method === 'GET' && path === '/api/v1/schema') {
@@ -110,7 +118,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 async function readBody(req: VercelRequest): Promise<any> {
-  // Vercel parses JSON bodies for us when Content-Type is application/json.
   if (req.body != null) return req.body;
   return new Promise((ok, fail) => {
     let buf = '';

@@ -1,7 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "functions": {
+    "api/index.ts":    { "includeFiles": "app/**" },
+    "api/v1/index.ts": { "includeFiles": "_runtime/**" }
+  },
   "rewrites": [
+    { "source": "/api/v1/(.*)",      "destination": "/api/v1/index.ts?_p=/api/v1/$1" },
     { "source": "/page/(.*)",        "destination": "/api/index.ts?_p=/page/$1" },
     { "source": "/maintenance/(.*)", "destination": "/api/index.ts?_p=/maintenance/$1" }
   ]
